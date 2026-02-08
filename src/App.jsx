@@ -1,7 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { differenceInCalendarDays, format, isToday, isYesterday, parseISO } from "date-fns";
-import { DayPicker } from "react-day-picker";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  format,
+  parseISO,
+} from "date-fns";
 import { BrowserRouter, NavLink, Route, Routes, useParams, useSearchParams } from "react-router-dom";
+import ClassDetailPage from "./pages/ClassDetailPage";
+import AttendancePage from "./pages/AttendancePage";
+import AssessmentDetailPage from "./pages/AssessmentDetailPage";
+import AssessmentsPage from "./pages/AssessmentsPage";
+import CalendarPage from "./pages/CalendarPage";
+import RandomPickerPage from "./pages/RandomPickerPage";
+import RunningRecordsPage from "./pages/RunningRecordsPage";
 import { supabase } from "./supabaseClient";
 import "./App.css";
 import "react-day-picker/dist/style.css";
@@ -398,513 +407,6 @@ const DEFAULT_RUBRICS = [
   },
 ];
 
-function RunningRecordsPage({
-  formError,
-  handleCreateRunningRecord,
-  handleDeleteRunningRecord,
-  runningRecordForm,
-  setRunningRecordForm,
-  students,
-  classes,
-  loading,
-  runningRecords,
-}) {
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [selectedStudentFilter, setSelectedStudentFilter] = useState("");
-  const [selectedLevelFilter, setSelectedLevelFilter] = useState("");
-  const [searchText, setSearchText] = useState("");
-  const [selectedRecord, setSelectedRecord] = useState(null);
-
-  const classLookup = useMemo(() => {
-    const map = new Map();
-    classes.forEach((classItem) => map.set(classItem.id, classItem));
-    return map;
-  }, [classes]);
-
-  const studentLookup = useMemo(() => {
-    const map = new Map();
-    students.forEach((student) => map.set(student.id, student));
-    return map;
-  }, [students]);
-
-  const getStudentName = (studentId) => {
-    const student = studentLookup.get(studentId);
-    return student ? `${student.first_name} ${student.last_name}` : "Unknown Student";
-  };
-
-  const classDisplayName = (classId) => {
-    if (!classId) return "No Class";
-    const classItem = classLookup.get(classId);
-    if (!classItem) return "No Class";
-    if (!classItem.grade_level) return classItem.name;
-    return `${classItem.name} (${classItem.grade_level})`;
-  };
-
-  const groupedStudents = useMemo(() => {
-    const groups = new Map();
-    students.forEach((student) => {
-      const key = classDisplayName(student.class_id);
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(student);
-    });
-    return [...groups.entries()]
-      .map(([className, classStudents]) => ({
-        className,
-        students: [...classStudents].sort((a, b) =>
-          `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`)
-        ),
-      }))
-      .sort((a, b) => a.className.localeCompare(b.className));
-  }, [students, classes]);
-
-  const normalizeLevel = (levelValue) => {
-    const value = (levelValue || "").toLowerCase();
-    if (value.startsWith("independent")) return "Independent (95-100%)";
-    if (value.startsWith("instructional")) return "Instructional (90-94%)";
-    if (value.startsWith("frustration")) return "Frustration (<90%)";
-    return "Frustration (<90%)";
-  };
-
-  const levelMeta = (levelValue) => {
-    const normalized = normalizeLevel(levelValue);
-    if (normalized === "Independent (95-100%)") {
-      return { short: "Independent", color: "#16a34a", tint: "#dcfce7", badge: "✓" };
-    }
-    if (normalized === "Instructional (90-94%)") {
-      return { short: "Instructional", color: "#ea580c", tint: "#ffedd5", badge: "📘" };
-    }
-    return { short: "Frustration", color: "#dc2626", tint: "#fee2e2", badge: "⚠" };
-  };
-
-  const totalRecords = runningRecords.length;
-  const studentsAssessed = new Set(runningRecords.map((record) => record.student_id).filter(Boolean)).size;
-  const avgAccuracy = totalRecords
-    ? (
-        runningRecords.reduce((sum, record) => sum + Number(record.accuracy_pct || 0), 0) /
-        totalRecords
-      ).toFixed(1)
-    : "0.0";
-
-  const filteredRecords = useMemo(() => {
-    return runningRecords.filter((record) => {
-      if (selectedStudentFilter && record.student_id !== selectedStudentFilter) return false;
-      if (selectedLevelFilter && normalizeLevel(record.level) !== selectedLevelFilter) return false;
-      if (searchText.trim()) {
-        const query = searchText.trim().toLowerCase();
-        const studentName = getStudentName(record.student_id).toLowerCase();
-        const textTitle = (record.text_title || "").toLowerCase();
-        if (!studentName.includes(query) && !textTitle.includes(query)) return false;
-      }
-      return true;
-    });
-  }, [runningRecords, selectedStudentFilter, selectedLevelFilter, searchText, students]);
-
-  const totalWords = runningRecordForm.totalWords ? Number(runningRecordForm.totalWords) : 0;
-  const errors = runningRecordForm.errors ? Number(runningRecordForm.errors) : 0;
-  const selfCorrections = runningRecordForm.selfCorrections ? Number(runningRecordForm.selfCorrections) : 0;
-  const liveAccuracy = totalWords > 0 ? ((totalWords - errors) / totalWords) * 100 : 0;
-  const liveLevel =
-    liveAccuracy >= 95
-      ? "Independent (95-100%)"
-      : liveAccuracy >= 90
-        ? "Instructional (90-94%)"
-        : "Frustration (<90%)";
-  const liveRatio =
-    selfCorrections > 0 ? `1:${(((errors + selfCorrections) / selfCorrections) || 0).toFixed(1)}` : null;
-
-  const onCreateRecord = async (event) => {
-    const created = await handleCreateRunningRecord(event);
-    if (created) {
-      setShowCreateModal(false);
-      setShowCalendar(false);
-    }
-  };
-
-  const selectedRecordLevel = selectedRecord ? levelMeta(selectedRecord.level) : null;
-  const selectedRecordDate = selectedRecord?.record_date
-    ? new Date(`${selectedRecord.record_date}T00:00:00`)
-    : null;
-
-  return (
-    <>
-      {formError && <div className="error">{formError}</div>}
-      <section className="panel running-records-panel">
-        <div className="running-records-title">
-          <h2>Running Records</h2>
-          <button type="button" onClick={() => setShowCreateModal(true)}>
-            + New Record
-          </button>
-        </div>
-
-        <div className="running-records-stats">
-          <article className="rr-stat">
-            <div className="rr-stat-icon">📄</div>
-            <div className="rr-stat-value">{totalRecords}</div>
-            <div className="rr-stat-label">Total Records</div>
-          </article>
-          <article className="rr-stat">
-            <div className="rr-stat-icon">👥</div>
-            <div className="rr-stat-value">{studentsAssessed}</div>
-            <div className="rr-stat-label">Students Assessed</div>
-          </article>
-          <article className="rr-stat">
-            <div className="rr-stat-icon">📈</div>
-            <div className="rr-stat-value">{avgAccuracy}%</div>
-            <div className="rr-stat-label">Avg. Accuracy</div>
-          </article>
-        </div>
-
-        <div className="running-records-filters">
-          <label className="stack">
-            <span>Student</span>
-            <select
-              value={selectedStudentFilter}
-              onChange={(event) => setSelectedStudentFilter(event.target.value)}
-            >
-              <option value="">All Students</option>
-              {students.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.first_name} {student.last_name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="stack">
-            <span>Search</span>
-            <input
-              type="text"
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Student or text title"
-            />
-          </label>
-          <div className="rr-level-filters">
-            {[
-              "Independent (95-100%)",
-              "Instructional (90-94%)",
-              "Frustration (<90%)",
-            ].map((level) => {
-              const meta = levelMeta(level);
-              const isActive = selectedLevelFilter === level;
-              return (
-                <button
-                  type="button"
-                  key={level}
-                  className={`rr-level-chip ${isActive ? "active" : ""}`}
-                  style={{ "--chip-color": meta.color, "--chip-bg": meta.tint }}
-                  onClick={() => setSelectedLevelFilter(isActive ? "" : level)}
-                >
-                  {meta.short}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {loading ? (
-          <p className="muted">Loading running records...</p>
-        ) : filteredRecords.length === 0 ? (
-          <div className="rr-empty">
-            <h3>No Running Records Yet</h3>
-            <p className="muted">Create your first running record to start tracking reading growth.</p>
-            <button type="button" onClick={() => setShowCreateModal(true)}>
-              Create First Record
-            </button>
-          </div>
-        ) : (
-          <div className="rr-cards">
-            {filteredRecords.map((record) => {
-              const studentName = getStudentName(record.student_id);
-              const student = studentLookup.get(record.student_id);
-              const meta = levelMeta(record.level);
-              return (
-                <button
-                  type="button"
-                  key={record.id}
-                  className="rr-card"
-                  onClick={() => setSelectedRecord(record)}
-                >
-                  <div className="rr-card-header">
-                    <div>
-                      <p className="rr-card-student">{studentName}</p>
-                      <p className="rr-card-title">{record.text_title || "Untitled Text"}</p>
-                      <p className="rr-card-class">{classDisplayName(student?.class_id)}</p>
-                    </div>
-                    <div className="rr-card-date">{record.record_date || "No date"}</div>
-                  </div>
-                  <div className="rr-mini-grid">
-                    <article>
-                      <strong style={{ color: meta.color }}>
-                        {record.accuracy_pct !== null ? `${record.accuracy_pct}%` : "--"}
-                      </strong>
-                      <span>Accuracy</span>
-                    </article>
-                    <article>
-                      <strong>{record.errors ?? 0}</strong>
-                      <span>Errors</span>
-                    </article>
-                    <article>
-                      <strong>{record.self_corrections ?? 0}</strong>
-                      <span>SC</span>
-                    </article>
-                    <article>
-                      <strong>{record.total_words ?? 0}</strong>
-                      <span>Words</span>
-                    </article>
-                  </div>
-                  <div className="rr-level-badge" style={{ color: meta.color, background: meta.tint }}>
-                    <span>{meta.badge}</span>
-                    <span>{meta.short}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {showCreateModal && (
-        <div className="modal-overlay">
-          <div className="modal-card running-records-modal">
-            <div className="rr-modal-header">
-              <div>
-                <h3>New Running Record</h3>
-                <p className="muted">Record reading assessment data</p>
-              </div>
-              <button
-                type="button"
-                className="icon-button"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setShowCalendar(false);
-                }}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <form onSubmit={onCreateRecord} className="grid">
-              <label className="stack">
-                <span>Student</span>
-                <select
-                  value={runningRecordForm.studentId}
-                  onChange={(event) =>
-                    setRunningRecordForm((prev) => ({ ...prev, studentId: event.target.value }))
-                  }
-                  required
-                >
-                  <option value="">Select a student</option>
-                  {groupedStudents.map((group) => (
-                    <optgroup key={group.className} label={group.className}>
-                      {group.students.map((student) => (
-                        <option key={student.id} value={student.id}>
-                          {student.first_name} {student.last_name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </label>
-              <label className="stack date-picker">
-                <span>Date</span>
-                <input
-                  type="text"
-                  value={runningRecordForm.recordDate}
-                  onClick={() => setShowCalendar((prev) => !prev)}
-                  onFocus={() => setShowCalendar(true)}
-                  readOnly
-                  placeholder="Click to choose"
-                  required
-                />
-                {showCalendar && (
-                  <div className="calendar-popover">
-                    <DayPicker
-                      mode="single"
-                      selected={runningRecordForm.recordDate ? parseISO(runningRecordForm.recordDate) : undefined}
-                      onSelect={(date) => {
-                        if (!date) return;
-                        setRunningRecordForm((prev) => ({
-                          ...prev,
-                          recordDate: format(date, "yyyy-MM-dd"),
-                        }));
-                        setShowCalendar(false);
-                      }}
-                    />
-                  </div>
-                )}
-              </label>
-              <label className="stack">
-                <span>Text Title</span>
-                <input
-                  value={runningRecordForm.textTitle}
-                  onChange={(event) =>
-                    setRunningRecordForm((prev) => ({ ...prev, textTitle: event.target.value }))
-                  }
-                  placeholder="e.g., The Cat in the Hat"
-                />
-              </label>
-              <label className="stack">
-                <span>Total Words</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={runningRecordForm.totalWords}
-                  onChange={(event) =>
-                    setRunningRecordForm((prev) => ({ ...prev, totalWords: event.target.value }))
-                  }
-                  required
-                />
-              </label>
-              <label className="stack">
-                <span>Errors</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={runningRecordForm.errors}
-                  onChange={(event) =>
-                    setRunningRecordForm((prev) => ({ ...prev, errors: event.target.value }))
-                  }
-                  required
-                />
-              </label>
-              <label className="stack">
-                <span>Self-Corrections (SC)</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={runningRecordForm.selfCorrections}
-                  onChange={(event) =>
-                    setRunningRecordForm((prev) => ({ ...prev, selfCorrections: event.target.value }))
-                  }
-                  required
-                />
-              </label>
-              <label className="stack rr-notes-field">
-                <span>Notes (Optional)</span>
-                <textarea
-                  rows="3"
-                  value={runningRecordForm.notes}
-                  onChange={(event) =>
-                    setRunningRecordForm((prev) => ({ ...prev, notes: event.target.value }))
-                  }
-                  placeholder="Optional notes"
-                />
-              </label>
-              {totalWords > 0 && (
-                <div className="rr-live-results">
-                  <h4>Results</h4>
-                  <p>
-                    Accuracy: <strong>{liveAccuracy.toFixed(1)}%</strong>
-                  </p>
-                  <p>
-                    Reading Level: <strong>{levelMeta(liveLevel).short}</strong>
-                  </p>
-                  {liveRatio && (
-                    <p>
-                      Self-Correction Ratio: <strong>{liveRatio}</strong>
-                    </p>
-                  )}
-                </div>
-              )}
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setShowCalendar(false);
-                  }}
-                >
-                  Cancel
-                </button>
-                <button type="submit">Save</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {selectedRecord && (
-        <div className="modal-overlay">
-          <div className="modal-card running-records-detail-modal">
-            <div className="rr-modal-header">
-              <div>
-                <h3>Running Record</h3>
-                <p className="muted">{getStudentName(selectedRecord.student_id)}</p>
-              </div>
-              <button
-                type="button"
-                className="icon-button"
-                onClick={() => setSelectedRecord(null)}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <div className="rr-detail-block">
-              <p className="rr-detail-title">{selectedRecord.text_title || "Untitled Text"}</p>
-              <p className="muted">{selectedRecordDate ? format(selectedRecordDate, "PPP") : "No date"}</p>
-            </div>
-            <div
-              className="rr-detail-accuracy"
-              style={{ background: selectedRecordLevel?.tint, color: selectedRecordLevel?.color }}
-            >
-              <div>
-                <p className="muted">Accuracy</p>
-                <p>{selectedRecord.accuracy_pct ?? 0}%</p>
-              </div>
-              <div>{selectedRecordLevel?.short}</div>
-            </div>
-            <div className="rr-detail-grid">
-              <article>
-                <span>Total Words</span>
-                <strong>{selectedRecord.total_words ?? 0}</strong>
-              </article>
-              <article>
-                <span>Errors</span>
-                <strong>{selectedRecord.errors ?? 0}</strong>
-              </article>
-              <article>
-                <span>Self-Corrections</span>
-                <strong>{selectedRecord.self_corrections ?? 0}</strong>
-              </article>
-              <article>
-                <span>SC Ratio</span>
-                <strong>{selectedRecord.sc_ratio !== null ? `1:${selectedRecord.sc_ratio}` : "N/A"}</strong>
-              </article>
-            </div>
-            {!!selectedRecord.notes && (
-              <div className="rr-detail-notes">
-                <h4>Notes</h4>
-                <p>{selectedRecord.notes}</p>
-              </div>
-            )}
-            <div className="modal-actions">
-              <button type="button" className="secondary" onClick={() => setSelectedRecord(null)}>
-                Done
-              </button>
-              <button
-                type="button"
-                className="danger"
-                onClick={async () => {
-                  await handleDeleteRunningRecord(selectedRecord.id);
-                  setSelectedRecord(null);
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
 function RubricsPage({
   formError,
   rubrics,
@@ -913,8 +415,6 @@ function RubricsPage({
   loading,
   seedingRubrics,
   handleSeedDefaultRubrics,
-  handleUpdateSortOrder,
-  handleSwapSortOrder,
   loadData,
 }) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -1447,24 +947,157 @@ function RubricsPage({
   );
 }
 
+function useReorderMode() {
+  const [isMobileLayout, setIsMobileLayout] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 720px)").matches : false
+  );
+  const [isReorderMode, setIsReorderMode] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const mediaQuery = window.matchMedia("(max-width: 720px)");
+    const handleChange = (event) => setIsMobileLayout(event.matches);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  const effectiveReorderMode = isMobileLayout ? isReorderMode : false;
+
+  return {
+    isMobileLayout,
+    isReorderMode: effectiveReorderMode,
+    setIsReorderMode,
+    isReorderEnabled: !isMobileLayout || effectiveReorderMode,
+  };
+}
+
+function useHandleDrag(isEnabled) {
+  const readyDragIdRef = useRef(null);
+  const pendingPressRef = useRef(null);
+  const holdTimerRef = useRef(null);
+
+  const clearHoldTimer = useCallback(() => {
+    if (holdTimerRef.current) {
+      window.clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  }, []);
+
+  const resetHandleDrag = useCallback(() => {
+    clearHoldTimer();
+    readyDragIdRef.current = null;
+    pendingPressRef.current = null;
+  }, [clearHoldTimer]);
+
+  const armDragByMovement = useCallback((event) => {
+    if (!pendingPressRef.current) return;
+    if (pendingPressRef.current.pointerId !== event.pointerId) return;
+    const distanceX = event.clientX - pendingPressRef.current.startX;
+    const distanceY = event.clientY - pendingPressRef.current.startY;
+    const moved = Math.hypot(distanceX, distanceY);
+    if (moved < 6) return;
+    readyDragIdRef.current = pendingPressRef.current.id;
+    clearHoldTimer();
+  }, [clearHoldTimer]);
+
+  const onHandlePointerDown = useCallback((id, event) => {
+    if (!isEnabled) return;
+    if (event.button !== 0 && event.pointerType !== "touch") return;
+    if (typeof event.currentTarget?.setPointerCapture === "function") {
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Ignore unsupported pointer capture edge cases.
+      }
+    }
+    pendingPressRef.current = {
+      id,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+    };
+    readyDragIdRef.current = null;
+    clearHoldTimer();
+    holdTimerRef.current = window.setTimeout(() => {
+      readyDragIdRef.current = id;
+    }, 150);
+  }, [clearHoldTimer, isEnabled]);
+
+  const onHandlePointerMove = useCallback((event) => {
+    if (!isEnabled) return;
+    armDragByMovement(event);
+  }, [armDragByMovement, isEnabled]);
+
+  const onHandlePointerUp = useCallback((event) => {
+    if (!pendingPressRef.current) return;
+    if (pendingPressRef.current.pointerId !== event.pointerId) return;
+    if (typeof event.currentTarget?.releasePointerCapture === "function") {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {
+        // Ignore if pointer capture was not active.
+      }
+    }
+    resetHandleDrag();
+  }, [resetHandleDrag]);
+
+  const isDragAllowed = useCallback(
+    (id) => isEnabled && readyDragIdRef.current === id,
+    [isEnabled]
+  );
+
+  useEffect(
+    () => () => {
+      clearHoldTimer();
+    },
+    [clearHoldTimer]
+  );
+
+  return {
+    onHandlePointerDown,
+    onHandlePointerMove,
+    onHandlePointerUp,
+    isDragAllowed,
+    resetHandleDrag,
+  };
+}
+
+function ReorderModeToggle({ isReorderMode, setIsReorderMode }) {
+  return (
+    <button
+      type="button"
+      className={`reorder-mode-toggle ${isReorderMode ? "active" : ""}`}
+      onClick={() => setIsReorderMode((prev) => !prev)}
+    >
+      {isReorderMode ? "Done Reordering" : "Reorder Mode"}
+    </button>
+  );
+}
+
 function ClassesPage({
   formError,
   classForm,
   setClassForm,
   handleCreateClass,
   handleDeleteClass,
-  handleUpdateSortOrder,
   handleSwapSortOrder,
   classes,
   students,
   subjects,
-  classOptions,
   loading,
 }) {
   const [showAddClass, setShowAddClass] = useState(false);
   const [dragClassId, setDragClassId] = useState(null);
+  const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderMode();
+  const {
+    onHandlePointerDown: onClassHandlePointerDown,
+    onHandlePointerMove: onClassHandlePointerMove,
+    onHandlePointerUp: onClassHandlePointerUp,
+    isDragAllowed: isClassDragAllowed,
+    resetHandleDrag: resetClassHandleDrag,
+  } = useHandleDrag(isReorderEnabled);
 
-  const draggedClass = classes.find((item) => item.id === dragClassId);
+  const classHandleClassName = `drag-handle${isReorderEnabled ? "" : " disabled"}`;
 
   return (
     <>
@@ -1472,9 +1105,14 @@ function ClassesPage({
       <section className="panel classes-page">
         <div className="classes-header">
           <h2>Classes</h2>
-          <button type="button" onClick={() => setShowAddClass(true)}>
-            + Add Class
-          </button>
+          <div className="classes-header-actions">
+            {isMobileLayout && classes.length > 1 && (
+              <ReorderModeToggle isReorderMode={isReorderMode} setIsReorderMode={setIsReorderMode} />
+            )}
+            <button type="button" onClick={() => setShowAddClass(true)}>
+              + Add Class
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -1488,24 +1126,49 @@ function ClassesPage({
                 <div
                   key={item.id}
                   className="class-card draggable"
-                  draggable
-                  onDragStart={() => setDragClassId(item.id)}
-                  onDragEnd={() => setDragClassId(null)}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={() => handleSwapSortOrder("classes", draggedClass, item)}
+                  draggable={isReorderEnabled}
+                  onDragStart={(event) => {
+                    if (!isClassDragAllowed(item.id)) {
+                      event.preventDefault();
+                      return;
+                    }
+                    setDragClassId(item.id);
+                  }}
+                  onDragEnd={() => {
+                    setDragClassId(null);
+                    resetClassHandleDrag();
+                  }}
+                  onDragOver={(event) => {
+                    if (!isReorderEnabled) return;
+                    event.preventDefault();
+                  }}
+                  onDrop={() => handleSwapSortOrder("classes", classes, dragClassId, item.id)}
                 >
                   <div className="class-card-header">
                     <NavLink to={`/classes/${item.id}`} className="class-card-title">
                       {item.name}
                     </NavLink>
-                    <button
-                      type="button"
-                      className="icon-button"
-                      onClick={() => handleDeleteClass(item.id)}
-                      aria-label={`Delete ${item.name}`}
-                    >
-                      ✕
-                    </button>
+                    <div className="class-card-actions">
+                      <button
+                        type="button"
+                        className={classHandleClassName}
+                        aria-label={`Drag ${item.name}`}
+                        onPointerDown={(event) => onClassHandlePointerDown(item.id, event)}
+                        onPointerMove={onClassHandlePointerMove}
+                        onPointerUp={onClassHandlePointerUp}
+                        onPointerCancel={onClassHandlePointerUp}
+                      >
+                        ⠿
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        onClick={() => handleDeleteClass(item.id)}
+                        aria-label={`Delete ${item.name}`}
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                   <div className="class-card-subtitle">
                     {item.grade_level || "—"}
@@ -1579,284 +1242,6 @@ function ClassesPage({
   );
 }
 
-function ClassDetailPage({
-  formError,
-  classes,
-  subjects,
-  students,
-  subjectForm,
-  setSubjectForm,
-  handleCreateSubject,
-  handleUpdateSortOrder,
-  handleSwapSortOrder,
-  studentForm,
-  setStudentForm,
-  handleCreateStudent,
-}) {
-  const { classId } = useParams();
-  const classItem = classes.find((item) => item.id === classId);
-  const classSubjects = subjects.filter((subject) => subject.class_id === classId);
-  const classStudents = students.filter((student) => student.class_id === classId);
-  const [showAddStudent, setShowAddStudent] = useState(false);
-  const [dragSubjectId, setDragSubjectId] = useState(null);
-  const draggedSubject = classSubjects.find((item) => item.id === dragSubjectId);
-
-  if (!classItem) {
-    return (
-      <section className="panel">
-        <h2>Class not found</h2>
-        <p className="muted">Select a class from the Classes page.</p>
-      </section>
-    );
-  }
-
-  return (
-    <>
-      {formError && <div className="error">{formError}</div>}
-      <section className="panel">
-        <h2>{classItem.name}</h2>
-        <p className="muted">
-          {classItem.grade_level ? `${classItem.grade_level} • ` : ""}
-          {classStudents.length} students • {classSubjects.length} subjects
-        </p>
-      </section>
-
-      <section className="panel quick-stats">
-        <div className="stat-card">
-          <div className="stat-value">{classStudents.length}</div>
-          <div className="stat-label">Students</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{classSubjects.length}</div>
-          <div className="stat-label">Subjects</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">
-            {classStudents.length > 0
-              ? Math.round((classSubjects.length / classStudents.length) * 10) / 10
-              : 0}
-          </div>
-          <div className="stat-label">Subjects per student</div>
-        </div>
-      </section>
-
-      <section className="panel">
-        <h3>Quick Actions</h3>
-        <div className="quick-actions">
-          <NavLink to={`/random?classId=${classId}`} className="quick-action action-orange">
-            Random Picker
-          </NavLink>
-          <NavLink to={`/groups?classId=${classId}`} className="quick-action action-purple">
-            Groups
-          </NavLink>
-          <NavLink to={`/attendance?classId=${classId}`} className="quick-action action-blue">
-            Attendance
-          </NavLink>
-        </div>
-      </section>
-
-      <section className="panel">
-        <h3>Subjects</h3>
-        <form onSubmit={(event) => handleCreateSubject(event, classId)} className="grid">
-          <label className="stack">
-            <span>Subject name</span>
-            <input
-              value={subjectForm.name}
-              onChange={(event) =>
-                setSubjectForm((prev) => ({ ...prev, name: event.target.value }))
-              }
-              placeholder="ELA"
-              required
-            />
-          </label>
-          <label className="stack">
-            <span>Description</span>
-            <input
-              value={subjectForm.description}
-              onChange={(event) =>
-                setSubjectForm((prev) => ({ ...prev, description: event.target.value }))
-              }
-              placeholder="Optional"
-            />
-          </label>
-          <label className="stack">
-            <span>Sort order</span>
-            <input
-              type="number"
-              value={subjectForm.sortOrder}
-              onChange={(event) =>
-                setSubjectForm((prev) => ({ ...prev, sortOrder: event.target.value }))
-              }
-              placeholder="0"
-              min="0"
-            />
-          </label>
-          <button type="submit">Add subject</button>
-        </form>
-
-        <ul className="list">
-          {classSubjects.map((subject) => (
-            <li
-              key={subject.id}
-              className="draggable"
-              draggable
-              onDragStart={() => setDragSubjectId(subject.id)}
-              onDragEnd={() => setDragSubjectId(null)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={() => handleSwapSortOrder("subjects", draggedSubject, subject)}
-            >
-              <div className="list-row">
-                <NavLink to={`/subjects/${subject.id}`}>{subject.name}</NavLink>
-              </div>
-              {subject.description ? ` • ${subject.description}` : ""}
-            </li>
-          ))}
-          {classSubjects.length === 0 && <li className="muted">No subjects yet.</li>}
-        </ul>
-      </section>
-
-      <section className="panel">
-        <h3>Students</h3>
-        <button
-          type="button"
-          className="link"
-          onClick={() => {
-            setStudentForm((prev) => ({ ...prev, classId }));
-            setShowAddStudent(true);
-          }}
-        >
-          + Add Student
-        </button>
-        <ul className="list">
-          {classStudents.map((student) => (
-            <li key={student.id}>
-              <NavLink to={`/students/${student.id}`}>
-                {student.first_name} {student.last_name}
-              </NavLink>
-            </li>
-          ))}
-          {classStudents.length === 0 && <li className="muted">No students yet.</li>}
-        </ul>
-      </section>
-
-      {showAddStudent && (
-        <div className="modal-overlay">
-          <div className="modal-card">
-            <h3>Add Student</h3>
-            <label className="stack">
-              <span>First name</span>
-              <input
-                value={studentForm.firstName}
-                onChange={(event) =>
-                  setStudentForm((prev) => ({ ...prev, firstName: event.target.value }))
-                }
-                placeholder="Maya"
-                required
-              />
-            </label>
-            <label className="stack">
-              <span>Last name</span>
-              <input
-                value={studentForm.lastName}
-                onChange={(event) =>
-                  setStudentForm((prev) => ({ ...prev, lastName: event.target.value }))
-                }
-                placeholder="Lopez"
-                required
-              />
-            </label>
-            <label className="stack">
-              <span>Gender</span>
-              <select
-                value={studentForm.gender}
-                onChange={(event) =>
-                  setStudentForm((prev) => ({ ...prev, gender: event.target.value }))
-                }
-              >
-                {STUDENT_GENDER_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="stack">
-              <span>Notes</span>
-              <textarea
-                rows="2"
-                value={studentForm.notes}
-                onChange={(event) =>
-                  setStudentForm((prev) => ({ ...prev, notes: event.target.value }))
-                }
-                placeholder="Optional"
-              />
-            </label>
-            <label className="stack">
-              <span>Separation list (IDs)</span>
-              <input
-                value={studentForm.separationList}
-                onChange={(event) =>
-                  setStudentForm((prev) => ({ ...prev, separationList: event.target.value }))
-                }
-                placeholder="comma-separated student IDs"
-              />
-            </label>
-            <label className="stack">
-              <span>Flags</span>
-              <div className="checkbox-row">
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={studentForm.isParticipatingWell}
-                    onChange={(event) =>
-                      setStudentForm((prev) => ({ ...prev, isParticipatingWell: event.target.checked }))
-                    }
-                  />
-                  Participating well
-                </label>
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={studentForm.needsHelp}
-                    onChange={(event) =>
-                      setStudentForm((prev) => ({ ...prev, needsHelp: event.target.checked }))
-                    }
-                  />
-                  Needs help
-                </label>
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={studentForm.missingHomework}
-                    onChange={(event) =>
-                      setStudentForm((prev) => ({ ...prev, missingHomework: event.target.checked }))
-                    }
-                  />
-                  Missing homework
-                </label>
-              </div>
-            </label>
-            <div className="modal-actions">
-              <button type="button" className="link" onClick={() => setShowAddStudent(false)}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await handleCreateStudent({ preventDefault: () => {} });
-                  setShowAddStudent(false);
-                }}
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
 function SubjectDetailPage({
   formError,
   subjects,
@@ -1894,7 +1279,16 @@ function SubjectDetailPage({
   const [showDeleteUnitAlert, setShowDeleteUnitAlert] = useState(false);
   const [unitToDelete, setUnitToDelete] = useState(null);
   const [dragUnitId, setDragUnitId] = useState(null);
-  const draggedUnit = subjectUnits.find((item) => item.id === dragUnitId);
+  const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderMode();
+  const {
+    onHandlePointerDown: onUnitHandlePointerDown,
+    onHandlePointerMove: onUnitHandlePointerMove,
+    onHandlePointerUp: onUnitHandlePointerUp,
+    isDragAllowed: isUnitDragAllowed,
+    resetHandleDrag: resetUnitHandleDrag,
+  } = useHandleDrag(isReorderEnabled);
+  const draggedUnitId = dragUnitId;
+  const unitHandleClassName = `drag-handle${isReorderEnabled ? "" : " disabled"}`;
 
   if (!subject) {
     return (
@@ -1931,17 +1325,22 @@ function SubjectDetailPage({
       <section className="panel">
         <div className="subject-units-title">
           <h3>Units</h3>
-          <button
-            type="button"
-            onClick={() => {
-              setUnitForm((prev) => ({ ...prev, name: "", description: "" }));
-              setShowAddUnitDialog(true);
-            }}
-          >
-            + Add Unit
-          </button>
+          <div className="subject-units-actions">
+            {isMobileLayout && subjectUnits.length > 1 && (
+              <ReorderModeToggle isReorderMode={isReorderMode} setIsReorderMode={setIsReorderMode} />
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setUnitForm((prev) => ({ ...prev, name: "", description: "" }));
+                setShowAddUnitDialog(true);
+              }}
+            >
+              + Add Unit
+            </button>
+          </div>
         </div>
-        <p className="muted">Drag and drop units to reorder.</p>
+        <p className="muted">Use the ⠿ handle to reorder units. On mobile, turn on Reorder Mode first.</p>
         {subjectUnits.length === 0 ? (
           <div className="subject-empty">
             <h4>No units yet</h4>
@@ -1962,11 +1361,23 @@ function SubjectDetailPage({
               <article
                 key={unit.id}
                 className="subject-unit-card draggable"
-                draggable
-                onDragStart={() => setDragUnitId(unit.id)}
-                onDragEnd={() => setDragUnitId(null)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => handleSwapSortOrder("units", draggedUnit, unit)}
+                draggable={isReorderEnabled}
+                onDragStart={(event) => {
+                  if (!isUnitDragAllowed(unit.id)) {
+                    event.preventDefault();
+                    return;
+                  }
+                  setDragUnitId(unit.id);
+                }}
+                onDragEnd={() => {
+                  setDragUnitId(null);
+                  resetUnitHandleDrag();
+                }}
+                onDragOver={(event) => {
+                  if (!isReorderEnabled) return;
+                  event.preventDefault();
+                }}
+                onDrop={() => handleSwapSortOrder("units", subjectUnits, draggedUnitId, unit.id)}
               >
                 <div className="subject-unit-main">
                   <NavLink to={`/units/${unit.id}`} className="subject-unit-name">
@@ -1975,7 +1386,17 @@ function SubjectDetailPage({
                   <p className="muted">{unit.description || "No description"}</p>
                 </div>
                 <div className="subject-unit-actions">
-                  <span className="drag-hint" aria-hidden="true">⠿</span>
+                  <button
+                    type="button"
+                    className={unitHandleClassName}
+                    aria-label={`Drag ${unit.name}`}
+                    onPointerDown={(event) => onUnitHandlePointerDown(unit.id, event)}
+                    onPointerMove={onUnitHandlePointerMove}
+                    onPointerUp={onUnitHandlePointerUp}
+                    onPointerCancel={onUnitHandlePointerUp}
+                  >
+                    ⠿
+                  </button>
                   <button
                     type="button"
                     className="icon-button"
@@ -2086,16 +1507,71 @@ function UnitDetailPage({
   units,
   subjects,
   assessments,
+  assessmentEntries,
   handleCreateAssessmentForUnit,
-  handleUpdateSortOrder,
   handleSwapSortOrder,
+  handleDeleteAssessment,
+  handleCopyAssessmentsFromUnit,
 }) {
   const { unitId } = useParams();
   const unit = units.find((item) => item.id === unitId);
   const subject = subjects.find((item) => item.id === unit?.subject_id);
-  const unitAssessments = assessments.filter((item) => item.unit_id === unitId);
+  const unitAssessments = assessments
+    .filter((item) => item.unit_id === unitId)
+    .sort(
+      (a, b) =>
+        Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0) ||
+        (a.assessment_date || "").localeCompare(b.assessment_date || "")
+    );
+  const unitAssessmentIds = new Set(unitAssessments.map((item) => item.id));
+  const gradedEntries = assessmentEntries.filter(
+    (entry) =>
+      unitAssessmentIds.has(entry.assessment_id) &&
+      entry.score !== null &&
+      Number.isFinite(Number(entry.score))
+  );
+  const unitAverage = gradedEntries.length
+    ? gradedEntries.reduce((sum, entry) => sum + Number(entry.score), 0) / gradedEntries.length
+    : 0;
+  const averageColor = unitAverage >= 7 ? "#16a34a" : unitAverage >= 5 ? "#ea580c" : "#dc2626";
+  const [showAddAssessmentDialog, setShowAddAssessmentDialog] = useState(false);
+  const [showDeleteAssessmentAlert, setShowDeleteAssessmentAlert] = useState(false);
+  const [showCopyCriteriaFlow, setShowCopyCriteriaFlow] = useState(false);
+  const [copyStep, setCopyStep] = useState("subject");
+  const [copySourceSubjectId, setCopySourceSubjectId] = useState("");
+  const [copySourceUnitId, setCopySourceUnitId] = useState("");
+  const [assessmentToDelete, setAssessmentToDelete] = useState(null);
+  const [newAssessment, setNewAssessment] = useState({
+    title: "",
+    assessmentDate: "",
+    maxScore: "",
+  });
   const [dragAssessmentId, setDragAssessmentId] = useState(null);
-  const draggedAssessment = unitAssessments.find((item) => item.id === dragAssessmentId);
+  const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderMode();
+  const {
+    onHandlePointerDown: onAssessmentHandlePointerDown,
+    onHandlePointerMove: onAssessmentHandlePointerMove,
+    onHandlePointerUp: onAssessmentHandlePointerUp,
+    isDragAllowed: isAssessmentDragAllowed,
+    resetHandleDrag: resetAssessmentHandleDrag,
+  } = useHandleDrag(isReorderEnabled);
+  const draggedAssessmentId = dragAssessmentId;
+  const assessmentHandleClassName = `drag-handle${isReorderEnabled ? "" : " disabled"}`;
+  const subjectsInClass = subject?.class_id
+    ? subjects
+        .filter((item) => item.class_id === subject.class_id)
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+    : [];
+  const sourceUnits = copySourceSubjectId
+    ? units
+        .filter((item) => item.subject_id === copySourceSubjectId && item.id !== unitId)
+        .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
+    : [];
+  const sourceAssessments = copySourceUnitId
+    ? assessments
+        .filter((item) => item.unit_id === copySourceUnitId)
+        .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
+    : [];
 
   if (!unit) {
     return (
@@ -2109,61 +1585,379 @@ function UnitDetailPage({
   return (
     <>
       {formError && <div className="error">{formError}</div>}
-      <section className="panel">
+      <section className="panel unit-detail-header">
         <h2>{unit.name}</h2>
         <p className="muted">
           {subject ? `Subject: ${subject.name}` : ""} {unit.description ? `• ${unit.description}` : ""}
         </p>
       </section>
 
-      <section className="panel">
-        <h3>Assessments</h3>
-        <form
-          onSubmit={(event) =>
-            handleCreateAssessmentForUnit(event, unitId, subject?.id, subject?.class_id)
-          }
-          className="grid"
-        >
-          <label className="stack">
-            <span>Title</span>
-            <input name="title" placeholder="Assessment title" required />
-          </label>
-          <label className="stack">
-            <span>Date</span>
-            <input name="assessmentDate" type="date" />
-          </label>
-          <label className="stack">
-            <span>Max score</span>
-            <input name="maxScore" type="number" min="0" />
-          </label>
-          <label className="stack">
-            <span>Sort order</span>
-            <input name="sortOrder" type="number" min="0" placeholder="0" />
-          </label>
-          <button type="submit">Add assessment</button>
-        </form>
-
-        <ul className="list">
-          {unitAssessments.map((item) => (
-            <li
-              key={item.id}
-              className="draggable"
-              draggable
-              onDragStart={() => setDragAssessmentId(item.id)}
-              onDragEnd={() => setDragAssessmentId(null)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={() => handleSwapSortOrder("assessments", draggedAssessment, item)}
-            >
-              <div className="list-row">
-                <strong>{item.title}</strong>
-              </div>
-              {item.assessment_date ? ` • ${item.assessment_date}` : ""}
-              {item.max_score ? ` • ${item.max_score} pts` : ""}
-            </li>
-          ))}
-          {unitAssessments.length === 0 && <li className="muted">No assessments yet.</li>}
-        </ul>
+      <section className="unit-stat-row">
+        <article className="panel unit-stat-card">
+          <p className="muted">Unit Average</p>
+          <p style={{ color: averageColor }}>{unitAverage.toFixed(1)}</p>
+        </article>
+        <article className="panel unit-stat-card">
+          <p className="muted">Assessments</p>
+          <p style={{ color: "#2563eb" }}>{unitAssessments.length}</p>
+        </article>
+        <article className="panel unit-stat-card">
+          <p className="muted">Total Grades</p>
+          <p style={{ color: "#7c3aed" }}>{gradedEntries.length}</p>
+        </article>
       </section>
+
+      <section className="panel">
+        <h3>Quick Actions</h3>
+        <div className="unit-actions-grid">
+          <NavLink to="/assessments" className="unit-action-card action-green">
+            <strong>Gradebook</strong>
+            <span>View all grades</span>
+          </NavLink>
+          <button type="button" className="unit-action-card action-purple" disabled>
+            <strong>Library</strong>
+            <span>Disabled for now</span>
+          </button>
+        </div>
+        <button
+          type="button"
+          className="unit-copy-button"
+          onClick={() => {
+            setCopySourceSubjectId("");
+            setCopySourceUnitId("");
+            setCopyStep("subject");
+            setShowCopyCriteriaFlow(true);
+          }}
+        >
+          <div>
+            <strong>Copy Criteria</strong>
+            <span>Import assessments from another unit</span>
+          </div>
+          <span>›</span>
+        </button>
+      </section>
+
+      <section className="panel">
+        <div className="unit-assessment-title">
+          <h3>Assessments</h3>
+          <div className="unit-assessment-actions-row">
+            {isMobileLayout && unitAssessments.length > 1 && (
+              <ReorderModeToggle isReorderMode={isReorderMode} setIsReorderMode={setIsReorderMode} />
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setNewAssessment({ title: "", assessmentDate: "", maxScore: "" });
+                setShowAddAssessmentDialog(true);
+              }}
+            >
+              + Add Assessment
+            </button>
+          </div>
+        </div>
+        <p className="muted">Use the ⠿ handle to reorder assessments. On mobile, turn on Reorder Mode first.</p>
+        {unitAssessments.length === 0 ? (
+          <div className="unit-empty">
+            <h4>No assessments yet</h4>
+            <p className="muted">Create your first assessment or copy criteria from another unit.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setNewAssessment({ title: "", assessmentDate: "", maxScore: "" });
+                setShowAddAssessmentDialog(true);
+              }}
+            >
+              Create First Assessment
+            </button>
+          </div>
+        ) : (
+          <div className="unit-assessment-grid">
+            {unitAssessments.map((item) => (
+              <article
+                key={item.id}
+                className="unit-assessment-card draggable"
+                draggable={isReorderEnabled}
+                onDragStart={(event) => {
+                  if (!isAssessmentDragAllowed(item.id)) {
+                    event.preventDefault();
+                    return;
+                  }
+                  setDragAssessmentId(item.id);
+                }}
+                onDragEnd={() => {
+                  setDragAssessmentId(null);
+                  resetAssessmentHandleDrag();
+                }}
+                onDragOver={(event) => {
+                  if (!isReorderEnabled) return;
+                  event.preventDefault();
+                }}
+                onDrop={() =>
+                  handleSwapSortOrder("assessments", unitAssessments, draggedAssessmentId, item.id)
+                }
+              >
+                <div className="unit-assessment-main">
+                  <NavLink to={`/assessments/${item.id}`} className="unit-assessment-name">
+                    {item.title}
+                  </NavLink>
+                  <p className="muted">
+                    {item.assessment_date || "No date"} {item.max_score ? `• ${item.max_score} pts` : ""}
+                  </p>
+                </div>
+                <div className="unit-assessment-actions">
+                  <button
+                    type="button"
+                    className={assessmentHandleClassName}
+                    aria-label={`Drag ${item.title}`}
+                    onPointerDown={(event) => onAssessmentHandlePointerDown(item.id, event)}
+                    onPointerMove={onAssessmentHandlePointerMove}
+                    onPointerUp={onAssessmentHandlePointerUp}
+                    onPointerCancel={onAssessmentHandlePointerUp}
+                  >
+                    ⠿
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label="Delete assessment"
+                    onClick={() => {
+                      setAssessmentToDelete(item);
+                      setShowDeleteAssessmentAlert(true);
+                    }}
+                  >
+                    🗑
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {showAddAssessmentDialog && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3>Add New Assessment</h3>
+            <p className="muted">Give your assessment a name.</p>
+            <form
+              className="grid"
+              onSubmit={async (event) => {
+                const ok = await handleCreateAssessmentForUnit(
+                  event,
+                  unitId,
+                  subject?.id,
+                  subject?.class_id,
+                  newAssessment
+                );
+                if (ok) setShowAddAssessmentDialog(false);
+              }}
+            >
+              <label className="stack">
+                <span>Assessment Name</span>
+                <input
+                  name="title"
+                  value={newAssessment.title}
+                  onChange={(event) =>
+                    setNewAssessment((prev) => ({ ...prev, title: event.target.value }))
+                  }
+                  placeholder="e.g. Quiz 1, Chapter Test, Midterm Exam"
+                  required
+                />
+              </label>
+              <label className="stack">
+                <span>Date</span>
+                <input
+                  name="assessmentDate"
+                  type="date"
+                  value={newAssessment.assessmentDate}
+                  onChange={(event) =>
+                    setNewAssessment((prev) => ({ ...prev, assessmentDate: event.target.value }))
+                  }
+                />
+              </label>
+              <label className="stack">
+                <span>Max Score</span>
+                <input
+                  name="maxScore"
+                  type="number"
+                  min="0"
+                  value={newAssessment.maxScore}
+                  onChange={(event) =>
+                    setNewAssessment((prev) => ({ ...prev, maxScore: event.target.value }))
+                  }
+                />
+              </label>
+              {!!newAssessment.title.trim() && (
+                <div className="subject-unit-preview">
+                  <strong>Preview</strong>
+                  <p>{newAssessment.title}</p>
+                </div>
+              )}
+              <div className="modal-actions">
+                <button type="button" className="secondary" onClick={() => setShowAddAssessmentDialog(false)}>
+                  Cancel
+                </button>
+                <button type="submit">Add</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+        {showDeleteAssessmentAlert && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3>Delete Assessment?</h3>
+            <p className="muted">
+              {assessmentToDelete
+                ? `Are you sure you want to delete "${assessmentToDelete.title}"?`
+                : ""}
+            </p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  setShowDeleteAssessmentAlert(false);
+                  setAssessmentToDelete(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="danger"
+                onClick={async () => {
+                  if (assessmentToDelete?.id) {
+                    await handleDeleteAssessment(assessmentToDelete.id);
+                  }
+                  setShowDeleteAssessmentAlert(false);
+                  setAssessmentToDelete(null);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {showCopyCriteriaFlow && (
+          <div className="modal-overlay">
+            <div className="modal-card">
+              {copyStep === "subject" && (
+                <>
+                  <h3>Copy Criteria: Choose Subject</h3>
+                  <label className="stack">
+                    <span>Subject</span>
+                    <select
+                      value={copySourceSubjectId}
+                      onChange={(event) => {
+                        setCopySourceSubjectId(event.target.value);
+                        setCopySourceUnitId("");
+                      }}
+                    >
+                      <option value="">Select subject</option>
+                      {subjectsInClass.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="modal-actions">
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setShowCopyCriteriaFlow(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!copySourceSubjectId}
+                      onClick={() => setCopyStep("unit")}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {copyStep === "unit" && (
+                <>
+                  <h3>Copy Criteria: Choose Unit</h3>
+                  <label className="stack">
+                    <span>Unit</span>
+                    <select
+                      value={copySourceUnitId}
+                      onChange={(event) => setCopySourceUnitId(event.target.value)}
+                    >
+                      <option value="">Select unit</option>
+                      {sourceUnits.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="modal-actions">
+                    <button type="button" className="secondary" onClick={() => setCopyStep("subject")}>
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!copySourceUnitId}
+                      onClick={() => setCopyStep("confirm")}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {copyStep === "confirm" && (
+                <>
+                  <h3>Confirm Copy</h3>
+                  <p className="muted">
+                    Copy {sourceAssessments.length} assessment
+                    {sourceAssessments.length === 1 ? "" : "s"} into this unit?
+                  </p>
+                  {sourceAssessments.length > 0 && (
+                    <ul className="list">
+                      {sourceAssessments.slice(0, 8).map((item) => (
+                        <li key={item.id}>{item.title}</li>
+                      ))}
+                      {sourceAssessments.length > 8 && (
+                        <li className="muted">+{sourceAssessments.length - 8} more</li>
+                      )}
+                    </ul>
+                  )}
+                  <div className="modal-actions">
+                    <button type="button" className="secondary" onClick={() => setCopyStep("unit")}>
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!copySourceUnitId}
+                      onClick={async () => {
+                        await handleCopyAssessmentsFromUnit(
+                          copySourceUnitId,
+                          unitId,
+                          subject?.id,
+                          subject?.class_id
+                        );
+                        setShowCopyCriteriaFlow(false);
+                      }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
     </>
   );
 }
@@ -2189,7 +1983,7 @@ function StudentDetailPage({
   const student = students.find((item) => item.id === studentId);
   const [showEditInfo, setShowEditInfo] = useState(false);
   const [showDevelopmentForm, setShowDevelopmentForm] = useState(false);
-  const [studentEdit, setStudentEdit] = useState({
+  const [editForm, setEditForm] = useState({
     gender: "Prefer not to say",
     notes: "",
     isParticipatingWell: false,
@@ -2282,7 +2076,7 @@ function StudentDetailPage({
     return { subject, count: subjectScores.length, average };
   });
 
-  const recentAssessments = scoredAssessments
+  const recentAssessments = assessmentsForStudent
     .map((entry) => ({ entry, assessment: assessmentLookup.get(entry.assessment_id) }))
     .sort((a, b) => {
       const dateA = a.assessment?.assessment_date || "";
@@ -2323,22 +2117,23 @@ function StudentDetailPage({
   };
 
   const toggleStatus = async (field) => {
-    const next = { ...studentEdit, [field]: !studentEdit[field] };
-    setStudentEdit(next);
-    await handleUpdateStudent(studentId, next);
-  };
-
-  useEffect(() => {
     if (!student) return;
-    setStudentEdit({
+    const next = {
       gender: student.gender || "Prefer not to say",
       notes: student.notes || "",
       isParticipatingWell: !!student.is_participating_well,
       needsHelp: !!student.needs_help,
       missingHomework: !!student.missing_homework,
       separationList: student.separation_list || "",
-    });
-  }, [student?.id]);
+      [field]:
+        field === "isParticipatingWell"
+          ? !student.is_participating_well
+          : field === "needsHelp"
+            ? !student.needs_help
+            : !student.missing_homework,
+    };
+    await handleUpdateStudent(studentId, next);
+  };
 
   if (!student) {
     return (
@@ -2359,7 +2154,20 @@ function StudentDetailPage({
           </h2>
           <p className="muted">{classItem ? `${classItem.name}${classItem.grade_level ? ` (${classItem.grade_level})` : ""}` : "No class"}</p>
         </div>
-        <button type="button" onClick={() => setShowEditInfo(true)}>
+        <button
+          type="button"
+          onClick={() => {
+            setEditForm({
+              gender: student.gender || "Prefer not to say",
+              notes: student.notes || "",
+              isParticipatingWell: !!student.is_participating_well,
+              needsHelp: !!student.needs_help,
+              missingHomework: !!student.missing_homework,
+              separationList: student.separation_list || "",
+            });
+            setShowEditInfo(true);
+          }}
+        >
           Edit Info
         </button>
       </section>
@@ -2369,35 +2177,35 @@ function StudentDetailPage({
         <div className="student-status-grid">
           <button
             type="button"
-            className={`student-status-card ${studentEdit.isParticipatingWell ? "active green" : ""}`}
+            className={`student-status-card ${student.is_participating_well ? "active green" : ""}`}
             onClick={() => toggleStatus("isParticipatingWell")}
           >
             <span>⭐</span>
             <div>
               <strong>Participating Well</strong>
-              <p>{studentEdit.isParticipatingWell ? "Active" : "Inactive"}</p>
+              <p>{student.is_participating_well ? "Active" : "Inactive"}</p>
             </div>
           </button>
           <button
             type="button"
-            className={`student-status-card ${studentEdit.needsHelp ? "active orange" : ""}`}
+            className={`student-status-card ${student.needs_help ? "active orange" : ""}`}
             onClick={() => toggleStatus("needsHelp")}
           >
             <span>⚠️</span>
             <div>
               <strong>Needs Help</strong>
-              <p>{studentEdit.needsHelp ? "Active" : "Inactive"}</p>
+              <p>{student.needs_help ? "Active" : "Inactive"}</p>
             </div>
           </button>
           <button
             type="button"
-            className={`student-status-card ${studentEdit.missingHomework ? "active red" : ""}`}
+            className={`student-status-card ${student.missing_homework ? "active red" : ""}`}
             onClick={() => toggleStatus("missingHomework")}
           >
             <span>📚</span>
             <div>
               <strong>Missing Homework</strong>
-              <p>{studentEdit.missingHomework ? "Active" : "Inactive"}</p>
+              <p>{student.missing_homework ? "Active" : "Inactive"}</p>
             </div>
           </button>
         </div>
@@ -2410,7 +2218,7 @@ function StudentDetailPage({
         </article>
         <article className="panel student-stat-card">
           <p className="muted">Total Assessments</p>
-          <p style={{ color: "#2563eb" }}>{scoredAssessments.length}</p>
+          <p style={{ color: "#2563eb" }}>{assessmentsForStudent.length}</p>
         </article>
       </section>
 
@@ -2516,9 +2324,13 @@ function StudentDetailPage({
                     {subjectName ? ` · ${subjectName}` : ""}
                     {assessment?.assessment_date ? ` · ${assessment.assessment_date}` : ""}
                   </span>
-                  <strong style={{ color: averageColor(Number(entry.score || 0)) }}>
-                    {Number(entry.score).toFixed(1)}
-                  </strong>
+                  {entry.score !== null && Number.isFinite(Number(entry.score)) ? (
+                    <strong style={{ color: averageColor(Number(entry.score || 0)) }}>
+                      {Number(entry.score).toFixed(1)}
+                    </strong>
+                  ) : (
+                    <strong className="muted">Not graded</strong>
+                  )}
                 </li>
               );
             })}
@@ -2646,15 +2458,15 @@ function StudentDetailPage({
               className="grid"
               onSubmit={async (event) => {
                 event.preventDefault();
-                await handleUpdateStudent(studentId, studentEdit);
+                await handleUpdateStudent(studentId, editForm);
                 setShowEditInfo(false);
               }}
             >
               <label className="stack">
                 <span>Gender</span>
                 <select
-                  value={studentEdit.gender}
-                  onChange={(event) => setStudentEdit((prev) => ({ ...prev, gender: event.target.value }))}
+                  value={editForm.gender}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, gender: event.target.value }))}
                 >
                   {STUDENT_GENDER_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -2667,16 +2479,16 @@ function StudentDetailPage({
                 <span>Notes</span>
                 <textarea
                   rows="3"
-                  value={studentEdit.notes}
-                  onChange={(event) => setStudentEdit((prev) => ({ ...prev, notes: event.target.value }))}
+                  value={editForm.notes}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, notes: event.target.value }))}
                 />
               </label>
               <label className="stack">
                 <span>Separation list</span>
                 <input
-                  value={studentEdit.separationList}
+                  value={editForm.separationList}
                   onChange={(event) =>
-                    setStudentEdit((prev) => ({ ...prev, separationList: event.target.value }))
+                    setEditForm((prev) => ({ ...prev, separationList: event.target.value }))
                   }
                   placeholder="comma-separated student IDs"
                 />
@@ -2806,7 +2618,9 @@ function Layout({ userEmail, onSignOut, children }) {
 function TeacherWorkspace({ user, onSignOut }) {
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
-  const [lessonPlans, setLessonPlans] = useState([]);
+  const [_lessonPlans, setLessonPlans] = useState([]);
+  const [calendarDiaryEntries, setCalendarDiaryEntries] = useState([]);
+  const [calendarEvents, setCalendarEvents] = useState([]);
   const [attendanceSessions, setAttendanceSessions] = useState([]);
   const [attendanceEntries, setAttendanceEntries] = useState([]);
   const [assessments, setAssessments] = useState([]);
@@ -2931,7 +2745,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     studentId: "",
   });
   const [randomGroupId, setRandomGroupId] = useState("");
-  const [randomResult, setRandomResult] = useState("");
+  const [_randomResult, setRandomResult] = useState("");
   const [groupGenForm, setGroupGenForm] = useState({
     classId: "",
     size: "3",
@@ -3085,6 +2899,30 @@ function TeacherWorkspace({ user, onSignOut }) {
       setGroups(groupRows ?? []);
       setGroupMembers(groupMemberRows ?? []);
       setGroupConstraints(constraintRows ?? []);
+
+      const isMissingTableError = (error) =>
+        !!error &&
+        (error.code === "42P01" ||
+          /does not exist|Could not find the table|schema cache/i.test(error.message || ""));
+
+      const [{ data: diaryRows, error: diaryError }, { data: eventRows, error: eventError }] =
+        await Promise.all([
+          supabase.from("calendar_diary_entries").select("*").order("entry_date", { ascending: false }),
+          supabase.from("calendar_events").select("*").order("event_date", { ascending: false }),
+        ]);
+
+      if (diaryError && !isMissingTableError(diaryError)) {
+        setFormError(diaryError.message);
+      } else {
+        setCalendarDiaryEntries(diaryRows ?? []);
+      }
+
+      if (eventError && !isMissingTableError(eventError)) {
+        setFormError(eventError.message);
+      } else {
+        setCalendarEvents(eventRows ?? []);
+      }
+
     }
 
     setLoading(false);
@@ -3098,7 +2936,12 @@ function TeacherWorkspace({ user, onSignOut }) {
     event.preventDefault();
     setFormError("");
 
-    const sortOrder = classForm.sortOrder ? Number(classForm.sortOrder) : 0;
+    const maxSortOrder = classes.reduce(
+      (maxValue, item) => Math.max(maxValue, Number(item.sort_order ?? -1)),
+      -1
+    );
+    const inferredSortOrder = maxSortOrder + 1;
+    const sortOrder = classForm.sortOrder ? Number(classForm.sortOrder) : inferredSortOrder;
     const payload = {
       name: classForm.name.trim(),
       grade_level: classForm.gradeLevel.trim() || null,
@@ -3144,10 +2987,40 @@ function TeacherWorkspace({ user, onSignOut }) {
       return;
     }
 
-    const { error } = await supabase.from("students").insert(payload);
-    if (error) {
-      setFormError(error.message);
+    const { data: insertedStudent, error } = await supabase
+      .from("students")
+      .insert(payload)
+      .select("id,class_id")
+      .single();
+    if (error || !insertedStudent?.id) {
+      setFormError(error?.message || "Failed to create student.");
       return;
+    }
+
+    if (insertedStudent.class_id) {
+      const { data: classAssessments, error: assessmentsError } = await supabase
+        .from("assessments")
+        .select("id")
+        .eq("class_id", insertedStudent.class_id);
+
+      if (assessmentsError) {
+        setFormError(`Student created, but assessment linking failed: ${assessmentsError.message}`);
+      } else if (classAssessments && classAssessments.length > 0) {
+        const rows = classAssessments.map((assessment) => ({
+          assessment_id: assessment.id,
+          student_id: insertedStudent.id,
+          score: null,
+          notes: null,
+        }));
+
+        const { error: linkError } = await supabase
+          .from("assessment_entries")
+          .upsert(rows, { onConflict: "assessment_id,student_id", ignoreDuplicates: true });
+
+        if (linkError) {
+          setFormError(`Student created, but assessment linking failed: ${linkError.message}`);
+        }
+      }
     }
 
     setStudentForm({
@@ -3209,30 +3082,45 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
-  const handleSwapSortOrder = async (table, first, second) => {
-    if (!first?.id || !second?.id || first.id === second.id) return;
-    const firstOrder = Number(first.sort_order ?? 0);
-    const secondOrder = Number(second.sort_order ?? 0);
-    const { error: firstError } = await supabase
-      .from(table)
-      .update({ sort_order: secondOrder })
-      .eq("id", first.id);
-    if (firstError) {
-      setFormError(firstError.message);
+  const handleSwapSortOrder = async (table, items, draggedId, targetId) => {
+    if (!Array.isArray(items) || !draggedId || !targetId || draggedId === targetId) return;
+
+    const fromIndex = items.findIndex((item) => item.id === draggedId);
+    const toIndex = items.findIndex((item) => item.id === targetId);
+    if (fromIndex < 0 || toIndex < 0) return;
+
+    const reordered = [...items];
+    const [movedItem] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, movedItem);
+
+    const changedUpdates = reordered
+      .map((item, index) => ({
+        id: item.id,
+        sort_order: index,
+      }))
+      .filter((update) => {
+        const original = items.find((item) => item.id === update.id);
+        return Number(original?.sort_order ?? 0) !== update.sort_order;
+      });
+
+    if (!changedUpdates.length) return;
+
+    const updateResults = await Promise.all(
+      changedUpdates.map((update) =>
+        supabase.from(table).update({ sort_order: update.sort_order }).eq("id", update.id)
+      )
+    );
+
+    const updateError = updateResults.find((result) => result.error)?.error;
+    if (updateError) {
+      setFormError(updateError.message);
       return;
     }
-    const { error: secondError } = await supabase
-      .from(table)
-      .update({ sort_order: firstOrder })
-      .eq("id", second.id);
-    if (secondError) {
-      setFormError(secondError.message);
-      return;
-    }
+
     await loadData();
   };
 
-  const handleCreateLesson = async (event) => {
+  const _handleCreateLesson = async (event) => {
     event.preventDefault();
     setFormError("");
 
@@ -3260,7 +3148,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
-  const handleCreateAttendanceSession = async (event) => {
+  const _handleCreateAttendanceSession = async (event) => {
     event.preventDefault();
     setFormError("");
 
@@ -3285,7 +3173,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
-  const handleCreateAttendanceEntry = async (event) => {
+  const _handleCreateAttendanceEntry = async (event) => {
     event.preventDefault();
     setFormError("");
 
@@ -3360,7 +3248,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
-  const handleCreateAssessmentEntry = async (event) => {
+  const _handleCreateAssessmentEntry = async (event) => {
     event.preventDefault();
     setFormError("");
 
@@ -3488,9 +3376,14 @@ function TeacherWorkspace({ user, onSignOut }) {
     event.preventDefault();
     setFormError("");
 
-    const sortOrder = subjectForm.sortOrder ? Number(subjectForm.sortOrder) : 0;
+    const targetClassId = classIdOverride || subjectForm.classId;
+    const maxSortOrder = subjects
+      .filter((item) => item.class_id === targetClassId)
+      .reduce((maxValue, item) => Math.max(maxValue, Number(item.sort_order ?? -1)), -1);
+    const inferredSortOrder = maxSortOrder + 1;
+    const sortOrder = subjectForm.sortOrder ? Number(subjectForm.sortOrder) : inferredSortOrder;
     const payload = {
-      class_id: classIdOverride || subjectForm.classId,
+      class_id: targetClassId,
       name: subjectForm.name.trim(),
       description: subjectForm.description.trim() || null,
       sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
@@ -3517,7 +3410,10 @@ function TeacherWorkspace({ user, onSignOut }) {
 
     const targetSubjectId = subjectIdOverride || unitForm.subjectId;
     const sortOrder = unitForm.sortOrder ? Number(unitForm.sortOrder) : null;
-    const inferredSortOrder = units.filter((unit) => unit.subject_id === targetSubjectId).length;
+    const inferredSortOrder =
+      units
+        .filter((unit) => unit.subject_id === targetSubjectId)
+        .reduce((maxValue, unit) => Math.max(maxValue, Number(unit.sort_order ?? -1)), -1) + 1;
     const payload = {
       subject_id: targetSubjectId,
       name: unitForm.name.trim(),
@@ -3551,21 +3447,23 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
-  const handleCreateAssessmentForUnit = async (event, unitId, subjectId, classId) => {
+  const handleCreateAssessmentForUnit = async (event, unitId, subjectId, classId, formValues = null) => {
     event.preventDefault();
     setFormError("");
 
     const form = event.target;
-    const title = form.elements["title"]?.value?.trim();
-    const assessmentDate = form.elements["assessmentDate"]?.value || null;
-    const maxScoreRaw = form.elements["maxScore"]?.value;
+    const title = (formValues?.title ?? form.elements["title"]?.value ?? "").trim();
+    const assessmentDate = (formValues?.assessmentDate ?? form.elements["assessmentDate"]?.value) || null;
+    const maxScoreRaw = formValues?.maxScore ?? form.elements["maxScore"]?.value;
     const maxScore = maxScoreRaw ? Number(maxScoreRaw) : null;
-    const sortOrderRaw = form.elements["sortOrder"]?.value;
-    const sortOrder = sortOrderRaw ? Number(sortOrderRaw) : 0;
+    const inferredSortOrder =
+      assessments
+        .filter((item) => item.unit_id === unitId)
+        .reduce((maxValue, item) => Math.max(maxValue, Number(item.sort_order ?? -1)), -1) + 1;
 
     if (!title) {
       setFormError("Assessment title is required.");
-      return;
+      return false;
     }
 
     const payload = {
@@ -3575,16 +3473,133 @@ function TeacherWorkspace({ user, onSignOut }) {
       class_id: classId || null,
       subject_id: subjectId || null,
       unit_id: unitId || null,
-      sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
+      sort_order: inferredSortOrder,
     };
 
-    const { error } = await supabase.from("assessments").insert(payload);
+    const { data: insertedAssessment, error } = await supabase
+      .from("assessments")
+      .insert(payload)
+      .select("id")
+      .single();
+    if (error || !insertedAssessment?.id) {
+      setFormError(error?.message || "Failed to create assessment.");
+      return false;
+    }
+
+    if (classId) {
+      const classStudents = students.filter((student) => student.class_id === classId);
+      if (classStudents.length > 0) {
+        const entryRows = classStudents.map((student) => ({
+          assessment_id: insertedAssessment.id,
+          student_id: student.id,
+          score: null,
+          notes: null,
+        }));
+
+        const { error: entriesError } = await supabase.from("assessment_entries").insert(entryRows);
+        if (entriesError) {
+          setFormError(
+            `Assessment created, but assigning students failed: ${entriesError.message}`
+          );
+        }
+      }
+    }
+
+    form.reset();
+    await loadData();
+    return true;
+  };
+
+  const handleDeleteAssessment = async (assessmentId) => {
+    if (!assessmentId) return;
+    setFormError("");
+    const { error } = await supabase.from("assessments").delete().eq("id", assessmentId);
     if (error) {
       setFormError(error.message);
       return;
     }
+    await loadData();
+  };
 
-    form.reset();
+  const handleCopyAssessmentsFromUnit = async (
+    sourceUnitId,
+    targetUnitId,
+    targetSubjectId,
+    targetClassId
+  ) => {
+    if (!sourceUnitId || !targetUnitId) return;
+    setFormError("");
+
+    const sourceUnit = units.find((item) => item.id === sourceUnitId);
+    const targetUnit = units.find((item) => item.id === targetUnitId);
+    const sourceSubject = subjects.find((item) => item.id === sourceUnit?.subject_id);
+    const targetSubject =
+      subjects.find((item) => item.id === targetUnit?.subject_id) ||
+      subjects.find((item) => item.id === targetSubjectId);
+
+    if (!sourceUnit || !targetUnit || !sourceSubject || !targetSubject) {
+      setFormError("Invalid source or target selection.");
+      return;
+    }
+
+    if (sourceSubject.class_id !== targetSubject.class_id) {
+      setFormError("Copy is only allowed between units of the same class/year.");
+      return;
+    }
+
+    const sourceAssessments = assessments
+      .filter((item) => item.unit_id === sourceUnitId)
+      .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
+
+    if (sourceAssessments.length === 0) {
+      setFormError("No assessments found in selected source unit.");
+      return;
+    }
+
+    const existingCount = assessments.filter((item) => item.unit_id === targetUnitId).length;
+    const rows = sourceAssessments.map((item, index) => ({
+      title: item.title,
+      assessment_date: null,
+      max_score: item.max_score ?? null,
+      notes: null,
+      class_id: targetClassId || null,
+      subject_id: targetSubjectId || null,
+      unit_id: targetUnitId,
+      sort_order: existingCount + index,
+    }));
+
+    const { data: insertedRows, error: insertError } = await supabase
+      .from("assessments")
+      .insert(rows)
+      .select("id");
+
+    if (insertError || !insertedRows) {
+      setFormError(insertError?.message || "Failed to copy assessments.");
+      return;
+    }
+
+    if (targetClassId) {
+      const classStudents = students.filter((student) => student.class_id === targetClassId);
+      if (classStudents.length > 0) {
+        const entryRows = [];
+        insertedRows.forEach((assessment) => {
+          classStudents.forEach((student) => {
+            entryRows.push({
+              assessment_id: assessment.id,
+              student_id: student.id,
+              score: null,
+              notes: null,
+            });
+          });
+        });
+
+        const { error: entriesError } = await supabase.from("assessment_entries").insert(entryRows);
+        if (entriesError) {
+          setFormError(`Assessments copied, but assigning students failed: ${entriesError.message}`);
+        }
+      }
+    }
+
     await loadData();
   };
 
@@ -3625,7 +3640,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
-  const handleCreateRubric = async (event) => {
+  const _handleCreateRubric = async (event) => {
     event.preventDefault();
     setFormError("");
 
@@ -3653,7 +3668,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
-  const handleCreateRubricCategory = async (event) => {
+  const _handleCreateRubricCategory = async (event) => {
     event.preventDefault();
     setFormError("");
 
@@ -3679,7 +3694,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
-  const handleCreateRubricCriterion = async (event) => {
+  const _handleCreateRubricCriterion = async (event) => {
     event.preventDefault();
     setFormError("");
 
@@ -3768,7 +3783,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     setSeedingRubrics(false);
   };
 
-  const handleCreateGroup = async (event) => {
+  const _handleCreateGroup = async (event) => {
     event.preventDefault();
     setFormError("");
 
@@ -3792,7 +3807,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
-  const handleAddGroupMember = async (event) => {
+  const _handleAddGroupMember = async (event) => {
     event.preventDefault();
     setFormError("");
 
@@ -4057,12 +4072,12 @@ function TeacherWorkspace({ user, onSignOut }) {
     setRandomResult(`${randomStudent.first_name} ${randomStudent.last_name}`);
   };
 
-  const handleRandomAll = () => {
+  const _handleRandomAll = () => {
     setRandomGroupId("");
     pickRandomStudent(students);
   };
 
-  const handleRandomFromGroup = () => {
+  const _handleRandomFromGroup = () => {
     if (!randomGroupId) {
       setRandomResult("Select a group first.");
       return;
@@ -4113,7 +4128,7 @@ function TeacherWorkspace({ user, onSignOut }) {
       audio.loop = true;
       audio.play().catch(() => {});
       timerAudioRef.current = audio;
-    } catch (error) {
+    } catch {
       console.warn("Timer sound failed to play.");
     }
   };
@@ -4194,7 +4209,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     { label: "Groups", path: "/groups", color: "#a855f7", desc: "Generate groups" },
     { label: "Random Picker", path: "/random", color: "#ef4444", desc: "Pick a student" },
     { label: "Timer", path: "/timer", color: "#dc2626", desc: "Class timer" },
-    { label: "Library", path: "/library", color: "#92400e", desc: "Store PDFs" },
     { label: "Running Records", path: "/running-records", color: "#0284c7", desc: "Reading checks" },
     { label: "Calendar", path: "/calendar", color: "#0f766e", desc: "Plan dates" },
   ];
@@ -4371,320 +4385,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     </div>
   );
 
-  const AttendancePage = () => {
-    const [searchParams] = useSearchParams();
-    const classId = searchParams.get("classId") || "";
-    const classLabel = classOptions.find((option) => option.id === classId)?.label;
-    const [activeClassId, setActiveClassId] = useState(classId || "");
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
-
-    useEffect(() => {
-      if (classId) {
-        setActiveClassId(classId);
-      }
-    }, [classId]);
-
-    const classStudents = activeClassId
-      ? students.filter((student) => student.class_id === activeClassId)
-      : [];
-    const classSessions = activeClassId
-      ? attendanceSessions.filter((session) => session.class_id === activeClassId)
-      : [];
-    const sessionIds = new Set(classSessions.map((session) => session.id));
-    const classEntries = attendanceEntries.filter((entry) => sessionIds.has(entry.session_id));
-
-    const presentCount = classEntries.filter((entry) => entry.status === "Present").length;
-    const totalEntries = classEntries.length;
-    const attendanceRate = totalEntries ? Math.round((presentCount / totalEntries) * 100) : 0;
-    const attendanceRateColor =
-      attendanceRate >= 90 ? "#16a34a" : attendanceRate >= 75 ? "#f59e0b" : "#ef4444";
-
-    const formatSessionDate = (dateString) => {
-      if (!dateString) return "";
-      try {
-        return format(parseISO(dateString), "MMM d, yyyy");
-      } catch {
-        return dateString;
-      }
-    };
-
-    const relativeDate = (dateString) => {
-      if (!dateString) return "";
-      const date = parseISO(dateString);
-      if (isToday(date)) return "Today";
-      if (isYesterday(date)) return "Yesterday";
-      const diff = differenceInCalendarDays(new Date(), date);
-      if (diff > 0 && diff <= 7) return `${diff} days ago`;
-      return format(date, "EEEE");
-    };
-
-    const getSessionStats = (sessionId) => {
-      const entries = attendanceEntries.filter((entry) => entry.session_id === sessionId);
-      const present = entries.filter((entry) => entry.status === "Present").length;
-      const absent = entries.filter((entry) => entry.status === "Didn't come").length;
-      const late = entries.filter((entry) => entry.status === "Arrived late").length;
-      const leftEarly = entries.filter((entry) => entry.status === "Left early").length;
-      const total = entries.length;
-      const rate = total ? Math.round((present / total) * 100) : 0;
-      const color = rate >= 90 ? "#16a34a" : rate >= 75 ? "#f59e0b" : "#ef4444";
-      return { present, absent, late, leftEarly, rate, color };
-    };
-
-    const handleCreateSessionForDate = async (dateString) => {
-      setFormError("");
-      if (!activeClassId) {
-        setFormError("Select a class first.");
-        return;
-      }
-      if (!dateString) {
-        setFormError("Choose a date.");
-        return;
-      }
-      const exists = classSessions.some((session) => session.session_date === dateString);
-      if (exists) {
-        setFormError("A session already exists for that date.");
-        return;
-      }
-
-      const { data: sessionRow, error: sessionError } = await supabase
-        .from("attendance_sessions")
-        .insert({
-          session_date: dateString,
-          title: null,
-          class_id: activeClassId,
-        })
-        .select()
-        .single();
-      if (sessionError) {
-        setFormError(sessionError.message);
-        return;
-      }
-
-      if (classStudents.length > 0) {
-        const entryRows = classStudents.map((student) => ({
-          session_id: sessionRow.id,
-          student_id: student.id,
-          status: "Present",
-          note: null,
-        }));
-        const { error: entryError } = await supabase
-          .from("attendance_entries")
-          .insert(entryRows);
-        if (entryError) {
-          setFormError(entryError.message);
-          return;
-        }
-      }
-
-      await loadData();
-    };
-
-    const handleDeleteSession = async (sessionId) => {
-      if (!window.confirm("Delete this attendance session?")) return;
-      setFormError("");
-      const { error } = await supabase.from("attendance_sessions").delete().eq("id", sessionId);
-      if (error) {
-        setFormError(error.message);
-        return;
-      }
-      await loadData();
-    };
-
-    const statusOptions = [
-      { value: "Present", label: "Present", icon: "✓", color: "#16a34a" },
-      { value: "Arrived late", label: "Arrived late", icon: "⏰", color: "#f59e0b" },
-      { value: "Left early", label: "Left early", icon: "↪", color: "#eab308" },
-      { value: "Didn't come", label: "Didn't come", icon: "✕", color: "#ef4444" },
-    ];
-
-    return (
-      <>
-        {formError && <div className="error">{formError}</div>}
-        <section className="panel attendance-page">
-          <div className="attendance-header">
-            <div>
-              <h2>Attendance</h2>
-              {classLabel && <div className="muted">Class: {classLabel}</div>}
-            </div>
-            <div className="attendance-actions">
-              {!classId && (
-                <select
-                  value={activeClassId}
-                  onChange={(event) => setActiveClassId(event.target.value)}
-                >
-                  <option value="">Select class</option>
-                  {classOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedDate(format(new Date(), "yyyy-MM-dd"));
-                  setShowDatePicker(true);
-                }}
-              >
-                By date
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCreateSessionForDate(format(new Date(), "yyyy-MM-dd"))}
-                disabled={!activeClassId}
-              >
-                Today
-              </button>
-            </div>
-          </div>
-
-          {classSessions.length > 0 && (
-            <div className="attendance-stats">
-              <div className="stat-card">
-                <div className="stat-value">{classSessions.length}</div>
-                <div className="stat-label">Total Sessions</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value">{classStudents.length}</div>
-                <div className="stat-label">Students</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value" style={{ color: attendanceRateColor }}>
-                  {attendanceRate}%
-                </div>
-                <div className="stat-label">Attendance Rate</div>
-              </div>
-            </div>
-          )}
-
-          <div className="attendance-section">
-            <h3>Attendance Sessions</h3>
-            {classSessions.length === 0 ? (
-              <div className="attendance-empty">
-                <div className="attendance-empty-icon">📅</div>
-                <div className="attendance-empty-title">No attendance sessions yet</div>
-                <div className="muted">
-                  Create your first session to start tracking attendance.
-                </div>
-              </div>
-            ) : (
-              <div className="attendance-grid">
-                {classSessions.map((session) => {
-                  const stats = getSessionStats(session.id);
-                  return (
-                    <NavLink
-                      to={`/attendance/${session.id}`}
-                      key={session.id}
-                      className="attendance-card"
-                    >
-                      <div className="attendance-card-header">
-                        <div>
-                          <div className="attendance-card-date">
-                            {formatSessionDate(session.session_date)}
-                          </div>
-                          <div className="muted">{relativeDate(session.session_date)}</div>
-                        </div>
-                        <button
-                          type="button"
-                          className="icon-button"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            handleDeleteSession(session.id);
-                          }}
-                          aria-label="Delete session"
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      <div className="attendance-card-stats">
-                        <div>
-                          <div className="muted">Present</div>
-                          <strong style={{ color: "#16a34a" }}>{stats.present}</strong>
-                        </div>
-                        <div>
-                          <div className="muted">Didn't come</div>
-                          <strong style={{ color: "#ef4444" }}>{stats.absent}</strong>
-                        </div>
-                        <div>
-                          <div className="muted">Late</div>
-                          <strong style={{ color: "#f59e0b" }}>{stats.late}</strong>
-                        </div>
-                        <div>
-                          <div className="muted">Left early</div>
-                          <strong style={{ color: "#eab308" }}>{stats.leftEarly}</strong>
-                        </div>
-                      </div>
-
-                      <div className="attendance-rate">
-                        <div className="muted">Attendance Rate</div>
-                        <div className="attendance-rate-bar">
-                          <span
-                            style={{
-                              width: `${stats.rate}%`,
-                              background: stats.color,
-                            }}
-                          />
-                        </div>
-                        <div className="attendance-rate-value" style={{ color: stats.color }}>
-                          {stats.rate}%
-                        </div>
-                      </div>
-                    </NavLink>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {showDatePicker && (
-          <div className="modal-overlay">
-            <div className="modal-card attendance-modal">
-              <div className="attendance-modal-header">
-                <div className="attendance-modal-icon">📅</div>
-                <h3>Add Attendance Session</h3>
-                <div className="muted">Choose a date to record attendance.</div>
-              </div>
-              <label className="stack">
-                <span>Select date</span>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(event) => setSelectedDate(event.target.value)}
-                />
-              </label>
-              <div className="attendance-modal-date">
-                Selected Date: {selectedDate}
-              </div>
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="link"
-                  onClick={() => setShowDatePicker(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await handleCreateSessionForDate(selectedDate);
-                    setShowDatePicker(false);
-                  }}
-                  disabled={!selectedDate}
-                >
-                  Create Session
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </>
-    );
-  };
-
   const AttendanceEntryRow = ({ entry, student, statusButtons }) => {
     const [noteValue, setNoteValue] = useState(entry.note || "");
     const statusColor =
@@ -4748,236 +4448,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     );
   };
 
-  const AssessmentEntryRow = ({ entry, student }) => {
-    const [scoreValue, setScoreValue] = useState(
-      entry.score !== null && entry.score !== undefined ? String(entry.score) : ""
-    );
-    const [noteValue, setNoteValue] = useState(entry.notes || "");
-
-    useEffect(() => {
-      setScoreValue(entry.score !== null && entry.score !== undefined ? String(entry.score) : "");
-      setNoteValue(entry.notes || "");
-    }, [entry.score, entry.notes]);
-
-    const scoreNumber = scoreValue === "" ? null : Number(scoreValue);
-    const scoreColor =
-      scoreNumber === null
-        ? "#94a3b8"
-        : scoreNumber >= 7
-        ? "#16a34a"
-        : scoreNumber >= 5
-        ? "#f59e0b"
-        : scoreNumber > 0
-        ? "#ef4444"
-        : "#94a3b8";
-
-    return (
-      <div className="grade-entry-card">
-        <div className="grade-entry-header">
-          <div className="grade-entry-name">
-            {student.first_name} {student.last_name}
-          </div>
-          <div className="grade-entry-score">
-            <span className="muted">Score:</span>
-            <input
-              type="number"
-              step="0.1"
-              min="0"
-              value={scoreValue}
-              onChange={(event) => setScoreValue(event.target.value)}
-              onBlur={() =>
-                handleUpdateAssessmentEntry(entry.id, {
-                  score: scoreValue === "" ? null : Number(scoreValue),
-                })
-              }
-              style={{ color: scoreColor }}
-            />
-          </div>
-        </div>
-        <div className="grade-entry-notes">
-          <span className="muted">Notes</span>
-          <input
-            value={noteValue}
-            onChange={(event) => setNoteValue(event.target.value)}
-            onBlur={() =>
-              handleUpdateAssessmentEntry(entry.id, {
-                notes: noteValue.trim() || null,
-              })
-            }
-            placeholder="Add notes"
-          />
-        </div>
-      </div>
-    );
-  };
-
-  const AssessmentDetailPage = () => {
-    const { assessmentId } = useParams();
-    const assessment = assessments.find((item) => item.id === assessmentId);
-    const assessmentEntriesForAssessment = assessmentEntries.filter(
-      (entry) => entry.assessment_id === assessmentId
-    );
-    const classItem = classes.find((item) => item.id === assessment?.class_id);
-    const subjectItem = subjects.find((item) => item.id === assessment?.subject_id);
-    const unitItem = units.find((item) => item.id === assessment?.unit_id);
-    const classStudents = students
-      .filter((student) => student.class_id === assessment?.class_id)
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-
-    useEffect(() => {
-      const ensureEntries = async () => {
-        if (!assessment || classStudents.length === 0) return;
-        const existingIds = new Set(assessmentEntriesForAssessment.map((e) => e.student_id));
-        const missing = classStudents.filter((student) => !existingIds.has(student.id));
-        if (missing.length === 0) return;
-
-        const rows = missing.map((student) => ({
-          assessment_id: assessment.id,
-          student_id: student.id,
-          score: null,
-          notes: null,
-        }));
-        const { error } = await supabase.from("assessment_entries").insert(rows);
-        if (error) {
-          setFormError(error.message);
-          return;
-        }
-        await loadData();
-      };
-
-      ensureEntries();
-    }, [assessment?.id, classStudents.length, assessmentEntriesForAssessment.length]);
-
-    if (!assessment) {
-      return (
-        <section className="panel">
-          <h2>Assessment not found</h2>
-          <p className="muted">Select an assessment from the gradebook.</p>
-        </section>
-      );
-    }
-
-    const scored = assessmentEntriesForAssessment
-      .map((entry) => entry.score)
-      .filter((score) => score !== null && score !== undefined && Number(score) > 0)
-      .map(Number);
-
-    const average =
-      scored.length > 0
-        ? Math.round((scored.reduce((sum, val) => sum + val, 0) / scored.length) * 10) / 10
-        : 0;
-    const highest = scored.length > 0 ? Math.max(...scored) : 0;
-    const lowest = scored.length > 0 ? Math.min(...scored) : 0;
-
-    const averageColor =
-      average >= 7 ? "#16a34a" : average >= 5 ? "#f59e0b" : average > 0 ? "#ef4444" : "#94a3b8";
-
-    return (
-      <section className="panel gradebook-detail">
-        <div className="gradebook-header">
-          <h2>{assessment.title}</h2>
-          <div className="muted">
-            {assessment.assessment_date ? format(parseISO(assessment.assessment_date), "PPP") : ""}
-          </div>
-        </div>
-
-        <div className="gradebook-stats">
-          <div className="stat-card">
-            <div className="stat-label">Class Average</div>
-            <div className="stat-value" style={{ color: averageColor }}>
-              {average.toFixed(1)}
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Highest</div>
-            <div className="stat-value" style={{ color: "#16a34a" }}>
-              {highest.toFixed(1)}
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Lowest</div>
-            <div className="stat-value" style={{ color: "#ef4444" }}>
-              {lowest.toFixed(1)}
-            </div>
-          </div>
-        </div>
-
-        <div className="gradebook-info">
-          <h3>Assessment Info</h3>
-          <div className="gradebook-info-grid">
-            {classItem && (
-              <div>
-                <span className="muted">Class</span>
-                <strong>{classItem.name}</strong>
-              </div>
-            )}
-            {subjectItem && (
-              <div>
-                <span className="muted">Subject</span>
-                <strong>{subjectItem.name}</strong>
-              </div>
-            )}
-            {unitItem && (
-              <div>
-                <span className="muted">Unit</span>
-                <strong>{unitItem.name}</strong>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="gradebook-notes">
-          <h3>Description</h3>
-          <textarea
-            rows="4"
-            value={assessment.notes || ""}
-            onChange={(event) =>
-              setAssessments((prev) =>
-                prev.map((item) =>
-                  item.id === assessment.id ? { ...item, notes: event.target.value } : item
-                )
-              )
-            }
-            onBlur={(event) =>
-              supabase
-                .from("assessments")
-                .update({ notes: event.target.value })
-                .eq("id", assessment.id)
-            }
-            placeholder="Add description"
-          />
-        </div>
-
-        <div className="gradebook-students">
-          <div className="gradebook-students-header">
-            <h3>Student Grades</h3>
-            <span className="muted">
-              {scored.length} / {assessmentEntriesForAssessment.length} graded
-            </span>
-          </div>
-
-          {assessmentEntriesForAssessment.length === 0 ? (
-            <div className="muted">No students yet.</div>
-          ) : (
-            <div className="gradebook-entries">
-              {classStudents.map((student) => {
-                const entry = assessmentEntriesForAssessment.find(
-                  (item) => item.student_id === student.id
-                );
-                return entry ? (
-                  <AssessmentEntryRow
-                    key={entry.id}
-                    entry={entry}
-                    student={student}
-                  />
-                ) : null;
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-    );
-  };
   const AttendanceSessionDetailPage = () => {
     const { sessionId } = useParams();
     const session = attendanceSessions.find((item) => item.id === sessionId);
@@ -5085,140 +4555,9 @@ function TeacherWorkspace({ user, onSignOut }) {
     );
   };
 
-  const AssessmentsPage = () => (
-    <>
-      {formError && <div className="error">{formError}</div>}
-      <section className="panel gradebook-page">
-        <h2>Gradebook</h2>
-        <form onSubmit={handleCreateAssessment} className="grid">
-          <label className="stack">
-            <span>Title</span>
-            <input
-              value={assessmentForm.title}
-              onChange={(event) =>
-                setAssessmentForm((prev) => ({ ...prev, title: event.target.value }))
-              }
-              placeholder="Unit 2 Quiz"
-              required
-            />
-          </label>
-          <label className="stack">
-            <span>Subject</span>
-            <input
-              value={assessmentForm.subject}
-              onChange={(event) =>
-                setAssessmentForm((prev) => ({ ...prev, subject: event.target.value }))
-              }
-              placeholder="Math"
-            />
-          </label>
-          <label className="stack">
-            <span>Date</span>
-            <input
-              type="date"
-              value={assessmentForm.assessmentDate}
-              onChange={(event) =>
-                setAssessmentForm((prev) => ({ ...prev, assessmentDate: event.target.value }))
-              }
-            />
-          </label>
-          <label className="stack">
-            <span>Class</span>
-            <select
-              value={assessmentForm.classId}
-              onChange={(event) =>
-                setAssessmentForm((prev) => ({ ...prev, classId: event.target.value }))
-              }
-            >
-              <option value="">No class</option>
-              {classOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="stack">
-            <span>Max score</span>
-            <input
-              type="number"
-              min="0"
-              value={assessmentForm.maxScore}
-              onChange={(event) =>
-                setAssessmentForm((prev) => ({ ...prev, maxScore: event.target.value }))
-              }
-              placeholder="100"
-            />
-          </label>
-          <label className="stack">
-            <span>Notes</span>
-            <textarea
-              rows="3"
-              value={assessmentForm.notes}
-              onChange={(event) => setAssessmentForm((prev) => ({ ...prev, notes: event.target.value }))}
-              placeholder="Optional"
-            />
-          </label>
-          <label className="stack">
-            <span>Sort order</span>
-            <input
-              type="number"
-              min="0"
-              value={assessmentForm.sortOrder}
-              onChange={(event) =>
-                setAssessmentForm((prev) => ({ ...prev, sortOrder: event.target.value }))
-              }
-              placeholder="0"
-            />
-          </label>
-          <button type="submit">Add assessment</button>
-        </form>
-
-        {loading ? (
-          <p className="muted">Loading assessments...</p>
-        ) : (
-          <div className="gradebook-grid">
-            {assessments.map((assessment) => {
-              const entries = assessmentEntries.filter(
-                (entry) => entry.assessment_id === assessment.id && entry.score !== null
-              );
-              const scores = entries.map((entry) => Number(entry.score));
-              const average =
-                scores.length > 0
-                  ? Math.round((scores.reduce((sum, val) => sum + val, 0) / scores.length) * 10) /
-                    10
-                  : 0;
-              const averageColor =
-                average >= 7 ? "#16a34a" : average >= 5 ? "#f59e0b" : average > 0 ? "#ef4444" : "#94a3b8";
-
-              return (
-                <NavLink key={assessment.id} to={`/assessments/${assessment.id}`} className="gradebook-card">
-                  <div className="gradebook-card-title">{assessment.title}</div>
-                  <div className="muted">
-                    {assessment.assessment_date
-                      ? format(parseISO(assessment.assessment_date), "PPP")
-                      : "No date"}
-                  </div>
-                  <div className="gradebook-card-meta">
-                    {assessment.max_score ? `${assessment.max_score} pts` : "No max score"}
-                  </div>
-                  <div className="gradebook-card-average" style={{ color: averageColor }}>
-                    Avg {average.toFixed(1)}
-                  </div>
-                </NavLink>
-              );
-            })}
-            {assessments.length === 0 && <p className="muted">No assessments yet.</p>}
-          </div>
-        )}
-      </section>
-    </>
-  );
-
   const GroupsPage = () => {
     const [searchParams] = useSearchParams();
     const classId = searchParams.get("classId") || "";
-    const classLabel = classOptions.find((option) => option.id === classId)?.label;
     const [showAdvanced, setShowAdvanced] = useState(true);
     const [showSeparations, setShowSeparations] = useState(false);
 
@@ -5521,325 +4860,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     );
   };
 
-  const RandomPickerPage = () => {
-    const [searchParams] = useSearchParams();
-    const classId = searchParams.get("classId") || "";
-    const classLabel = classOptions.find((option) => option.id === classId)?.label;
-    const filteredStudents = classId
-      ? students.filter((student) => student.class_id === classId)
-      : students;
-
-    const defaultCategories = ["Helper", "Guardian", "Line Leader", "Messenger"];
-    const categoryIcons = {
-      Helper: "⭐",
-      Guardian: "🛡️",
-      "Line Leader": "🚶",
-      Messenger: "✉️",
-    };
-    const categoryColors = {
-      Helper: "#7c3aed",
-      Guardian: "#2563eb",
-      "Line Leader": "#16a34a",
-      Messenger: "#f97316",
-      Custom: "#ec4899",
-    };
-
-    const [selectedCategory, setSelectedCategory] = useState("Helper");
-    const [customCategories, setCustomCategories] = useState([]);
-    const [showAddCategory, setShowAddCategory] = useState(false);
-    const [newCategoryName, setNewCategoryName] = useState("");
-    const [pickedStudent, setPickedStudent] = useState(null);
-    const [isSpinning, setIsSpinning] = useState(false);
-    const [isRotationMode, setIsRotationMode] = useState(false);
-
-    const categories = [...defaultCategories, ...customCategories];
-
-    const customCategoriesKey = classId
-      ? `ta_random_custom_categories_${classId}`
-      : "ta_random_custom_categories_global";
-
-    const rotationKeyForCategory = (category) =>
-      classId ? `ta_random_rotation_${classId}_${category}` : `ta_random_rotation_global_${category}`;
-
-    useEffect(() => {
-      const stored = localStorage.getItem(customCategoriesKey);
-      if (stored) {
-        setCustomCategories(stored.split("|").filter(Boolean));
-      }
-    }, [customCategoriesKey]);
-
-    const saveCustomCategories = (next) => {
-      setCustomCategories(next);
-      localStorage.setItem(customCategoriesKey, next.join("|"));
-    };
-
-    const getRotationData = () => localStorage.getItem(rotationKeyForCategory(selectedCategory)) || "";
-
-    const setRotationData = (value) => {
-      localStorage.setItem(rotationKeyForCategory(selectedCategory), value);
-    };
-
-    const usedStudentIds = new Set(getRotationData().split(",").filter(Boolean));
-    const availableStudents = filteredStudents.filter(
-      (student) => !usedStudentIds.has(student.id)
-    );
-    const usedStudents = filteredStudents.filter((student) => usedStudentIds.has(student.id));
-
-    const categoryColor = categoryColors[selectedCategory] || categoryColors.Custom;
-    const categoryIcon = categoryIcons[selectedCategory] || "🏳️";
-
-    const pickRandom = (list) => {
-      if (!list.length) return;
-      setIsSpinning(true);
-      setTimeout(() => {
-        setIsSpinning(false);
-        setPickedStudent(list[Math.floor(Math.random() * list.length)]);
-      }, 1000);
-    };
-
-    const handleQuickPick = () => {
-      setIsRotationMode(false);
-      pickRandom(filteredStudents);
-    };
-
-    const handleRotationPick = () => {
-      setIsRotationMode(true);
-      pickRandom(availableStudents);
-    };
-
-    const markUsed = () => {
-      if (!pickedStudent) return;
-      const next = new Set(usedStudentIds);
-      next.add(pickedStudent.id);
-      setRotationData(Array.from(next).join(","));
-      setPickedStudent(null);
-    };
-
-    const clearUsed = () => {
-      setRotationData("");
-    };
-
-    const addCustomCategory = () => {
-      const cleaned = newCategoryName.trim();
-      if (!cleaned) return;
-      if (categories.includes(cleaned)) return;
-      const next = [...customCategories, cleaned];
-      saveCustomCategories(next);
-      setSelectedCategory(cleaned);
-      setNewCategoryName("");
-      setShowAddCategory(false);
-    };
-
-    return (
-      <>
-        {formError && <div className="error">{formError}</div>}
-        <section className="panel random-page">
-          <h2>Student Picker</h2>
-          {classId && <div className="badge">Class: {classLabel || "Selected class"}</div>}
-          {!classId && (
-            <div className="muted">
-              Tip: open from a class to keep rotation per class.
-            </div>
-          )}
-
-          <button
-            type="button"
-            className="random-quick-card"
-            onClick={handleQuickPick}
-            disabled={!filteredStudents.length}
-          >
-            <div className="random-quick-icon">🔀</div>
-            <div>
-              <div className="random-quick-title">Quick Random Pick</div>
-              <div className="muted">Tap here for instant random pick</div>
-              <div className="random-quick-note">(any student, no rotation tracking)</div>
-            </div>
-          </button>
-
-          <div className="random-section">
-            <div className="random-section-header">
-              <h3>Select Role</h3>
-              <button type="button" className="link" onClick={() => setShowAddCategory(true)}>
-                + Add Custom
-              </button>
-            </div>
-            <div className="random-category-row">
-              {categories.map((category) => {
-                const isSelected = selectedCategory === category;
-                const color = categoryColors[category] || categoryColors.Custom;
-                const icon = categoryIcons[category] || "🏳️";
-                return (
-                  <button
-                    key={category}
-                    type="button"
-                    className={`random-category-chip ${isSelected ? "selected" : ""}`}
-                    style={isSelected ? { borderColor: color, background: `${color}22` } : {}}
-                    onClick={() => setSelectedCategory(category)}
-                  >
-                    <span className="random-chip-icon">{icon}</span>
-                    <span>{category}</span>
-                    {isSelected && (
-                      <span className="muted">{availableStudents.length} left</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="random-rotation-card">
-            <div className="random-rotation-header">
-              <span className="random-rotation-icon">{categoryIcon}</span>
-              <strong>{selectedCategory} Rotation</strong>
-            </div>
-            <div className="muted">Fair rotation - everyone gets a turn!</div>
-
-            <div className="random-stats">
-              <div className="stat-card green">
-                <div className="stat-value">{availableStudents.length}</div>
-                <div className="stat-label">Available</div>
-              </div>
-              <div className="stat-card orange">
-                <div className="stat-value">{usedStudents.length}</div>
-                <div className="stat-label">Used</div>
-              </div>
-              <div className="stat-card purple">
-                <div className="stat-value">{filteredStudents.length}</div>
-                <div className="stat-label">Total</div>
-              </div>
-            </div>
-
-            {usedStudents.length > 0 && (
-              <button type="button" className="random-clear" onClick={clearUsed}>
-                Clear used students
-              </button>
-            )}
-
-            <div className="random-spinner" style={{ borderColor: categoryColor }}>
-              <div className={`random-spinner-icon ${isSpinning ? "spin" : ""}`}>
-                {categoryIcon}
-              </div>
-            </div>
-
-            {availableStudents.length === 0 && filteredStudents.length > 0 ? (
-              <div className="random-reset">
-                <div className="random-reset-title">
-                  Everyone has been the {selectedCategory.toLowerCase()}!
-                </div>
-                <button type="button" onClick={clearUsed} style={{ background: categoryColor }}>
-                  Reset & Start Over
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="random-pick-next"
-                onClick={handleRotationPick}
-                disabled={isSpinning || !filteredStudents.length}
-                style={{ background: categoryColor }}
-              >
-                ✨ Pick Next {selectedCategory}
-              </button>
-            )}
-
-            {(availableStudents.length > 0 || usedStudents.length > 0) && (
-              <div className="random-lists">
-                {availableStudents.length > 0 && (
-                  <div>
-                    <div className="random-list-title">
-                      Available ({availableStudents.length})
-                    </div>
-                    <div className="random-pill-row">
-                      {availableStudents.map((student) => (
-                        <span key={student.id} className="random-pill green">
-                          {student.first_name} {student.last_name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {usedStudents.length > 0 && (
-                  <div>
-                    <div className="random-list-title">Already Used ({usedStudents.length})</div>
-                    <div className="random-pill-row">
-                      {usedStudents.map((student) => (
-                        <span key={student.id} className="random-pill gray">
-                          {student.first_name} {student.last_name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {showAddCategory && (
-          <div className="modal-overlay">
-            <div className="modal-card">
-              <h3>Add Custom Role</h3>
-              <p className="muted">Create your own classroom role.</p>
-              <label className="stack">
-                <span>Role Name</span>
-                <input
-                  value={newCategoryName}
-                  onChange={(event) => setNewCategoryName(event.target.value)}
-                  placeholder="e.g., Door Holder"
-                />
-              </label>
-              {newCategoryName.trim() && (
-                <div className="random-preview">
-                  <span>🏳️</span>
-                  <strong>{newCategoryName.trim()}</strong>
-                </div>
-              )}
-              <div className="modal-actions">
-                <button type="button" className="link" onClick={() => setShowAddCategory(false)}>
-                  Cancel
-                </button>
-                <button type="button" onClick={addCustomCategory} disabled={!newCategoryName.trim()}>
-                  Add
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {pickedStudent && (
-          <div className="modal-overlay">
-            <div className="modal-card random-result">
-              <div className="random-result-icon">{isRotationMode ? categoryIcon : "🔀"}</div>
-              <div className="muted">
-                {isRotationMode ? `Today's ${selectedCategory}` : "Random Pick!"}
-              </div>
-              <h2>
-                {pickedStudent.first_name} {pickedStudent.last_name}
-              </h2>
-              <div className="random-result-emoji">🎉</div>
-              <div className="modal-actions">
-                {isRotationMode ? (
-                  <>
-                    <button type="button" onClick={markUsed} style={{ background: categoryColor }}>
-                      Mark as Used
-                    </button>
-                    <button type="button" className="link" onClick={() => setPickedStudent(null)}>
-                      Skip (Student Absent)
-                    </button>
-                  </>
-                ) : (
-                  <button type="button" onClick={() => setPickedStudent(null)}>
-                    Done
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </>
-    );
-  };
-
   const DashboardPage = () => (
     <section className="panel">
       <h2>Dashboard</h2>
@@ -5892,6 +4912,11 @@ function TeacherWorkspace({ user, onSignOut }) {
                 classes={classes}
                 subjects={subjects}
                 students={students}
+                assessments={assessments}
+                assessmentEntries={assessmentEntries}
+                attendanceSessions={attendanceSessions}
+                attendanceEntries={attendanceEntries}
+                developmentScores={developmentScores}
                 subjectForm={subjectForm}
                 setSubjectForm={setSubjectForm}
                 handleCreateSubject={handleCreateSubject}
@@ -5900,15 +4925,65 @@ function TeacherWorkspace({ user, onSignOut }) {
                 studentForm={studentForm}
                 setStudentForm={setStudentForm}
                 handleCreateStudent={handleCreateStudent}
+                useReorderModeHook={useReorderMode}
+                useHandleDragHook={useHandleDrag}
+                ReorderModeToggleComponent={ReorderModeToggle}
+                studentGenderOptions={STUDENT_GENDER_OPTIONS}
               />
             }
           />
-          <Route path="/attendance" element={<AttendancePage />} />
+          <Route
+            path="/attendance"
+            element={
+              <AttendancePage
+                classOptions={classOptions}
+                students={students}
+                attendanceSessions={attendanceSessions}
+                attendanceEntries={attendanceEntries}
+                formError={formError}
+                setFormError={setFormError}
+                loadData={loadData}
+              />
+            }
+          />
           <Route path="/attendance/:sessionId" element={<AttendanceSessionDetailPage />} />
-          <Route path="/assessments" element={<AssessmentsPage />} />
-          <Route path="/assessments/:assessmentId" element={<AssessmentDetailPage />} />
+          <Route
+            path="/assessments"
+            element={
+              <AssessmentsPage
+                formError={formError}
+                handleCreateAssessment={handleCreateAssessment}
+                assessmentForm={assessmentForm}
+                setAssessmentForm={setAssessmentForm}
+                classOptions={classOptions}
+                loading={loading}
+                assessments={assessments}
+                assessmentEntries={assessmentEntries}
+              />
+            }
+          />
+          <Route
+            path="/assessments/:assessmentId"
+            element={
+              <AssessmentDetailPage
+                assessments={assessments}
+                assessmentEntries={assessmentEntries}
+                classes={classes}
+                subjects={subjects}
+                units={units}
+                students={students}
+                handleUpdateAssessmentEntry={handleUpdateAssessmentEntry}
+                setAssessments={setAssessments}
+                setFormError={setFormError}
+                loadData={loadData}
+              />
+            }
+          />
           <Route path="/groups" element={<GroupsPage />} />
-          <Route path="/random" element={<RandomPickerPage />} />
+          <Route
+            path="/random"
+            element={<RandomPickerPage formError={formError} classOptions={classOptions} students={students} />}
+          />
           <Route
             path="/rubrics"
             element={
@@ -5929,10 +5004,6 @@ function TeacherWorkspace({ user, onSignOut }) {
           <Route
             path="/timer"
             element={<TimerPage />}
-          />
-          <Route
-            path="/library"
-            element={<PlaceholderPage title="Library" message="Coming soon." />}
           />
           <Route
             path="/subjects/:subjectId"
@@ -5959,9 +5030,11 @@ function TeacherWorkspace({ user, onSignOut }) {
                 units={units}
                 subjects={subjects}
                 assessments={assessments}
+                assessmentEntries={assessmentEntries}
                 handleCreateAssessmentForUnit={handleCreateAssessmentForUnit}
-                handleUpdateSortOrder={handleUpdateSortOrder}
                 handleSwapSortOrder={handleSwapSortOrder}
+                handleDeleteAssessment={handleDeleteAssessment}
+                handleCopyAssessmentsFromUnit={handleCopyAssessmentsFromUnit}
               />
             }
           />
@@ -6005,7 +5078,19 @@ function TeacherWorkspace({ user, onSignOut }) {
           />
           <Route
             path="/calendar"
-            element={<PlaceholderPage title="Calendar" message="Coming soon." />}
+            element={
+              <CalendarPage
+                formError={formError}
+                setFormError={setFormError}
+                loadData={loadData}
+                classOptions={classOptions}
+                calendarDiaryEntries={calendarDiaryEntries}
+                calendarEvents={calendarEvents}
+                classes={classes}
+                subjects={subjects}
+                units={units}
+              />
+            }
           />
         </Routes>
         {timerIsRunning && timerIsExpanded && <TimerOverlay />}
