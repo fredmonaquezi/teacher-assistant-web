@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  addDays,
+  endOfDay,
   format,
+  isValid,
   parseISO,
+  startOfDay,
 } from "date-fns";
-import { BrowserRouter, NavLink, Route, Routes, useParams, useSearchParams } from "react-router-dom";
+import { BrowserRouter, NavLink, Route, Routes, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ClassDetailPage from "./pages/ClassDetailPage";
 import AttendancePage from "./pages/AttendancePage";
 import AssessmentDetailPage from "./pages/AssessmentDetailPage";
@@ -12,6 +16,7 @@ import CalendarPage from "./pages/CalendarPage";
 import RandomPickerPage from "./pages/RandomPickerPage";
 import RunningRecordsPage from "./pages/RunningRecordsPage";
 import { supabase } from "./supabaseClient";
+import { averageFromPercents, entryToPercent, performanceColor } from "./utils/assessmentMetrics";
 import "./App.css";
 import "react-day-picker/dist/style.css";
 
@@ -1088,6 +1093,7 @@ function ClassesPage({
 }) {
   const [showAddClass, setShowAddClass] = useState(false);
   const [dragClassId, setDragClassId] = useState(null);
+  const navigate = useNavigate();
   const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderMode();
   const {
     onHandlePointerDown: onClassHandlePointerDown,
@@ -1126,7 +1132,16 @@ function ClassesPage({
                 <div
                   key={item.id}
                   className="class-card draggable"
+                  role="button"
+                  tabIndex={0}
                   draggable={isReorderEnabled}
+                  onClick={() => navigate(`/classes/${item.id}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      navigate(`/classes/${item.id}`);
+                    }
+                  }}
                   onDragStart={(event) => {
                     if (!isClassDragAllowed(item.id)) {
                       event.preventDefault();
@@ -1144,32 +1159,32 @@ function ClassesPage({
                   }}
                   onDrop={() => handleSwapSortOrder("classes", classes, dragClassId, item.id)}
                 >
-                  <div className="class-card-header">
-                    <NavLink to={`/classes/${item.id}`} className="class-card-title">
-                      {item.name}
-                    </NavLink>
-                    <div className="class-card-actions">
-                      <button
-                        type="button"
-                        className={classHandleClassName}
-                        aria-label={`Drag ${item.name}`}
-                        onPointerDown={(event) => onClassHandlePointerDown(item.id, event)}
-                        onPointerMove={onClassHandlePointerMove}
-                        onPointerUp={onClassHandlePointerUp}
-                        onPointerCancel={onClassHandlePointerUp}
-                      >
-                        ⠿
-                      </button>
-                      <button
-                        type="button"
-                        className="icon-button"
-                        onClick={() => handleDeleteClass(item.id)}
-                        aria-label={`Delete ${item.name}`}
-                      >
-                        ✕
-                      </button>
-                    </div>
+                  <div className="class-card-actions">
+                    <button
+                      type="button"
+                      className={classHandleClassName}
+                      aria-label={`Drag ${item.name}`}
+                      onClick={(event) => event.stopPropagation()}
+                      onPointerDown={(event) => onClassHandlePointerDown(item.id, event)}
+                      onPointerMove={onClassHandlePointerMove}
+                      onPointerUp={onClassHandlePointerUp}
+                      onPointerCancel={onClassHandlePointerUp}
+                    >
+                      ⠿
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDeleteClass(item.id);
+                      }}
+                      aria-label={`Delete ${item.name}`}
+                    >
+                      ✕
+                    </button>
                   </div>
+                  <div className="class-card-title">{item.name}</div>
                   <div className="class-card-subtitle">
                     {item.grade_level || "—"}
                     {item.school_year ? ` • ${item.school_year}` : ""}
@@ -1254,6 +1269,7 @@ function SubjectDetailPage({
   handleSwapSortOrder,
   handleDeleteUnit,
 }) {
+  const navigate = useNavigate();
   const { subjectId } = useParams();
   const subject = subjects.find((item) => item.id === subjectId);
   const subjectUnits = units
@@ -1265,16 +1281,17 @@ function SubjectDetailPage({
     );
   const subjectAssessments = assessments.filter((assessment) => assessment.subject_id === subjectId);
   const subjectAssessmentIds = new Set(subjectAssessments.map((assessment) => assessment.id));
+  const subjectAssessmentLookup = new Map(subjectAssessments.map((assessment) => [assessment.id, assessment]));
   const subjectResults = assessmentEntries.filter(
     (entry) =>
       subjectAssessmentIds.has(entry.assessment_id) &&
       entry.score !== null &&
       Number.isFinite(Number(entry.score))
   );
-  const subjectAverage = subjectResults.length
-    ? subjectResults.reduce((sum, item) => sum + Number(item.score), 0) / subjectResults.length
-    : 0;
-  const averageColor = subjectAverage >= 7 ? "#16a34a" : subjectAverage >= 5 ? "#ea580c" : "#dc2626";
+  const subjectAverage = averageFromPercents(
+    subjectResults.map((entry) => entryToPercent(entry, subjectAssessmentLookup))
+  );
+  const averageColor = performanceColor(subjectAverage);
   const [showAddUnitDialog, setShowAddUnitDialog] = useState(false);
   const [showDeleteUnitAlert, setShowDeleteUnitAlert] = useState(false);
   const [unitToDelete, setUnitToDelete] = useState(null);
@@ -1310,7 +1327,7 @@ function SubjectDetailPage({
       <section className="subject-stat-row">
         <article className="panel subject-stat-card">
           <p className="muted">Subject Average</p>
-          <p style={{ color: averageColor }}>{subjectAverage.toFixed(1)}</p>
+          <p style={{ color: averageColor }}>{subjectAverage.toFixed(1)}%</p>
         </article>
         <article className="panel subject-stat-card">
           <p className="muted">Total Units</p>
@@ -1340,7 +1357,7 @@ function SubjectDetailPage({
             </button>
           </div>
         </div>
-        <p className="muted">Use the ⠿ handle to reorder units. On mobile, turn on Reorder Mode first.</p>
+        <div className="unit-reorder-tip">Drag ⠿ to reorder units. On mobile, use Reorder Mode.</div>
         {subjectUnits.length === 0 ? (
           <div className="subject-empty">
             <h4>No units yet</h4>
@@ -1361,7 +1378,16 @@ function SubjectDetailPage({
               <article
                 key={unit.id}
                 className="subject-unit-card draggable"
+                role="button"
+                tabIndex={0}
                 draggable={isReorderEnabled}
+                onClick={() => navigate(`/units/${unit.id}`)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    navigate(`/units/${unit.id}`);
+                  }
+                }}
                 onDragStart={(event) => {
                   if (!isUnitDragAllowed(unit.id)) {
                     event.preventDefault();
@@ -1380,9 +1406,8 @@ function SubjectDetailPage({
                 onDrop={() => handleSwapSortOrder("units", subjectUnits, draggedUnitId, unit.id)}
               >
                 <div className="subject-unit-main">
-                  <NavLink to={`/units/${unit.id}`} className="subject-unit-name">
-                    {unit.name}
-                  </NavLink>
+                  <p className="subject-unit-kicker">Unit</p>
+                  <div className="subject-unit-name">{unit.name}</div>
                   <p className="muted">{unit.description || "No description"}</p>
                 </div>
                 <div className="subject-unit-actions">
@@ -1390,6 +1415,7 @@ function SubjectDetailPage({
                     type="button"
                     className={unitHandleClassName}
                     aria-label={`Drag ${unit.name}`}
+                    onClick={(event) => event.stopPropagation()}
                     onPointerDown={(event) => onUnitHandlePointerDown(unit.id, event)}
                     onPointerMove={onUnitHandlePointerMove}
                     onPointerUp={onUnitHandlePointerUp}
@@ -1401,7 +1427,8 @@ function SubjectDetailPage({
                     type="button"
                     className="icon-button"
                     aria-label="Delete unit"
-                    onClick={() => {
+                    onClick={(event) => {
+                      event.stopPropagation();
                       setUnitToDelete(unit);
                       setShowDeleteUnitAlert(true);
                     }}
@@ -1417,11 +1444,14 @@ function SubjectDetailPage({
 
       {showAddUnitDialog && (
         <div className="modal-overlay">
-          <div className="modal-card">
-            <h3>Add New Unit</h3>
-            <p className="muted">Give your unit a name.</p>
+          <div className="modal-card unit-add-modal">
+            <div className="unit-add-header">
+              <p className="unit-add-kicker">Units</p>
+              <h3>Add New Unit</h3>
+              <p className="muted">Create a clear unit name so teachers can find it quickly.</p>
+            </div>
             <form
-              className="grid"
+              className="unit-add-form"
               onSubmit={async (event) => {
                 await handleCreateUnit(event, subjectId);
                 setShowAddUnitDialog(false);
@@ -1441,7 +1471,7 @@ function SubjectDetailPage({
                 <input
                   value={unitForm.description}
                   onChange={(event) => setUnitForm((prev) => ({ ...prev, description: event.target.value }))}
-                  placeholder="Optional"
+                  placeholder="Optional notes"
                 />
               </label>
               {!!unitForm.name.trim() && (
@@ -1450,7 +1480,7 @@ function SubjectDetailPage({
                   <p>{unitForm.name}</p>
                 </div>
               )}
-              <div className="modal-actions">
+              <div className="modal-actions unit-add-actions">
                 <button type="button" className="secondary" onClick={() => setShowAddUnitDialog(false)}>
                   Cancel
                 </button>
@@ -1513,6 +1543,7 @@ function UnitDetailPage({
   handleDeleteAssessment,
   handleCopyAssessmentsFromUnit,
 }) {
+  const navigate = useNavigate();
   const { unitId } = useParams();
   const unit = units.find((item) => item.id === unitId);
   const subject = subjects.find((item) => item.id === unit?.subject_id);
@@ -1524,16 +1555,17 @@ function UnitDetailPage({
         (a.assessment_date || "").localeCompare(b.assessment_date || "")
     );
   const unitAssessmentIds = new Set(unitAssessments.map((item) => item.id));
+  const unitAssessmentLookup = new Map(unitAssessments.map((assessment) => [assessment.id, assessment]));
   const gradedEntries = assessmentEntries.filter(
     (entry) =>
       unitAssessmentIds.has(entry.assessment_id) &&
       entry.score !== null &&
       Number.isFinite(Number(entry.score))
   );
-  const unitAverage = gradedEntries.length
-    ? gradedEntries.reduce((sum, entry) => sum + Number(entry.score), 0) / gradedEntries.length
-    : 0;
-  const averageColor = unitAverage >= 7 ? "#16a34a" : unitAverage >= 5 ? "#ea580c" : "#dc2626";
+  const unitAverage = averageFromPercents(
+    gradedEntries.map((entry) => entryToPercent(entry, unitAssessmentLookup))
+  );
+  const averageColor = performanceColor(unitAverage);
   const [showAddAssessmentDialog, setShowAddAssessmentDialog] = useState(false);
   const [showDeleteAssessmentAlert, setShowDeleteAssessmentAlert] = useState(false);
   const [showCopyCriteriaFlow, setShowCopyCriteriaFlow] = useState(false);
@@ -1585,17 +1617,18 @@ function UnitDetailPage({
   return (
     <>
       {formError && <div className="error">{formError}</div>}
-      <section className="panel unit-detail-header">
+      <section className="panel unit-detail-header unit-hero">
+        <p className="unit-hero-kicker">Unit Workspace</p>
         <h2>{unit.name}</h2>
         <p className="muted">
-          {subject ? `Subject: ${subject.name}` : ""} {unit.description ? `• ${unit.description}` : ""}
+          {subject ? `Subject: ${subject.name}` : ""} {unit.description ? `• ${unit.description}` : "• No notes yet"}
         </p>
       </section>
 
       <section className="unit-stat-row">
         <article className="panel unit-stat-card">
           <p className="muted">Unit Average</p>
-          <p style={{ color: averageColor }}>{unitAverage.toFixed(1)}</p>
+          <p style={{ color: averageColor }}>{unitAverage.toFixed(1)}%</p>
         </article>
         <article className="panel unit-stat-card">
           <p className="muted">Assessments</p>
@@ -1607,34 +1640,27 @@ function UnitDetailPage({
         </article>
       </section>
 
-      <section className="panel">
+      <section className="panel unit-actions-panel">
         <h3>Quick Actions</h3>
         <div className="unit-actions-grid">
           <NavLink to="/assessments" className="unit-action-card action-green">
             <strong>Gradebook</strong>
             <span>View all grades</span>
           </NavLink>
-          <button type="button" className="unit-action-card action-purple" disabled>
-            <strong>Library</strong>
-            <span>Disabled for now</span>
-          </button>
-        </div>
-        <button
-          type="button"
-          className="unit-copy-button"
-          onClick={() => {
-            setCopySourceSubjectId("");
-            setCopySourceUnitId("");
-            setCopyStep("subject");
-            setShowCopyCriteriaFlow(true);
-          }}
-        >
-          <div>
+          <button
+            type="button"
+            className="unit-action-card action-amber"
+            onClick={() => {
+              setCopySourceSubjectId("");
+              setCopySourceUnitId("");
+              setCopyStep("subject");
+              setShowCopyCriteriaFlow(true);
+            }}
+          >
             <strong>Copy Criteria</strong>
             <span>Import assessments from another unit</span>
-          </div>
-          <span>›</span>
-        </button>
+          </button>
+        </div>
       </section>
 
       <section className="panel">
@@ -1655,7 +1681,7 @@ function UnitDetailPage({
             </button>
           </div>
         </div>
-        <p className="muted">Use the ⠿ handle to reorder assessments. On mobile, turn on Reorder Mode first.</p>
+        <div className="unit-reorder-tip">Drag ⠿ to reorder assessments. On mobile, use Reorder Mode.</div>
         {unitAssessments.length === 0 ? (
           <div className="unit-empty">
             <h4>No assessments yet</h4>
@@ -1676,7 +1702,16 @@ function UnitDetailPage({
               <article
                 key={item.id}
                 className="unit-assessment-card draggable"
+                role="button"
+                tabIndex={0}
                 draggable={isReorderEnabled}
+                onClick={() => navigate(`/assessments/${item.id}`)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    navigate(`/assessments/${item.id}`);
+                  }
+                }}
                 onDragStart={(event) => {
                   if (!isAssessmentDragAllowed(item.id)) {
                     event.preventDefault();
@@ -1697,9 +1732,8 @@ function UnitDetailPage({
                 }
               >
                 <div className="unit-assessment-main">
-                  <NavLink to={`/assessments/${item.id}`} className="unit-assessment-name">
-                    {item.title}
-                  </NavLink>
+                  <p className="unit-assessment-kicker">Assessment</p>
+                  <div className="unit-assessment-name">{item.title}</div>
                   <p className="muted">
                     {item.assessment_date || "No date"} {item.max_score ? `• ${item.max_score} pts` : ""}
                   </p>
@@ -1709,6 +1743,7 @@ function UnitDetailPage({
                     type="button"
                     className={assessmentHandleClassName}
                     aria-label={`Drag ${item.title}`}
+                    onClick={(event) => event.stopPropagation()}
                     onPointerDown={(event) => onAssessmentHandlePointerDown(item.id, event)}
                     onPointerMove={onAssessmentHandlePointerMove}
                     onPointerUp={onAssessmentHandlePointerUp}
@@ -1720,7 +1755,8 @@ function UnitDetailPage({
                     type="button"
                     className="icon-button"
                     aria-label="Delete assessment"
-                    onClick={() => {
+                    onClick={(event) => {
+                      event.stopPropagation();
                       setAssessmentToDelete(item);
                       setShowDeleteAssessmentAlert(true);
                     }}
@@ -1736,11 +1772,14 @@ function UnitDetailPage({
 
       {showAddAssessmentDialog && (
         <div className="modal-overlay">
-          <div className="modal-card">
-            <h3>Add New Assessment</h3>
-            <p className="muted">Give your assessment a name.</p>
+          <div className="modal-card assessment-add-modal">
+            <div className="assessment-add-header">
+              <p className="assessment-add-kicker">Assessments</p>
+              <h3>Add New Assessment</h3>
+              <p className="muted">Create a clear assessment so grading stays simple and organized.</p>
+            </div>
             <form
-              className="grid"
+              className="assessment-add-form"
               onSubmit={async (event) => {
                 const ok = await handleCreateAssessmentForUnit(
                   event,
@@ -1793,7 +1832,7 @@ function UnitDetailPage({
                   <p>{newAssessment.title}</p>
                 </div>
               )}
-              <div className="modal-actions">
+              <div className="modal-actions assessment-add-actions">
                 <button type="button" className="secondary" onClick={() => setShowAddAssessmentDialog(false)}>
                   Cancel
                 </button>
@@ -1989,7 +2028,6 @@ function StudentDetailPage({
     isParticipatingWell: false,
     needsHelp: false,
     missingHomework: false,
-    separationList: "",
   });
   const records = runningRecords
     .filter((record) => record.student_id === studentId)
@@ -2000,9 +2038,6 @@ function StudentDetailPage({
   const scoredAssessments = assessmentsForStudent.filter(
     (entry) => entry.score !== null && Number.isFinite(Number(entry.score))
   );
-  const overallAverage = scoredAssessments.length
-    ? scoredAssessments.reduce((sum, entry) => sum + Number(entry.score), 0) / scoredAssessments.length
-    : 0;
   const studentScores = developmentScores
     .filter((score) => score.student_id === studentId)
     .sort((a, b) => (b.score_date || b.created_at || "").localeCompare(a.score_date || a.created_at || ""));
@@ -2024,6 +2059,9 @@ function StudentDetailPage({
     assessments.forEach((assessment) => map.set(assessment.id, assessment));
     return map;
   }, [assessments]);
+  const overallAverage = averageFromPercents(
+    scoredAssessments.map((entry) => entryToPercent(entry, assessmentLookup))
+  );
   const subjectLookup = useMemo(() => {
     const map = new Map();
     subjects.forEach((subject) => map.set(subject.id, subject));
@@ -2070,9 +2108,9 @@ function StudentDetailPage({
         entry.score !== null &&
         Number.isFinite(Number(entry.score))
     );
-    const average = subjectScores.length
-      ? subjectScores.reduce((sum, item) => sum + Number(item.score), 0) / subjectScores.length
-      : 0;
+    const average = averageFromPercents(
+      subjectScores.map((entry) => entryToPercent(entry, assessmentLookup))
+    );
     return { subject, count: subjectScores.length, average };
   });
 
@@ -2111,9 +2149,7 @@ function StudentDetailPage({
   };
 
   const averageColor = (value) => {
-    if (value >= 7) return "#16a34a";
-    if (value >= 5) return "#ea580c";
-    return "#dc2626";
+    return performanceColor(value);
   };
 
   const toggleStatus = async (field) => {
@@ -2124,7 +2160,6 @@ function StudentDetailPage({
       isParticipatingWell: !!student.is_participating_well,
       needsHelp: !!student.needs_help,
       missingHomework: !!student.missing_homework,
-      separationList: student.separation_list || "",
       [field]:
         field === "isParticipatingWell"
           ? !student.is_participating_well
@@ -2144,18 +2179,35 @@ function StudentDetailPage({
     );
   }
 
+  const studentInitials = `${student.first_name?.[0] || ""}${student.last_name?.[0] || ""}`
+    .toUpperCase()
+    .trim() || "S";
+  const classLabel = classItem
+    ? `${classItem.name}${classItem.grade_level ? ` (${classItem.grade_level})` : ""}`
+    : "No class";
+
   return (
     <>
       {formError && <div className="error">{formError}</div>}
       <section className="panel student-profile-header">
-        <div>
-          <h2>
-            {student.first_name} {student.last_name}
-          </h2>
-          <p className="muted">{classItem ? `${classItem.name}${classItem.grade_level ? ` (${classItem.grade_level})` : ""}` : "No class"}</p>
+        <div className="student-profile-hero">
+          <div className="student-profile-avatar">{studentInitials}</div>
+          <div className="student-profile-copy">
+            <h2>
+              {student.first_name} {student.last_name}
+            </h2>
+            <p className="muted">{classLabel}</p>
+            <div className="student-profile-chips">
+              <span className="student-chip">{student.gender || "Prefer not to say"}</span>
+              <span className={`student-chip ${student.notes ? "" : "subtle"}`}>
+                {student.notes ? "Notes saved" : "No notes"}
+              </span>
+            </div>
+          </div>
         </div>
         <button
           type="button"
+          className="secondary"
           onClick={() => {
             setEditForm({
               gender: student.gender || "Prefer not to say",
@@ -2163,7 +2215,6 @@ function StudentDetailPage({
               isParticipatingWell: !!student.is_participating_well,
               needsHelp: !!student.needs_help,
               missingHomework: !!student.missing_homework,
-              separationList: student.separation_list || "",
             });
             setShowEditInfo(true);
           }}
@@ -2172,7 +2223,7 @@ function StudentDetailPage({
         </button>
       </section>
 
-      <section className="panel">
+      <section className="panel student-status-panel">
         <h3>Quick Status</h3>
         <div className="student-status-grid">
           <button
@@ -2214,7 +2265,7 @@ function StudentDetailPage({
       <section className="student-stat-row">
         <article className="panel student-stat-card">
           <p className="muted">Overall Average</p>
-          <p style={{ color: averageColor(overallAverage) }}>{overallAverage.toFixed(1)}</p>
+          <p style={{ color: averageColor(overallAverage) }}>{overallAverage.toFixed(1)}%</p>
         </article>
         <article className="panel student-stat-card">
           <p className="muted">Total Assessments</p>
@@ -2302,7 +2353,7 @@ function StudentDetailPage({
                   <strong>{item.subject.name}</strong>
                   <p className="muted">{item.count} assessments</p>
                 </div>
-                <p style={{ color: averageColor(item.average) }}>{item.average.toFixed(1)}</p>
+                <p style={{ color: averageColor(item.average) }}>{item.average.toFixed(1)}%</p>
               </article>
             ))}
           </div>
@@ -2317,6 +2368,7 @@ function StudentDetailPage({
           <ul className="list student-mini-list">
             {recentAssessments.map(({ entry, assessment }) => {
               const subjectName = subjectLookup.get(assessment?.subject_id)?.name;
+              const percent = entryToPercent(entry, assessmentLookup);
               return (
                 <li key={entry.id}>
                   <span>
@@ -2324,10 +2376,8 @@ function StudentDetailPage({
                     {subjectName ? ` · ${subjectName}` : ""}
                     {assessment?.assessment_date ? ` · ${assessment.assessment_date}` : ""}
                   </span>
-                  {entry.score !== null && Number.isFinite(Number(entry.score)) ? (
-                    <strong style={{ color: averageColor(Number(entry.score || 0)) }}>
-                      {Number(entry.score).toFixed(1)}
-                    </strong>
+                  {entry.score !== null && Number.isFinite(Number(entry.score)) && percent !== null ? (
+                    <strong style={{ color: averageColor(percent) }}>{percent.toFixed(1)}%</strong>
                   ) : (
                     <strong className="muted">Not graded</strong>
                   )}
@@ -2452,10 +2502,15 @@ function StudentDetailPage({
 
       {showEditInfo && (
         <div className="modal-overlay">
-          <div className="modal-card">
-            <h3>Edit Student</h3>
+          <div className="modal-card student-edit-modal">
+            <div className="student-edit-header">
+              <h3>Edit Student</h3>
+              <p className="muted">
+                Update student info and reminders for {student.first_name} {student.last_name}.
+              </p>
+            </div>
             <form
-              className="grid"
+              className="student-edit-form"
               onSubmit={async (event) => {
                 event.preventDefault();
                 await handleUpdateStudent(studentId, editForm);
@@ -2481,19 +2536,14 @@ function StudentDetailPage({
                   rows="3"
                   value={editForm.notes}
                   onChange={(event) => setEditForm((prev) => ({ ...prev, notes: event.target.value }))}
+                  placeholder="Optional notes about this student"
                 />
               </label>
-              <label className="stack">
-                <span>Separation list</span>
-                <input
-                  value={editForm.separationList}
-                  onChange={(event) =>
-                    setEditForm((prev) => ({ ...prev, separationList: event.target.value }))
-                  }
-                  placeholder="comma-separated student IDs"
-                />
-              </label>
-              <div className="modal-actions">
+              <p className="muted student-edit-help">
+                To keep students apart during group generation, use{" "}
+                <NavLink to={`/groups?classId=${student.class_id || ""}`}>Groups → Separations</NavLink>.
+              </p>
+              <div className="modal-actions student-edit-actions">
                 <button type="button" className="secondary" onClick={() => setShowEditInfo(false)}>
                   Cancel
                 </button>
@@ -2587,30 +2637,62 @@ function AuthForm({ onSuccess }) {
   );
 }
 
-function Layout({ userEmail, onSignOut, children }) {
+function formatDisplayName(user) {
+  const metadataName = user?.user_metadata?.full_name || user?.user_metadata?.name || "";
+  const emailLocalPart = String(user?.email || "").split("@")[0] || "";
+  const source = (metadataName || emailLocalPart || "Teacher").replace(/[._-]+/g, " ").trim();
+  return source
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function Layout({ user, onSignOut, children }) {
+  const userEmail = user?.email || "";
+  const displayName = formatDisplayName(user);
+  const navLinks = [
+    { label: "Dashboard", path: "/" },
+    { label: "Classes", path: "/classes" },
+    { label: "Attendance", path: "/attendance" },
+    { label: "Gradebook", path: "/assessments" },
+    { label: "Groups", path: "/groups" },
+    { label: "Calendar", path: "/calendar" },
+    { label: "Timer", path: "/timer" },
+    { label: "Random Picker", path: "/random" },
+    { label: "Running Records", path: "/running-records" },
+  ];
+
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <div>
-          <h1 className="brand">Teacher Assistant</h1>
-          <p className="muted">Signed in as {userEmail}</p>
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <p className="sidebar-kicker">Teacher Assistant</p>
+          <h1 className="sidebar-title">Classroom Hub</h1>
+          <p className="sidebar-email">Signed in as {userEmail}</p>
         </div>
-        <div className="topbar-actions">
-          <nav className="nav-links">
-            <NavLink to="/" end>
-              Dashboard
+        <nav className="nav-links">
+          {navLinks.map((link) => (
+            <NavLink key={link.path} to={link.path} end={link.path === "/"}>
+              {link.label}
             </NavLink>
-            <NavLink to="/classes">Classes</NavLink>
-            <NavLink to="/attendance">Attendance</NavLink>
-            <NavLink to="/assessments">Gradebook</NavLink>
-            <NavLink to="/groups">Groups</NavLink>
-          </nav>
-          <button type="button" onClick={onSignOut}>
-            Sign out
-          </button>
-        </div>
-      </header>
-      <main className="content">{children}</main>
+          ))}
+        </nav>
+        <button type="button" className="secondary sidebar-signout" onClick={onSignOut}>
+          Sign out
+        </button>
+      </aside>
+      <div className="workspace">
+        <header className="topbar">
+          <div className="topbar-intro">
+            <p className="topbar-kicker">Welcome back, {displayName}.</p>
+            <h2 className="brand">
+              Today is <span className="today-pill">{format(new Date(), "EEEE, MMMM d, yyyy")}</span>
+            </h2>
+          </div>
+        </header>
+        <main className="content">{children}</main>
+      </div>
     </div>
   );
 }
@@ -2621,6 +2703,7 @@ function TeacherWorkspace({ user, onSignOut }) {
   const [_lessonPlans, setLessonPlans] = useState([]);
   const [calendarDiaryEntries, setCalendarDiaryEntries] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [calendarTablesReady, setCalendarTablesReady] = useState(true);
   const [attendanceSessions, setAttendanceSessions] = useState([]);
   const [attendanceEntries, setAttendanceEntries] = useState([]);
   const [assessments, setAssessments] = useState([]);
@@ -2759,6 +2842,8 @@ function TeacherWorkspace({ user, onSignOut }) {
     studentA: "",
     studentB: "",
   });
+  const [groupsShowAdvanced, setGroupsShowAdvanced] = useState(true);
+  const [groupsShowSeparations, setGroupsShowSeparations] = useState(false);
 
   const classOptions = useMemo(
     () =>
@@ -2910,14 +2995,17 @@ function TeacherWorkspace({ user, onSignOut }) {
           supabase.from("calendar_diary_entries").select("*").order("entry_date", { ascending: false }),
           supabase.from("calendar_events").select("*").order("event_date", { ascending: false }),
         ]);
+      const diaryMissing = isMissingTableError(diaryError);
+      const eventMissing = isMissingTableError(eventError);
+      setCalendarTablesReady(!diaryMissing && !eventMissing);
 
-      if (diaryError && !isMissingTableError(diaryError)) {
+      if (diaryError && !diaryMissing) {
         setFormError(diaryError.message);
       } else {
         setCalendarDiaryEntries(diaryRows ?? []);
       }
 
-      if (eventError && !isMissingTableError(eventError)) {
+      if (eventError && !eventMissing) {
         setFormError(eventError.message);
       } else {
         setCalendarEvents(eventRows ?? []);
@@ -3048,8 +3136,11 @@ function TeacherWorkspace({ user, onSignOut }) {
       is_participating_well: !!updates.isParticipatingWell,
       needs_help: !!updates.needsHelp,
       missing_homework: !!updates.missingHomework,
-      separation_list: updates.separationList?.trim() || null,
     };
+
+    if (typeof updates.separationList === "string") {
+      payload.separation_list = updates.separationList.trim() || null;
+    }
 
     const { error } = await supabase.from("students").update(payload).eq("id", studentId);
     if (error) {
@@ -3215,18 +3306,23 @@ function TeacherWorkspace({ user, onSignOut }) {
     setFormError("");
 
     const sortOrder = assessmentForm.sortOrder ? Number(assessmentForm.sortOrder) : 0;
+    const maxScoreValue = assessmentForm.maxScore ? Number(assessmentForm.maxScore) : 10;
     const payload = {
       title: assessmentForm.title.trim(),
       subject: assessmentForm.subject.trim() || null,
       assessment_date: assessmentForm.assessmentDate || null,
       class_id: assessmentForm.classId || null,
-      max_score: assessmentForm.maxScore ? Number(assessmentForm.maxScore) : null,
+      max_score: maxScoreValue,
       notes: assessmentForm.notes.trim() || null,
       sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
     };
 
     if (!payload.title) {
       setFormError("Assessment title is required.");
+      return;
+    }
+    if (!Number.isFinite(payload.max_score) || payload.max_score <= 0) {
+      setFormError("Max score must be greater than 0.");
       return;
     }
 
@@ -3264,9 +3360,15 @@ function TeacherWorkspace({ user, onSignOut }) {
       return;
     }
 
-    const { error } = await supabase.from("assessment_entries").insert(payload);
+    const { error } = await supabase
+      .from("assessment_entries")
+      .upsert(payload, { onConflict: "assessment_id,student_id" });
     if (error) {
-      setFormError(error.message);
+      setFormError(
+        error.code === "23505"
+          ? "This student already has an entry for that assessment."
+          : error.message
+      );
       return;
     }
 
@@ -3455,7 +3557,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     const title = (formValues?.title ?? form.elements["title"]?.value ?? "").trim();
     const assessmentDate = (formValues?.assessmentDate ?? form.elements["assessmentDate"]?.value) || null;
     const maxScoreRaw = formValues?.maxScore ?? form.elements["maxScore"]?.value;
-    const maxScore = maxScoreRaw ? Number(maxScoreRaw) : null;
+    const maxScore = maxScoreRaw ? Number(maxScoreRaw) : 10;
     const inferredSortOrder =
       assessments
         .filter((item) => item.unit_id === unitId)
@@ -3463,6 +3565,10 @@ function TeacherWorkspace({ user, onSignOut }) {
 
     if (!title) {
       setFormError("Assessment title is required.");
+      return false;
+    }
+    if (!Number.isFinite(maxScore) || maxScore <= 0) {
+      setFormError("Max score must be greater than 0.");
       return false;
     }
 
@@ -3496,7 +3602,9 @@ function TeacherWorkspace({ user, onSignOut }) {
           notes: null,
         }));
 
-        const { error: entriesError } = await supabase.from("assessment_entries").insert(entryRows);
+        const { error: entriesError } = await supabase
+          .from("assessment_entries")
+          .upsert(entryRows, { onConflict: "assessment_id,student_id", ignoreDuplicates: true });
         if (entriesError) {
           setFormError(
             `Assessment created, but assigning students failed: ${entriesError.message}`
@@ -3593,7 +3701,9 @@ function TeacherWorkspace({ user, onSignOut }) {
           });
         });
 
-        const { error: entriesError } = await supabase.from("assessment_entries").insert(entryRows);
+        const { error: entriesError } = await supabase
+          .from("assessment_entries")
+          .upsert(entryRows, { onConflict: "assessment_id,student_id", ignoreDuplicates: true });
         if (entriesError) {
           setFormError(`Assessments copied, but assigning students failed: ${entriesError.message}`);
         }
@@ -3859,6 +3969,18 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
+  const handleDeleteConstraint = async (constraintId) => {
+    if (!constraintId) return;
+    if (!window.confirm("Delete this separation rule?")) return;
+    setFormError("");
+    const { error } = await supabase.from("group_constraints").delete().eq("id", constraintId);
+    if (error) {
+      setFormError(error.message);
+      return;
+    }
+    await loadData();
+  };
+
   const buildConstraintSet = (studentList) => {
     const set = new Set();
     const studentIdSet = new Set(studentList.map((student) => student.id));
@@ -4107,33 +4229,40 @@ function TeacherWorkspace({ user, onSignOut }) {
   const [timerRemainingSeconds, setTimerRemainingSeconds] = useState(0);
   const [timerShowTimesUp, setTimerShowTimesUp] = useState(false);
 
-  const stopTimerInterval = () => {
+  const stopTimerInterval = useCallback(() => {
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
-  };
+  }, []);
 
-  const stopTimerSound = () => {
+  const stopTimerSound = useCallback(() => {
     if (timerAudioRef.current) {
       timerAudioRef.current.pause();
       timerAudioRef.current.currentTime = 0;
+      timerAudioRef.current.onended = null;
       timerAudioRef.current = null;
     }
-  };
+  }, []);
 
-  const playTimerSound = () => {
+  const playTimerSound = useCallback(() => {
     try {
+      stopTimerSound();
       const audio = new Audio("/timer_end.wav");
-      audio.loop = true;
+      audio.loop = false;
+      audio.onended = () => {
+        if (timerAudioRef.current === audio) {
+          timerAudioRef.current = null;
+        }
+      };
       audio.play().catch(() => {});
       timerAudioRef.current = audio;
     } catch {
       console.warn("Timer sound failed to play.");
     }
-  };
+  }, [stopTimerSound]);
 
-  const resetTimer = () => {
+  const resetTimer = useCallback(() => {
     stopTimerSound();
     stopTimerInterval();
     setTimerShowTimesUp(false);
@@ -4141,7 +4270,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     setTimerIsExpanded(false);
     setTimerTotalSeconds(0);
     setTimerRemainingSeconds(0);
-  };
+  }, [stopTimerInterval, stopTimerSound]);
 
   const dismissTimesUpAndReset = () => {
     resetTimer();
@@ -4179,7 +4308,14 @@ function TeacherWorkspace({ user, onSignOut }) {
       });
     }, 1000);
     return () => stopTimerInterval();
-  }, [timerIsRunning]);
+  }, [timerIsRunning, playTimerSound, stopTimerInterval]);
+
+  useEffect(() => {
+    return () => {
+      stopTimerInterval();
+      stopTimerSound();
+    };
+  }, [stopTimerInterval, stopTimerSound]);
 
   const formatTimer = (totalSeconds) => {
     const minutes = Math.floor(totalSeconds / 60);
@@ -4202,15 +4338,15 @@ function TeacherWorkspace({ user, onSignOut }) {
   };
 
   const tiles = [
-    { label: "Classes", path: "/classes", color: "#2563eb", desc: "Students & lesson plans" },
-    { label: "Attendance", path: "/attendance", color: "#16a34a", desc: "Track presence" },
-    { label: "Gradebook", path: "/assessments", color: "#ea580c", desc: "Assessments" },
-    { label: "Rubrics", path: "/rubrics", color: "#7c3aed", desc: "Build rubrics" },
-    { label: "Groups", path: "/groups", color: "#a855f7", desc: "Generate groups" },
-    { label: "Random Picker", path: "/random", color: "#ef4444", desc: "Pick a student" },
-    { label: "Timer", path: "/timer", color: "#dc2626", desc: "Class timer" },
-    { label: "Running Records", path: "/running-records", color: "#0284c7", desc: "Reading checks" },
-    { label: "Calendar", path: "/calendar", color: "#0f766e", desc: "Plan dates" },
+    { label: "Classes", path: "/classes", accent: "#2563eb", desc: "Students and lesson plans", shortcut: "CL" },
+    { label: "Attendance", path: "/attendance", accent: "#16a34a", desc: "Track presence quickly", shortcut: "AT" },
+    { label: "Gradebook", path: "/assessments", accent: "#ea580c", desc: "Record and review scores", shortcut: "GB" },
+    { label: "Rubrics", path: "/rubrics", accent: "#7c3aed", desc: "Build clear criteria", shortcut: "RB" },
+    { label: "Groups", path: "/groups", accent: "#0f766e", desc: "Create balanced teams", shortcut: "GP" },
+    { label: "Random Picker", path: "/random", accent: "#ef4444", desc: "Choose a student fairly", shortcut: "RP" },
+    { label: "Timer", path: "/timer", accent: "#dc2626", desc: "Run classroom timers", shortcut: "TM" },
+    { label: "Running Records", path: "/running-records", accent: "#0284c7", desc: "Monitor reading growth", shortcut: "RR" },
+    { label: "Calendar", path: "/calendar", accent: "#0369a1", desc: "Plan classes and events", shortcut: "CA" },
   ];
 
   const PlaceholderPage = ({ title, message }) => (
@@ -4306,39 +4442,116 @@ function TeacherWorkspace({ user, onSignOut }) {
     );
   };
 
-  const TimerOverlay = () => (
-    <div className="timer-overlay">
-      <div className="timer-overlay-card">
-        <div className="timer-ring">
-          <svg viewBox="0 0 120 120">
-            <circle className="timer-ring-bg" cx="60" cy="60" r="52" />
-            <circle
-              className="timer-ring-progress"
-              cx="60"
-              cy="60"
-              r="52"
-              strokeDasharray={`${2 * Math.PI * 52}`}
-              strokeDashoffset={`${2 * Math.PI * 52 * (1 - timerProgress)}`}
-              style={{ stroke: timerProgressColor }}
-            />
-          </svg>
-          <div className="timer-ring-text">
-            <div className="timer-big">{formatTimer(timerRemainingSeconds)}</div>
-            <div className="muted">{timerTimeRemaining()}</div>
+  const TimerOverlay = () => {
+    const clampedProgress = Math.max(0, Math.min(1, timerProgress));
+    const topSandHeight = 108 * clampedProgress;
+    const topSandY = 150 - topSandHeight;
+    const bottomSandHeight = 108 * (1 - clampedProgress);
+    const bottomSandY = 258 - bottomSandHeight;
+    const streamOpacity = timerRemainingSeconds > 0 ? 1 : 0;
+
+    return (
+      <div className="timer-overlay">
+        <div className="timer-overlay-card">
+          <div className="timer-visual">
+            <div className="timer-hourglass-wrap">
+              <svg className="timer-hourglass" viewBox="0 0 220 300" aria-hidden="true">
+                <defs>
+                  <linearGradient id="woodGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#8a5a2b" />
+                    <stop offset="100%" stopColor="#5b3717" />
+                  </linearGradient>
+                  <linearGradient id="glassGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="rgba(219, 234, 254, 0.55)" />
+                    <stop offset="100%" stopColor="rgba(125, 211, 252, 0.2)" />
+                  </linearGradient>
+                  <linearGradient id="sandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fef08a" />
+                    <stop offset="100%" stopColor="#f59e0b" />
+                  </linearGradient>
+                  <clipPath id="topBulbClip">
+                    <path d="M110 42 C78 42 58 64 58 94 C58 116 78 136 100 146 L110 150 L120 146 C142 136 162 116 162 94 C162 64 142 42 110 42 Z" />
+                  </clipPath>
+                  <clipPath id="bottomBulbClip">
+                    <path d="M110 258 C78 258 58 236 58 206 C58 184 78 164 100 154 L110 150 L120 154 C142 164 162 184 162 206 C162 236 142 258 110 258 Z" />
+                  </clipPath>
+                </defs>
+
+                <ellipse cx="110" cy="22" rx="74" ry="16" className="hourglass-frame" />
+                <ellipse cx="110" cy="278" rx="74" ry="16" className="hourglass-frame" />
+                <rect x="30" y="28" width="14" height="244" rx="7" className="hourglass-post" />
+                <rect x="176" y="28" width="14" height="244" rx="7" className="hourglass-post" />
+                <circle cx="37" cy="24" r="6" className="hourglass-cap" />
+                <circle cx="183" cy="24" r="6" className="hourglass-cap" />
+                <circle cx="37" cy="276" r="6" className="hourglass-cap" />
+                <circle cx="183" cy="276" r="6" className="hourglass-cap" />
+
+                <path className="hourglass-glass" d="M110 42 C78 42 58 64 58 94 C58 116 78 136 100 146 L110 150 L120 146 C142 136 162 116 162 94 C162 64 142 42 110 42 Z" />
+                <path className="hourglass-glass" d="M110 258 C78 258 58 236 58 206 C58 184 78 164 100 154 L110 150 L120 154 C142 164 162 184 162 206 C162 236 142 258 110 258 Z" />
+                <circle className="hourglass-neck" cx="110" cy="150" r="4.5" />
+
+                <rect
+                  x="56"
+                  y={topSandY}
+                  width="108"
+                  height={topSandHeight}
+                  fill="url(#sandGradient)"
+                  clipPath="url(#topBulbClip)"
+                />
+                <rect
+                  x="56"
+                  y={bottomSandY}
+                  width="108"
+                  height={bottomSandHeight}
+                  fill="url(#sandGradient)"
+                  clipPath="url(#bottomBulbClip)"
+                />
+                <rect
+                  className="hourglass-stream"
+                  x="108"
+                  y="132"
+                  width="4"
+                  height="36"
+                  rx="2"
+                  fill="url(#sandGradient)"
+                  style={{ opacity: streamOpacity }}
+                />
+
+                <path
+                  d="M61 99 C82 126 97 139 110 150 C123 139 138 126 159 99"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.32)"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M61 201 C82 174 97 161 110 150 C123 161 138 174 159 201"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.32)"
+                  strokeWidth="2"
+                />
+              </svg>
+            </div>
+
+            <div className="timer-readout">
+              <div className="timer-big">{formatTimer(timerRemainingSeconds)}</div>
+              <div className="muted">{timerTimeRemaining()}</div>
+              <div className="timer-progress-strip" aria-hidden="true">
+                <span style={{ width: `${clampedProgress * 100}%` }} />
+              </div>
+              <div className="timer-controls">
+                <button type="button" className="timer-stop" onClick={stopTimer}>
+                  Stop
+                </button>
+                <button type="button" className="timer-minimize" onClick={() => setTimerIsExpanded(false)}>
+                  Minimize
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div className="timer-controls">
-          <button type="button" className="timer-stop" onClick={stopTimer}>
-            Stop
-          </button>
-          <button type="button" className="timer-minimize" onClick={() => setTimerIsExpanded(false)}>
-            Minimize
-          </button>
-        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const MiniTimer = () => (
     <div className="mini-timer">
@@ -4558,8 +4771,6 @@ function TeacherWorkspace({ user, onSignOut }) {
   const GroupsPage = () => {
     const [searchParams] = useSearchParams();
     const classId = searchParams.get("classId") || "";
-    const [showAdvanced, setShowAdvanced] = useState(true);
-    const [showSeparations, setShowSeparations] = useState(false);
 
     useEffect(() => {
       if (classId && groupGenForm.classId != classId) {
@@ -4571,6 +4782,13 @@ function TeacherWorkspace({ user, onSignOut }) {
     const classStudents = activeClassId
       ? students.filter((student) => student.class_id === activeClassId)
       : [];
+    const classStudentIdSet = new Set(classStudents.map((student) => student.id));
+    const classConstraintList = activeClassId
+      ? groupConstraints.filter(
+          (constraint) =>
+            classStudentIdSet.has(constraint.student_a) && classStudentIdSet.has(constraint.student_b)
+        )
+      : groupConstraints;
     const classGroups = activeClassId
       ? groups.filter((group) => group.class_id === activeClassId)
       : [];
@@ -4706,11 +4924,11 @@ function TeacherWorkspace({ user, onSignOut }) {
           <div className="groups-advanced-card">
             <div className="groups-advanced-header">
               <h3>Advanced Options</h3>
-              <button type="button" className="link" onClick={() => setShowAdvanced((prev) => !prev)}>
-                {showAdvanced ? "Hide" : "Show"}
+              <button type="button" className="link" onClick={() => setGroupsShowAdvanced((prev) => !prev)}>
+                {groupsShowAdvanced ? "Hide" : "Show"}
               </button>
             </div>
-            {showAdvanced && (
+            {groupsShowAdvanced && (
               <div className="groups-advanced-options">
                 <label className="checkbox">
                   <input
@@ -4745,7 +4963,7 @@ function TeacherWorkspace({ user, onSignOut }) {
                   />
                   Respect Separation Rules
                 </label>
-                <button type="button" className="link" onClick={() => setShowSeparations(true)}>
+                <button type="button" className="link" onClick={() => setGroupsShowSeparations(true)}>
                   Separations
                 </button>
               </div>
@@ -4790,7 +5008,7 @@ function TeacherWorkspace({ user, onSignOut }) {
           )}
         </section>
 
-        {showSeparations && (
+        {groupsShowSeparations && (
           <div className="modal-overlay">
             <div className="modal-card">
               <h3>Separation Rules</h3>
@@ -4833,23 +5051,34 @@ function TeacherWorkspace({ user, onSignOut }) {
                   Add separation
                 </button>
               </div>
-              {groupConstraints.length > 0 && (
+              {classConstraintList.length > 0 && (
                 <ul className="list">
-                  {groupConstraints.map((constraint) => {
+                  {classConstraintList.map((constraint) => {
                     const studentA = students.find((item) => item.id === constraint.student_a);
                     const studentB = students.find((item) => item.id === constraint.student_b);
                     return (
                       <li key={constraint.id}>
-                        {studentA ? `${studentA.first_name} ${studentA.last_name}` : "Student"}
-                        {" ↔ "}
-                        {studentB ? `${studentB.first_name} ${studentB.last_name}` : "Student"}
+                        <div className="list-row">
+                          <span>
+                            {studentA ? `${studentA.first_name} ${studentA.last_name}` : "Student"}
+                            {" ↔ "}
+                            {studentB ? `${studentB.first_name} ${studentB.last_name}` : "Student"}
+                          </span>
+                          <button
+                            type="button"
+                            className="link danger separation-delete-btn"
+                            onClick={() => handleDeleteConstraint(constraint.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </li>
                     );
                   })}
                 </ul>
               )}
               <div className="modal-actions">
-                <button type="button" className="link" onClick={() => setShowSeparations(false)}>
+                <button type="button" className="link" onClick={() => setGroupsShowSeparations(false)}>
                   Done
                 </button>
               </div>
@@ -4860,29 +5089,86 @@ function TeacherWorkspace({ user, onSignOut }) {
     );
   };
 
-  const DashboardPage = () => (
-    <section className="panel">
-      <h2>Dashboard</h2>
-      <p className="muted">Pick a tool to get started.</p>
-      <div className="tile-grid">
-        {tiles.map((tile) => (
-          <NavLink
-            key={tile.label}
-            to={tile.path}
-            className="tile"
-            style={{ background: tile.color }}
-          >
-            <span className="tile-label">{tile.label}</span>
-            <span className="tile-desc">{tile.desc}</span>
-          </NavLink>
-        ))}
-      </div>
-    </section>
-  );
+  const DashboardPage = () => {
+    const now = new Date();
+    const windowStart = startOfDay(now);
+    const windowEnd = endOfDay(addDays(now, 15));
+    const upcomingEventReminders = calendarEvents
+      .filter((item) => {
+        if (!item?.event_date) return false;
+        const eventDate = parseISO(String(item.event_date));
+        if (!isValid(eventDate)) return false;
+        return eventDate >= windowStart && eventDate <= windowEnd;
+      })
+      .sort((a, b) => {
+        const firstDate = parseISO(String(a.event_date));
+        const secondDate = parseISO(String(b.event_date));
+        const dateCompare = firstDate.getTime() - secondDate.getTime();
+        if (dateCompare !== 0) return dateCompare;
+        if (!!a.is_all_day !== !!b.is_all_day) return a.is_all_day ? -1 : 1;
+        return (a.start_time || "").localeCompare(b.start_time || "");
+      });
+
+    return (
+      <>
+        <section className="panel reminders-panel">
+          <div className="reminders-header">
+            <h2>Upcoming Events (Next 15 Days)</h2>
+            <NavLink to="/calendar" className="reminders-icon-link" aria-label="Open calendar" title="Open calendar">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 3a1 1 0 0 1 1 1v1h8V4a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8a3 3 0 0 1 3-3h1V4a1 1 0 0 1 1-1Zm13 8H4v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6ZM5 7a1 1 0 0 0-1 1v1h16V8a1 1 0 0 0-1-1h-1v1a1 1 0 1 1-2 0V7H8v1a1 1 0 1 1-2 0V7H5Z" />
+              </svg>
+            </NavLink>
+          </div>
+          {upcomingEventReminders.length === 0 ? (
+            <p className="muted">No upcoming events in the next 15 days.</p>
+          ) : (
+            <div className="reminders-list">
+              {upcomingEventReminders.map((item) => {
+                const eventDateLabel = format(parseISO(item.event_date), "EEE, MMM d");
+                const eventTimeLabel = item.is_all_day
+                  ? "All day"
+                  : item.start_time
+                    ? format(parseISO(item.start_time), "p")
+                    : "Time not set";
+                return (
+                  <article key={item.id} className="reminder-card">
+                    <div className="reminder-date">{eventDateLabel}</div>
+                    <div className="reminder-main">
+                      <strong>{item.title || "Untitled event"}</strong>
+                      <p>{eventTimeLabel}</p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="panel">
+          <h3>Quick Actions</h3>
+          <div className="tile-grid">
+            {tiles.map((tile) => (
+              <NavLink
+                key={tile.label}
+                to={tile.path}
+                className="tile"
+                style={{ "--tile-accent": tile.accent }}
+              >
+                <span className="tile-badge">{tile.shortcut}</span>
+                <span className="tile-label">{tile.label}</span>
+                <span className="tile-desc">{tile.desc}</span>
+              </NavLink>
+            ))}
+          </div>
+        </section>
+      </>
+    );
+  };
 
   return (
     <BrowserRouter>
-      <Layout userEmail={user.email} onSignOut={onSignOut}>
+      <Layout user={user} onSignOut={onSignOut}>
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route
@@ -5086,6 +5372,7 @@ function TeacherWorkspace({ user, onSignOut }) {
                 classOptions={classOptions}
                 calendarDiaryEntries={calendarDiaryEntries}
                 calendarEvents={calendarEvents}
+                calendarTablesReady={calendarTablesReady}
                 classes={classes}
                 subjects={subjects}
                 units={units}

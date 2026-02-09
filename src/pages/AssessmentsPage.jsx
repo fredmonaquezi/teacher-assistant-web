@@ -1,5 +1,6 @@
 import { format, parseISO } from "date-fns";
 import { NavLink } from "react-router-dom";
+import { averageFromPercents, getAssessmentMaxScore, performanceColor, scoreToPercent } from "../utils/assessmentMetrics";
 
 const AssessmentsPage = ({
   formError,
@@ -107,14 +108,12 @@ const AssessmentsPage = ({
             const entries = assessmentEntries.filter(
               (entry) => entry.assessment_id === assessment.id && entry.score !== null
             );
-            const scores = entries.map((entry) => Number(entry.score));
-            const average =
-              scores.length > 0
-                ? Math.round((scores.reduce((sum, val) => sum + val, 0) / scores.length) * 10) /
-                  10
-                : 0;
-            const averageColor =
-              average >= 7 ? "#16a34a" : average >= 5 ? "#f59e0b" : average > 0 ? "#ef4444" : "#94a3b8";
+            const maxScore = getAssessmentMaxScore(assessment);
+            const percents = entries
+              .map((entry) => scoreToPercent(entry.score, maxScore))
+              .filter((value) => Number.isFinite(value));
+            const average = averageFromPercents(percents);
+            const averageColor = performanceColor(average);
 
             return (
               <NavLink key={assessment.id} to={`/assessments/${assessment.id}`} className="gradebook-card">
@@ -128,7 +127,7 @@ const AssessmentsPage = ({
                   {assessment.max_score ? `${assessment.max_score} pts` : "No max score"}
                 </div>
                 <div className="gradebook-card-average" style={{ color: averageColor }}>
-                  Avg {average.toFixed(1)}
+                  Avg {average.toFixed(1)}%
                 </div>
               </NavLink>
             );

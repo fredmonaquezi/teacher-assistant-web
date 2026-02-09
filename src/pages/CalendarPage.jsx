@@ -22,10 +22,13 @@ const CalendarPage = ({
   classOptions,
   calendarDiaryEntries,
   calendarEvents,
+  calendarTablesReady,
   classes,
   subjects,
   units,
 }) => {
+    const calendarSetupMessage =
+      "Calendar tables are not set up yet. Run /Users/fred/Documents/teacher-assistant-web/supabase_calendar_tables.sql in Supabase SQL Editor, then refresh.";
     const [searchParams] = useSearchParams();
     const classId = searchParams.get("classId") || "";
     const [activeClassId, setActiveClassId] = useState("");
@@ -113,6 +116,11 @@ const CalendarPage = ({
       event.preventDefault();
       setFormError("");
 
+      if (!calendarTablesReady) {
+        setFormError(calendarSetupMessage);
+        return;
+      }
+
       const payload = {
         entry_date: selectedDate,
         class_id: newEntry.classId || effectiveClassId || null,
@@ -168,6 +176,11 @@ const CalendarPage = ({
       event.preventDefault();
       setFormError("");
 
+      if (!calendarTablesReady) {
+        setFormError(calendarSetupMessage);
+        return;
+      }
+
       const payload = {
         event_date: selectedDate,
         class_id: newEvent.classId || effectiveClassId || null,
@@ -216,6 +229,7 @@ const CalendarPage = ({
     return (
       <>
         {formError && <div className="error">{formError}</div>}
+        {!calendarTablesReady && <div className="error">{calendarSetupMessage}</div>}
         <section className="panel calendar-page">
           <div className="calendar-header">
             <button type="button" className="icon-button" onClick={() => navigatePeriod(-1)}>
@@ -350,7 +364,16 @@ const CalendarPage = ({
               <div className="calendar-day-section">
                 <div className="calendar-day-section-title">
                   <h4>Class Diary</h4>
-                  <button type="button" onClick={() => setShowNewEntry(true)}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!calendarTablesReady) {
+                        setFormError(calendarSetupMessage);
+                        return;
+                      }
+                      setShowNewEntry(true);
+                    }}
+                  >
                     + Add Entry
                   </button>
                 </div>
@@ -399,7 +422,16 @@ const CalendarPage = ({
               <div className="calendar-day-section">
                 <div className="calendar-day-section-title">
                   <h4>Events & Alerts</h4>
-                  <button type="button" onClick={() => setShowNewEvent(true)}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!calendarTablesReady) {
+                        setFormError(calendarSetupMessage);
+                        return;
+                      }
+                      setShowNewEvent(true);
+                    }}
+                  >
                     + Add Event
                   </button>
                 </div>
@@ -551,7 +583,9 @@ const CalendarPage = ({
                   <button type="button" className="secondary" onClick={() => setShowNewEntry(false)}>
                     Cancel
                   </button>
-                  <button type="submit">Save</button>
+                  <button type="submit" disabled={!calendarTablesReady}>
+                    Save
+                  </button>
                 </div>
               </form>
             </div>
@@ -634,7 +668,9 @@ const CalendarPage = ({
                   <button type="button" className="secondary" onClick={() => setShowNewEvent(false)}>
                     Cancel
                   </button>
-                  <button type="submit">Save Event</button>
+                  <button type="submit" disabled={!calendarTablesReady}>
+                    Save Event
+                  </button>
                 </div>
               </form>
             </div>

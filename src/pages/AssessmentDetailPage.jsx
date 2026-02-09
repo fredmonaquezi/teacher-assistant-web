@@ -2,24 +2,17 @@ import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { useParams } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { averageFromPercents, getAssessmentMaxScore, performanceColor, scoreToPercent } from "../utils/assessmentMetrics";
 
-const AssessmentEntryRow = ({ entry, student, handleUpdateAssessmentEntry }) => {
+const AssessmentEntryRow = ({ entry, student, handleUpdateAssessmentEntry, assessmentMaxScore }) => {
   const [scoreValue, setScoreValue] = useState(
     entry.score !== null && entry.score !== undefined ? String(entry.score) : ""
   );
   const [noteValue, setNoteValue] = useState(entry.notes || "");
 
   const scoreNumber = scoreValue === "" ? null : Number(scoreValue);
-  const scoreColor =
-    scoreNumber === null
-      ? "#94a3b8"
-      : scoreNumber >= 7
-      ? "#16a34a"
-      : scoreNumber >= 5
-      ? "#f59e0b"
-      : scoreNumber > 0
-      ? "#ef4444"
-      : "#94a3b8";
+  const scorePercent = scoreToPercent(scoreNumber, assessmentMaxScore);
+  const scoreColor = scorePercent === null ? "#94a3b8" : performanceColor(scorePercent);
 
   return (
     <div className="grade-entry-card">
@@ -98,9 +91,15 @@ const AssessmentDetailPage = ({
         score: null,
         notes: null,
       }));
-      const { error } = await supabase.from("assessment_entries").insert(rows);
+      const { error } = await supabase
+        .from("assessment_entries")
+        .upsert(rows, { onConflict: "assessment_id,student_id", ignoreDuplicates: true });
       if (error) {
-        setFormError(error.message);
+        setFormError(
+          error.code === "23505"
+            ? "Some assessment entries already existed. Refresh and try again."
+            : error.message
+        );
         return;
       }
       await loadData();
@@ -118,20 +117,17 @@ const AssessmentDetailPage = ({
     );
   }
 
+  const maxScore = getAssessmentMaxScore(assessment);
   const scored = assessmentEntriesForAssessment
-    .map((entry) => entry.score)
-    .filter((score) => score !== null && score !== undefined && Number(score) > 0)
+    .map((entry) => scoreToPercent(entry.score, maxScore))
+    .filter((score) => score !== null && score !== undefined && Number(score) >= 0)
     .map(Number);
 
-  const average =
-    scored.length > 0
-      ? Math.round((scored.reduce((sum, val) => sum + val, 0) / scored.length) * 10) / 10
-      : 0;
+  const average = averageFromPercents(scored);
   const highest = scored.length > 0 ? Math.max(...scored) : 0;
   const lowest = scored.length > 0 ? Math.min(...scored) : 0;
 
-  const averageColor =
-    average >= 7 ? "#16a34a" : average >= 5 ? "#f59e0b" : average > 0 ? "#ef4444" : "#94a3b8";
+  const averageColor = performanceColor(average);
 
   return (
     <section className="panel gradebook-detail">
@@ -144,23 +140,23 @@ const AssessmentDetailPage = ({
 
       <div className="gradebook-stats">
         <div className="stat-card">
-          <div className="stat-label">Class Average</div>
-          <div className="stat-value" style={{ color: averageColor }}>
-            {average.toFixed(1)}
+            <div className="stat-label">Class Average</div>
+            <div className="stat-value" style={{ color: averageColor }}>
+            {average.toFixed(1)}%
+            </div>
           </div>
-        </div>
         <div className="stat-card">
-          <div className="stat-label">Highest</div>
-          <div className="stat-value" style={{ color: "#16a34a" }}>
-            {highest.toFixed(1)}
+            <div className="stat-label">Highest</div>
+            <div className="stat-value" style={{ color: "#16a34a" }}>
+            {highest.toFixed(1)}%
+            </div>
           </div>
-        </div>
         <div className="stat-card">
-          <div className="stat-label">Lowest</div>
-          <div className="stat-value" style={{ color: "#ef4444" }}>
-            {lowest.toFixed(1)}
+            <div className="stat-label">Lowest</div>
+            <div className="stat-value" style={{ color: "#ef4444" }}>
+            {lowest.toFixed(1)}%
+            </div>
           </div>
-        </div>
       </div>
 
       <div className="gradebook-info">
@@ -231,6 +227,7 @@ const AssessmentDetailPage = ({
                   entry={entry}
                   student={student}
                   handleUpdateAssessmentEntry={handleUpdateAssessmentEntry}
+                  assessmentMaxScore={maxScore}
                 />
               ) : null;
             })}

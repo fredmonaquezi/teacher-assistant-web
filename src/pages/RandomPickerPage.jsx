@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 function RandomPickerPage({ formError, classOptions, students }) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const classId = searchParams.get("classId") || "";
   const classLabel = classOptions.find((option) => option.id === classId)?.label;
   const filteredStudents = classId
@@ -32,6 +32,14 @@ function RandomPickerPage({ formError, classOptions, students }) {
   const [pickedStudent, setPickedStudent] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [isRotationMode, setIsRotationMode] = useState(false);
+
+  const handleClassChange = (nextClassId) => {
+    if (nextClassId) {
+      setSearchParams({ classId: nextClassId });
+      return;
+    }
+    setSearchParams({});
+  };
 
     const categories = [...defaultCategories, ...customCategories];
     const isSelectedCategoryCustom = customCategories.includes(selectedCategory);
@@ -134,10 +142,21 @@ function RandomPickerPage({ formError, classOptions, students }) {
         {formError && <div className="error">{formError}</div>}
         <section className="panel random-page">
           <h2>Student Picker</h2>
+          <label className="stack">
+            <span>Class</span>
+            <select value={classId} onChange={(event) => handleClassChange(event.target.value)}>
+              <option value="">All classes</option>
+              {classOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
           {classId && <div className="badge">Class: {classLabel || "Selected class"}</div>}
           {!classId && (
             <div className="muted">
-              Tip: open from a class to keep rotation per class.
+              Rotation is currently tracked across all classes.
             </div>
           )}
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, useParams } from "react-router-dom";
+import { averageFromPercents, entryToPercent, performanceColor } from "../utils/assessmentMetrics";
 
 function ClassDetailPage({
   formError,
@@ -47,6 +48,7 @@ function ClassDetailPage({
     ? classAssessmentList.filter((assessment) => assessment.subject_id === selectedSubjectId)
     : classAssessmentList;
   const filteredAssessmentIdSet = new Set(filteredAssessmentList.map((assessment) => assessment.id));
+  const assessmentLookup = new Map(classAssessmentList.map((assessment) => [assessment.id, assessment]));
   const filteredResults = assessmentEntries.filter(
     (entry) =>
       filteredAssessmentIdSet.has(entry.assessment_id) &&
@@ -54,10 +56,9 @@ function ClassDetailPage({
       entry.score !== null &&
       entry.score !== undefined
   );
-  const classAverage =
-    filteredResults.length > 0
-      ? filteredResults.reduce((sum, entry) => sum + Number(entry.score || 0), 0) / filteredResults.length
-      : 0;
+  const classAverage = averageFromPercents(
+    filteredResults.map((entry) => entryToPercent(entry, assessmentLookup))
+  );
   const classSessionIdSet = new Set(
     attendanceSessions
       .filter((session) => session.class_id === classId)
@@ -76,13 +77,13 @@ function ClassDetailPage({
     .map((student) => {
       const rows = filteredResults.filter((entry) => entry.student_id === student.id);
       if (rows.length === 0) return null;
-      const avg = rows.reduce((sum, row) => sum + Number(row.score || 0), 0) / rows.length;
+      const avg = averageFromPercents(rows.map((row) => entryToPercent(row, assessmentLookup)));
       return { student, average: avg };
     })
     .filter(Boolean);
   const topPerformers = [...studentAverageRows].sort((a, b) => b.average - a.average).slice(0, 3);
   const studentsNeedingAttention = studentAverageRows
-    .filter((row) => row.average < 6)
+    .filter((row) => row.average < 50)
     .map((row) => {
       const studentRows = classAttendanceResults.filter((entry) => entry.student_id === row.student.id);
       const absentCount = studentRows.filter((entry) => entry.status === "Didn't come").length;
@@ -93,9 +94,9 @@ function ClassDetailPage({
       return { ...row, flags };
     })
     .sort((a, b) => a.average - b.average);
-  const excellentCount = studentAverageRows.filter((row) => row.average >= 8).length;
-  const goodCount = studentAverageRows.filter((row) => row.average >= 6 && row.average < 8).length;
-  const needsWorkCount = studentAverageRows.filter((row) => row.average < 6).length;
+  const excellentCount = studentAverageRows.filter((row) => row.average >= 70).length;
+  const goodCount = studentAverageRows.filter((row) => row.average >= 50 && row.average < 70).length;
+  const needsWorkCount = studentAverageRows.filter((row) => row.average < 50).length;
   const subjectPerformanceRows = classSubjects
     .map((subject) => {
       const subjectAssessmentIds = new Set(
@@ -109,8 +110,9 @@ function ClassDetailPage({
           entry.score !== undefined
       );
       if (subjectRows.length === 0) return { subject, average: 0, count: 0 };
-      const average =
-        subjectRows.reduce((sum, row) => sum + Number(row.score || 0), 0) / subjectRows.length;
+      const average = averageFromPercents(
+        subjectRows.map((row) => entryToPercent(row, assessmentLookup))
+      );
       return { subject, average, count: subjectRows.length };
     })
     .sort((a, b) => b.average - a.average);
@@ -183,8 +185,8 @@ function ClassDetailPage({
         <div className="class-analytics-stats">
           <article className="class-analytics-card">
             <p>Class Average</p>
-            <strong style={{ color: classAverage >= 7 ? "#16a34a" : classAverage >= 5 ? "#f59e0b" : "#ef4444" }}>
-              {classAverage.toFixed(1)}
+            <strong style={{ color: performanceColor(classAverage) }}>
+              {classAverage.toFixed(1)}%
             </strong>
           </article>
           <article className="class-analytics-card">
@@ -203,17 +205,17 @@ function ClassDetailPage({
           <article className="class-analytics-block">
             <h4>Performance Distribution</h4>
             <div className="distribution-row">
-              <span>Excellent (8+)</span>
+              <span>Excellent (70%+)</span>
               <span>{excellentCount}</span>
             </div>
             <div className="distribution-track"><span style={{ width: distributionBar(excellentCount), background: "#16a34a" }} /></div>
             <div className="distribution-row">
-              <span>Good (6-7.9)</span>
+              <span>Good (50-69.9%)</span>
               <span>{goodCount}</span>
             </div>
             <div className="distribution-track"><span style={{ width: distributionBar(goodCount), background: "#f59e0b" }} /></div>
             <div className="distribution-row">
-              <span>Needs Work (&lt;6)</span>
+              <span>Needs Work (&lt;50%)</span>
               <span>{needsWorkCount}</span>
             </div>
             <div className="distribution-track"><span style={{ width: distributionBar(needsWorkCount), background: "#ef4444" }} /></div>
@@ -228,7 +230,7 @@ function ClassDetailPage({
                 {topPerformers.map((row, idx) => (
                   <li key={row.student.id}>
                     <span>{idx + 1}. {row.student.first_name} {row.student.last_name}</span>
-                    <strong>{row.average.toFixed(1)}</strong>
+                    <strong>{row.average.toFixed(1)}%</strong>
                   </li>
                 ))}
               </ul>
@@ -246,7 +248,7 @@ function ClassDetailPage({
                     {row.student.first_name} {row.student.last_name}
                     {row.flags.length > 0 ? ` • ${row.flags.join(" • ")}` : ""}
                   </span>
-                  <strong style={{ color: "#ef4444" }}>{row.average.toFixed(1)}</strong>
+                  <strong style={{ color: "#ef4444" }}>{row.average.toFixed(1)}%</strong>
                 </li>
               ))}
             </ul>
@@ -260,7 +262,7 @@ function ClassDetailPage({
               {subjectPerformanceRows.map((row) => (
                 <li key={row.subject.id}>
                   <span>{row.subject.name}</span>
-                  <strong>{row.count > 0 ? row.average.toFixed(1) : "—"}</strong>
+                  <strong>{row.count > 0 ? `${row.average.toFixed(1)}%` : "—"}</strong>
                 </li>
               ))}
             </ul>
@@ -303,35 +305,23 @@ function ClassDetailPage({
             />
           </label>
           <label className="stack">
-            <span>Description</span>
+            <span>Notes</span>
             <input
               value={subjectForm.description}
               onChange={(event) =>
                 setSubjectForm((prev) => ({ ...prev, description: event.target.value }))
               }
-              placeholder="Optional"
-            />
-          </label>
-          <label className="stack">
-            <span>Sort order</span>
-            <input
-              type="number"
-              value={subjectForm.sortOrder}
-              onChange={(event) =>
-                setSubjectForm((prev) => ({ ...prev, sortOrder: event.target.value }))
-              }
-              placeholder="0"
-              min="0"
+              placeholder="Optional notes"
             />
           </label>
           <button type="submit">Add subject</button>
         </form>
 
-        <ul className="list">
+        <ul className="subject-card-grid">
           {classSubjects.map((subject) => (
             <li
               key={subject.id}
-              className="draggable"
+              className="subject-card draggable"
               draggable={isReorderEnabled}
               onDragStart={(event) => {
                 if (!isSubjectDragAllowed(subject.id)) {
@@ -352,21 +342,24 @@ function ClassDetailPage({
                 handleSwapSortOrder("subjects", classSubjects, draggedSubjectId, subject.id)
               }
             >
-              <div className="list-row">
-                <NavLink to={`/subjects/${subject.id}`}>{subject.name}</NavLink>
-                <button
-                  type="button"
-                  className={subjectHandleClassName}
-                  aria-label={`Drag ${subject.name}`}
-                  onPointerDown={(event) => onSubjectHandlePointerDown(subject.id, event)}
-                  onPointerMove={onSubjectHandlePointerMove}
-                  onPointerUp={onSubjectHandlePointerUp}
-                  onPointerCancel={onSubjectHandlePointerUp}
-                >
-                  ⠿
-                </button>
-              </div>
-              {subject.description ? ` • ${subject.description}` : ""}
+              <NavLink to={`/subjects/${subject.id}`} className="subject-card-link">
+                <div className="subject-card-name">{subject.name}</div>
+                <div className="subject-card-description">
+                  {subject.description || "Open to manage units and assessments"}
+                </div>
+              </NavLink>
+              <button
+                type="button"
+                className={subjectHandleClassName}
+                aria-label={`Drag ${subject.name}`}
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => onSubjectHandlePointerDown(subject.id, event)}
+                onPointerMove={onSubjectHandlePointerMove}
+                onPointerUp={onSubjectHandlePointerUp}
+                onPointerCancel={onSubjectHandlePointerUp}
+              >
+                ⠿
+              </button>
             </li>
           ))}
           {classSubjects.length === 0 && <li className="muted">No subjects yet.</li>}
@@ -385,11 +378,36 @@ function ClassDetailPage({
         >
           + Add Student
         </button>
-        <ul className="list">
+        <ul className="student-card-grid">
           {classStudents.map((student) => (
             <li key={student.id}>
-              <NavLink to={`/students/${student.id}`}>
-                {student.first_name} {student.last_name}
+              <NavLink to={`/students/${student.id}`} className="student-card-link">
+                <span className="student-card-avatar">
+                  {(student.first_name || "S").charAt(0).toUpperCase()}
+                </span>
+                <div className="student-card-content">
+                  <strong>
+                    {student.first_name} {student.last_name}
+                  </strong>
+                  <span>Open student profile</span>
+                </div>
+                <div className="student-card-flags">
+                  {student.is_participating_well && (
+                    <span className="student-flag green" title="Participating well" aria-label="Participating well">
+                      ⭐
+                    </span>
+                  )}
+                  {student.needs_help && (
+                    <span className="student-flag orange" title="Needs help" aria-label="Needs help">
+                      ⚠️
+                    </span>
+                  )}
+                  {student.missing_homework && (
+                    <span className="student-flag red" title="Missing homework" aria-label="Missing homework">
+                      📚
+                    </span>
+                  )}
+                </div>
               </NavLink>
             </li>
           ))}
@@ -449,16 +467,10 @@ function ClassDetailPage({
                 placeholder="Optional"
               />
             </label>
-            <label className="stack">
-              <span>Separation list (IDs)</span>
-              <input
-                value={studentForm.separationList}
-                onChange={(event) =>
-                  setStudentForm((prev) => ({ ...prev, separationList: event.target.value }))
-                }
-                placeholder="comma-separated student IDs"
-              />
-            </label>
+            <p className="muted student-separation-help">
+              Need to keep some students apart in groups? Use{" "}
+              <NavLink to={`/groups?classId=${classId}`}>Groups → Separations</NavLink>.
+            </p>
             <label className="stack">
               <span>Flags</span>
               <div className="checkbox-row">
