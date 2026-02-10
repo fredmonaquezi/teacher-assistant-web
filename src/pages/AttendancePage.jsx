@@ -152,7 +152,7 @@ const AttendancePage = ({
       {formError && <div className="error">{formError}</div>}
       <section className="panel attendance-page">
         <div className="attendance-header">
-          <div>
+          <div className="attendance-page-title">
             <h2>Attendance</h2>
             {classLabel && <div className="muted">Class: {classLabel}</div>}
           </div>
@@ -185,21 +185,21 @@ const AttendancePage = ({
                 disabled={!effectiveClassId}
               >
                 Today
-              </button>
+            </button>
           </div>
         </div>
 
         {classSessions.length > 0 && (
           <div className="attendance-stats">
-            <div className="stat-card">
+            <div className="stat-card attendance-stat-card">
               <div className="stat-value">{classSessions.length}</div>
               <div className="stat-label">Total Sessions</div>
             </div>
-            <div className="stat-card">
+            <div className="stat-card attendance-stat-card">
               <div className="stat-value">{classStudents.length}</div>
               <div className="stat-label">Students</div>
             </div>
-            <div className="stat-card">
+            <div className="stat-card attendance-stat-card">
               <div className="stat-value" style={{ color: attendanceRateColor }}>
                 {attendanceRate}%
               </div>
@@ -233,7 +233,7 @@ const AttendancePage = ({
                         <div className="attendance-card-date">
                           {formatSessionDate(session.session_date)}
                         </div>
-                        <div className="muted">{relativeDate(session.session_date)}</div>
+                        <div className="attendance-date-chip">{relativeDate(session.session_date)}</div>
                       </div>
                       <button
                         type="button"

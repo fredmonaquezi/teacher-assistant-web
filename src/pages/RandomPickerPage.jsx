@@ -32,6 +32,8 @@ function RandomPickerPage({ formError, classOptions, students }) {
   const [pickedStudent, setPickedStudent] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [isRotationMode, setIsRotationMode] = useState(false);
+  const [rotationRevision, setRotationRevision] = useState(0);
+  const [rotationFeedback, setRotationFeedback] = useState("");
 
   const handleClassChange = (nextClassId) => {
     if (nextClassId) {
@@ -69,6 +71,7 @@ function RandomPickerPage({ formError, classOptions, students }) {
 
     const setRotationData = (value) => {
       localStorage.setItem(rotationKeyForCategory(selectedCategory), value);
+      setRotationRevision((prev) => prev + 1);
     };
 
     const usedStudentIds = new Set(getRotationData().split(",").filter(Boolean));
@@ -108,8 +111,20 @@ function RandomPickerPage({ formError, classOptions, students }) {
     };
 
     const clearUsed = () => {
+      const clearedCount = usedStudentIds.size;
       setRotationData("");
+      setRotationFeedback(
+        clearedCount > 0
+          ? `${clearedCount} student${clearedCount === 1 ? "" : "s"} reset for ${selectedCategory}.`
+          : `${selectedCategory} rotation is already clear.`
+      );
     };
+
+    useEffect(() => {
+      if (!rotationFeedback) return undefined;
+      const timer = window.setTimeout(() => setRotationFeedback(""), 2200);
+      return () => window.clearTimeout(timer);
+    }, [rotationFeedback]);
 
     const addCustomCategory = () => {
       const cleaned = newCategoryName.trim();
@@ -141,7 +156,16 @@ function RandomPickerPage({ formError, classOptions, students }) {
       <>
         {formError && <div className="error">{formError}</div>}
         <section className="panel random-page">
-          <h2>Student Picker</h2>
+          <div className="random-page-header">
+            <div className="random-page-heading">
+              <span className="random-page-kicker">Random Picker</span>
+              <h2>Pick a student quickly</h2>
+              <p className="muted">Simple, fair picks for classroom roles.</p>
+            </div>
+            <span className="random-scope-chip">
+              {classId ? classLabel || "Selected class" : "All classes"}
+            </span>
+          </div>
           <label className="stack">
             <span>Class</span>
             <select value={classId} onChange={(event) => handleClassChange(event.target.value)}>
@@ -153,7 +177,6 @@ function RandomPickerPage({ formError, classOptions, students }) {
               ))}
             </select>
           </label>
-          {classId && <div className="badge">Class: {classLabel || "Selected class"}</div>}
           {!classId && (
             <div className="muted">
               Rotation is currently tracked across all classes.
@@ -166,17 +189,18 @@ function RandomPickerPage({ formError, classOptions, students }) {
             onClick={handleQuickPick}
             disabled={!filteredStudents.length}
           >
-            <div className="random-quick-icon">🔀</div>
-            <div>
+            <div className="random-quick-icon">🎲</div>
+            <div className="random-quick-copy">
               <div className="random-quick-title">Quick Random Pick</div>
-              <div className="muted">Tap here for instant random pick</div>
-              <div className="random-quick-note">(any student, no rotation tracking)</div>
+              <div className="random-quick-subtitle">Tap to spin and choose instantly</div>
+              <div className="random-quick-note">Any student, no rotation tracking</div>
             </div>
+            <span className="random-quick-cta">Pick Now</span>
           </button>
 
           <div className="random-section">
             <div className="random-section-header">
-              <h3>Select Role</h3>
+              <h3>Role Rotation</h3>
               <div className="random-section-actions">
                 {isSelectedCategoryCustom && (
                   <button type="button" className="link danger" onClick={() => setShowDeleteCategory(true)}>
@@ -224,12 +248,22 @@ function RandomPickerPage({ formError, classOptions, students }) {
             </div>
           </div>
 
-          <div className="random-rotation-card">
-            <div className="random-rotation-header">
-              <span className="random-rotation-icon">{categoryIcon}</span>
-              <strong>{selectedCategory} Rotation</strong>
+          <div className="random-rotation-card" style={{ "--role-color": categoryColor }}>
+            <div className="random-rotation-top">
+              <div className="random-rotation-headline">
+                <div className="random-rotation-header">
+                  <span className="random-rotation-icon">{categoryIcon}</span>
+                  <strong>{selectedCategory} Rotation</strong>
+                </div>
+                <div className="random-rotation-subtitle">Fair rotation, everyone gets a turn.</div>
+              </div>
+              {usedStudents.length > 0 && (
+                <button type="button" className="random-clear" onClick={clearUsed}>
+                  Clear used students
+                </button>
+              )}
             </div>
-            <div className="muted">Fair rotation - everyone gets a turn!</div>
+            {rotationFeedback && <div className="result random-feedback">{rotationFeedback}</div>}
 
             <div className="random-stats">
               <div className="stat-card green">
@@ -245,12 +279,6 @@ function RandomPickerPage({ formError, classOptions, students }) {
                 <div className="stat-label">Total</div>
               </div>
             </div>
-
-            {usedStudents.length > 0 && (
-              <button type="button" className="random-clear" onClick={clearUsed}>
-                Clear used students
-              </button>
-            )}
 
             <div className="random-spinner" style={{ borderColor: categoryColor }}>
               <div className={`random-spinner-icon ${isSpinning ? "spin" : ""}`}>
@@ -365,15 +393,17 @@ function RandomPickerPage({ formError, classOptions, students }) {
         {pickedStudent && (
           <div className="modal-overlay">
             <div className="modal-card random-result">
-              <div className="random-result-icon">{isRotationMode ? categoryIcon : "🔀"}</div>
-              <div className="muted">
-                {isRotationMode ? `Today's ${selectedCategory}` : "Random Pick!"}
+              <div className="random-result-icon-wrap">
+                <div className="random-result-icon">{isRotationMode ? categoryIcon : "🔀"}</div>
               </div>
-              <h2>
+              <div className="random-result-kicker">
+                {isRotationMode ? `Today's ${selectedCategory}` : "Random Pick"}
+              </div>
+              <h2 className="random-result-name">
                 {pickedStudent.first_name} {pickedStudent.last_name}
               </h2>
               <div className="random-result-emoji">🎉</div>
-              <div className="modal-actions">
+              <div className="modal-actions random-result-actions">
                 {isRotationMode ? (
                   <>
                     <button type="button" onClick={markUsed} style={{ background: categoryColor }}>

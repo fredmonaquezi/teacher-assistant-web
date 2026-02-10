@@ -16,7 +16,13 @@ import CalendarPage from "./pages/CalendarPage";
 import RandomPickerPage from "./pages/RandomPickerPage";
 import RunningRecordsPage from "./pages/RunningRecordsPage";
 import { supabase } from "./supabaseClient";
-import { averageFromPercents, entryToPercent, performanceColor } from "./utils/assessmentMetrics";
+import {
+  averageFromPercents,
+  entryToPercent,
+  getAssessmentMaxScore,
+  performanceColor,
+  scoreToPercent,
+} from "./utils/assessmentMetrics";
 import "./App.css";
 import "react-day-picker/dist/style.css";
 
@@ -2836,6 +2842,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     clearExisting: true,
     balanceGender: false,
     balanceAbility: false,
+    pairSupportPartners: false,
     respectSeparations: true,
   });
   const [constraintForm, setConstraintForm] = useState({
@@ -2844,6 +2851,7 @@ function TeacherWorkspace({ user, onSignOut }) {
   });
   const [groupsShowAdvanced, setGroupsShowAdvanced] = useState(true);
   const [groupsShowSeparations, setGroupsShowSeparations] = useState(false);
+  const groupsScrollTopRef = useRef(0);
 
   const classOptions = useMemo(
     () =>
@@ -4025,7 +4033,82 @@ function TeacherWorkspace({ user, onSignOut }) {
 
   const normalizeGender = (value) => (value || "").trim().toLowerCase();
 
-  const pickBestStudent = (candidates, group, constraintSet, options) => {
+  const buildAbilityProfiles = (classId, classStudents) => {
+    const classAssessmentMap = new Map(
+      assessments
+        .filter((assessment) => assessment.class_id === classId)
+        .map((assessment) => [assessment.id, assessment])
+    );
+    const scoreSamplesByStudent = new Map();
+
+    assessmentEntries.forEach((entry) => {
+      const assessment = classAssessmentMap.get(entry.assessment_id);
+      if (!assessment) return;
+      const percent = scoreToPercent(entry.score, getAssessmentMaxScore(assessment));
+      if (!Number.isFinite(percent)) return;
+      if (!scoreSamplesByStudent.has(entry.student_id)) {
+        scoreSamplesByStudent.set(entry.student_id, []);
+      }
+      scoreSamplesByStudent.get(entry.student_id).push(percent);
+    });
+
+    const averages = classStudents
+      .map((student) => {
+        const samples = scoreSamplesByStudent.get(student.id) || [];
+        if (samples.length === 0) return null;
+        return averageFromPercents(samples);
+      })
+      .filter((value) => Number.isFinite(value))
+      .sort((a, b) => a - b);
+
+    const lowerIndex = averages.length
+      ? Math.max(0, Math.floor((averages.length - 1) * 0.33))
+      : -1;
+    const upperIndex = averages.length
+      ? Math.max(0, Math.floor((averages.length - 1) * 0.66))
+      : -1;
+    const lowerThreshold = lowerIndex >= 0 ? averages[lowerIndex] : null;
+    const upperThreshold = upperIndex >= 0 ? averages[upperIndex] : null;
+
+    const abilityByStudentId = new Map();
+
+    classStudents.forEach((student) => {
+      const samples = scoreSamplesByStudent.get(student.id) || [];
+      const avgPercent = samples.length ? averageFromPercents(samples) : null;
+      let abilityBand = "unknown";
+      let abilityRank = 1;
+
+      if (Number.isFinite(avgPercent)) {
+        if (!Number.isFinite(lowerThreshold) || !Number.isFinite(upperThreshold)) {
+          abilityBand = "proficient";
+          abilityRank = 1;
+        } else if (avgPercent <= lowerThreshold) {
+          abilityBand = "developing";
+          abilityRank = 0;
+        } else if (avgPercent >= upperThreshold) {
+          abilityBand = "advanced";
+          abilityRank = 2;
+        } else {
+          abilityBand = "proficient";
+          abilityRank = 1;
+        }
+      }
+
+      abilityByStudentId.set(student.id, {
+        averagePercent: avgPercent,
+        band: abilityBand,
+        rank: abilityRank,
+        isSupportPartner:
+          !student.needs_help &&
+          Number.isFinite(avgPercent) &&
+          (abilityBand === "advanced" || avgPercent >= 75),
+      });
+    });
+
+    return abilityByStudentId;
+  };
+
+  const pickBestStudent = (candidates, group, constraintSet, options, abilityByStudentId) => {
     let filtered = candidates.filter((student) =>
       canJoinGroup(student.id, group.map((g) => g.id), constraintSet)
     );
@@ -4039,26 +4122,76 @@ function TeacherWorkspace({ user, onSignOut }) {
       if (differentGender) return differentGender;
     }
 
-    if (options.balanceAbility && group.length > 0) {
+    if (options.pairSupportPartners && group.length > 0) {
       const hasNeedsHelp = group.some((s) => s.needs_help);
-      if (hasNeedsHelp) {
-        const candidate = filtered.find((s) => !s.needs_help);
+      const hasSupportPartner = group.some(
+        (s) => abilityByStudentId.get(s.id)?.isSupportPartner
+      );
+
+      if (hasNeedsHelp && !hasSupportPartner) {
+        const candidate = filtered.find(
+          (s) => !s.needs_help && abilityByStudentId.get(s.id)?.isSupportPartner
+        );
         if (candidate) return candidate;
-      } else {
+      }
+
+      if (hasSupportPartner && !hasNeedsHelp) {
         const candidate = filtered.find((s) => s.needs_help);
         if (candidate) return candidate;
       }
     }
 
+    if (options.balanceAbility && group.length > 0) {
+      const bandCounts = group.reduce((acc, student) => {
+        const band = abilityByStudentId.get(student.id)?.band || "unknown";
+        acc.set(band, (acc.get(band) || 0) + 1);
+        return acc;
+      }, new Map());
+
+      const ranked = [...filtered].sort((a, b) => {
+        const aBand = abilityByStudentId.get(a.id)?.band || "unknown";
+        const bBand = abilityByStudentId.get(b.id)?.band || "unknown";
+        const aBandCount = bandCounts.get(aBand) || 0;
+        const bBandCount = bandCounts.get(bBand) || 0;
+        if (aBandCount !== bBandCount) return aBandCount - bBandCount;
+
+        const aRank = abilityByStudentId.get(a.id)?.rank ?? 1;
+        const bRank = abilityByStudentId.get(b.id)?.rank ?? 1;
+        if (aRank !== bRank) return aRank - bRank;
+
+        const aAvg = abilityByStudentId.get(a.id)?.averagePercent ?? -1;
+        const bAvg = abilityByStudentId.get(b.id)?.averagePercent ?? -1;
+        return aAvg - bAvg;
+      });
+
+      if (ranked.length > 0) return ranked[0];
+    }
+
     return filtered[0];
   };
 
-  const generateGroups = (studentList, groupSize, constraintSet, options, maxAttempts = 200) => {
+  const generateGroups = (
+    studentList,
+    groupSize,
+    constraintSet,
+    options,
+    abilityByStudentId,
+    maxAttempts = 200
+  ) => {
     if (studentList.length === 0) return [];
     const size = Math.max(2, groupSize);
     let available = [...studentList];
 
     if (options.balanceAbility) {
+      available.sort((a, b) => {
+        const aRank = abilityByStudentId.get(a.id)?.rank ?? 1;
+        const bRank = abilityByStudentId.get(b.id)?.rank ?? 1;
+        if (aRank !== bRank) return aRank - bRank;
+        const aAvg = abilityByStudentId.get(a.id)?.averagePercent ?? -1;
+        const bAvg = abilityByStudentId.get(b.id)?.averagePercent ?? -1;
+        return aAvg - bAvg;
+      });
+    } else if (options.pairSupportPartners) {
       available.sort((a, b) => (a.needs_help ? 0 : 1) - (b.needs_help ? 0 : 1));
     } else {
       available = shuffleArray(available);
@@ -4072,7 +4205,7 @@ function TeacherWorkspace({ user, onSignOut }) {
       const group = [];
 
       while (group.length < size && available.length > 0 && attempts < maxAttempts) {
-        const candidate = pickBestStudent(available, group, constraintSet, options);
+        const candidate = pickBestStudent(available, group, constraintSet, options, abilityByStudentId);
         if (!candidate) break;
         group.push(candidate);
         available = available.filter((s) => s.id !== candidate.id);
@@ -4094,6 +4227,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     const clearExisting = groupGenForm.clearExisting;
     const balanceGender = groupGenForm.balanceGender;
     const balanceAbility = groupGenForm.balanceAbility;
+    const pairSupportPartners = groupGenForm.pairSupportPartners;
     const respectSeparations = groupGenForm.respectSeparations;
 
     if (!classId) {
@@ -4112,11 +4246,13 @@ function TeacherWorkspace({ user, onSignOut }) {
     }
 
     const constraintSet = respectSeparations ? buildConstraintSet(classStudents) : new Set();
+    const abilityByStudentId = buildAbilityProfiles(classId, classStudents);
     const groupList = generateGroups(
       classStudents,
       size,
       constraintSet,
-      { balanceGender, balanceAbility, respectSeparations }
+      { balanceGender, balanceAbility, pairSupportPartners, respectSeparations },
+      abilityByStudentId
     );
     if (!groupList) {
       setFormError("Could not satisfy the grouping rules. Try adjusting constraints or size.");
@@ -4365,9 +4501,12 @@ function TeacherWorkspace({ user, onSignOut }) {
     return (
       <section className="panel timer-page">
         <div className="timer-header-card">
-          <div className="timer-icon">⏱️</div>
-          <h2>Classroom Timer</h2>
-          <p className="muted">Choose a duration to start the countdown.</p>
+          <div className="timer-header-copy">
+            <span className="timer-kicker">Focus Tool</span>
+            <h2>Classroom Timer</h2>
+            <p className="muted">Choose a duration and keep every activity on track.</p>
+          </div>
+          <div className="timer-icon" aria-hidden="true">⏱️</div>
         </div>
 
         <div className="timer-section">
@@ -4385,6 +4524,7 @@ function TeacherWorkspace({ user, onSignOut }) {
                   {preset.icon}
                 </div>
                 <div className="timer-preset-label">{preset.label}</div>
+                <div className="timer-preset-sub">{preset.minutes} min</div>
               </button>
             ))}
           </div>
@@ -4398,6 +4538,7 @@ function TeacherWorkspace({ user, onSignOut }) {
               <span>:</span>
               <span>{String(customSeconds).padStart(2, "0")}</span>
             </div>
+            <p className="timer-custom-hint">Set your exact countdown length</p>
 
             <div className="timer-picker-row">
               <label className="stack">
@@ -4535,6 +4676,9 @@ function TeacherWorkspace({ user, onSignOut }) {
             <div className="timer-readout">
               <div className="timer-big">{formatTimer(timerRemainingSeconds)}</div>
               <div className="muted">{timerTimeRemaining()}</div>
+              <div className="timer-progress-label">
+                {Math.round(clampedProgress * 100)}% remaining
+              </div>
               <div className="timer-progress-strip" aria-hidden="true">
                 <span style={{ width: `${clampedProgress * 100}%` }} />
               </div>
@@ -4628,13 +4772,23 @@ function TeacherWorkspace({ user, onSignOut }) {
               <button
                 key={status.value}
                 type="button"
-                className={`status-btn ${entry.status === status.value ? "selected" : ""}`}
+                className={`status-btn ${
+                  status.value === "Present"
+                    ? "present"
+                    : status.value === "Arrived late"
+                      ? "late"
+                      : status.value === "Left early"
+                        ? "left-early"
+                        : "absent"
+                } ${entry.status === status.value ? "selected" : ""}`}
                 style={
                   entry.status === status.value
                     ? { background: status.color, color: "#fff" }
                     : undefined
                 }
                 onClick={() => handleUpdateAttendanceEntry(entry.id, { status: status.value })}
+                aria-label={status.value}
+                title={status.value}
               >
                 {status.icon}
               </button>
@@ -4770,6 +4924,34 @@ function TeacherWorkspace({ user, onSignOut }) {
 
   const GroupsPage = () => {
     const [searchParams] = useSearchParams();
+    const openSeparationsModal = () => {
+      if (typeof window !== "undefined") {
+        groupsScrollTopRef.current = window.scrollY;
+      }
+      setGroupsShowSeparations(true);
+    };
+
+    const closeSeparationsModal = () => {
+      if (typeof window !== "undefined") {
+        groupsScrollTopRef.current = window.scrollY;
+      }
+      setGroupsShowSeparations(false);
+      if (typeof window !== "undefined") {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            window.scrollTo({ top: groupsScrollTopRef.current, behavior: "auto" });
+          });
+        });
+      }
+    };
+
+    useEffect(() => {
+      if (!groupsShowSeparations || typeof window === "undefined") return;
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: groupsScrollTopRef.current, behavior: "auto" });
+      });
+    }, [groupsShowSeparations]);
+
     const classId = searchParams.get("classId") || "";
 
     useEffect(() => {
@@ -4878,7 +5060,7 @@ function TeacherWorkspace({ user, onSignOut }) {
             </div>
 
             <div className="groups-size-row">
-              <div>
+              <div className="groups-size-display">
                 <div className="muted">Students per group</div>
                 <div className="groups-size-value">{groupSize}</div>
               </div>
@@ -4948,7 +5130,17 @@ function TeacherWorkspace({ user, onSignOut }) {
                       setGroupGenForm((prev) => ({ ...prev, balanceAbility: event.target.checked }))
                     }
                   />
-                  Balance Ability Levels
+                  Balance Academic Levels
+                </label>
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={groupGenForm.pairSupportPartners}
+                    onChange={(event) =>
+                      setGroupGenForm((prev) => ({ ...prev, pairSupportPartners: event.target.checked }))
+                    }
+                  />
+                  Pair Learning Partners
                 </label>
                 <label className="checkbox">
                   <input
@@ -4963,9 +5155,12 @@ function TeacherWorkspace({ user, onSignOut }) {
                   />
                   Respect Separation Rules
                 </label>
-                <button type="button" className="link" onClick={() => setGroupsShowSeparations(true)}>
+                <button type="button" className="link" onClick={openSeparationsModal}>
                   Separations
                 </button>
+                <p className="muted groups-option-help">
+                  Academic levels are estimated from recent gradebook scores for this class.
+                </p>
               </div>
             )}
           </div>
@@ -5078,7 +5273,7 @@ function TeacherWorkspace({ user, onSignOut }) {
                 </ul>
               )}
               <div className="modal-actions">
-                <button type="button" className="link" onClick={() => setGroupsShowSeparations(false)}>
+                <button type="button" className="link" onClick={closeSeparationsModal}>
                   Done
                 </button>
               </div>
@@ -5238,11 +5433,11 @@ function TeacherWorkspace({ user, onSignOut }) {
             element={
               <AssessmentsPage
                 formError={formError}
-                handleCreateAssessment={handleCreateAssessment}
-                assessmentForm={assessmentForm}
-                setAssessmentForm={setAssessmentForm}
-                classOptions={classOptions}
                 loading={loading}
+                classes={classes}
+                subjects={subjects}
+                units={units}
+                students={students}
                 assessments={assessments}
                 assessmentEntries={assessmentEntries}
               />

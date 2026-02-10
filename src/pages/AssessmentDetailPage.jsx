@@ -35,6 +35,9 @@ const AssessmentEntryRow = ({ entry, student, handleUpdateAssessmentEntry, asses
             }
             style={{ color: scoreColor }}
           />
+          <span className="grade-entry-percent">
+            {scorePercent === null ? "—" : `${scorePercent.toFixed(1)}%`}
+          </span>
         </div>
       </div>
       <div className="grade-entry-notes">
@@ -131,27 +134,30 @@ const AssessmentDetailPage = ({
 
   return (
     <section className="panel gradebook-detail">
-      <div className="gradebook-header">
-        <h2>{assessment.title}</h2>
-        <div className="muted">
+      <div className="gradebook-header gradebook-detail-hero">
+        <div>
+          <p className="gradebook-kicker">Assessment Details</p>
+          <h2>{assessment.title}</h2>
+        </div>
+        <div className="gradebook-date-pill">
           {assessment.assessment_date ? format(parseISO(assessment.assessment_date), "PPP") : ""}
         </div>
       </div>
 
       <div className="gradebook-stats">
-        <div className="stat-card">
+        <div className="stat-card gradebook-stat-card">
             <div className="stat-label">Class Average</div>
             <div className="stat-value" style={{ color: averageColor }}>
             {average.toFixed(1)}%
             </div>
           </div>
-        <div className="stat-card">
+        <div className="stat-card gradebook-stat-card">
             <div className="stat-label">Highest</div>
             <div className="stat-value" style={{ color: "#16a34a" }}>
             {highest.toFixed(1)}%
             </div>
           </div>
-        <div className="stat-card">
+        <div className="stat-card gradebook-stat-card">
             <div className="stat-label">Lowest</div>
             <div className="stat-value" style={{ color: "#ef4444" }}>
             {lowest.toFixed(1)}%
@@ -163,19 +169,19 @@ const AssessmentDetailPage = ({
         <h3>Assessment Info</h3>
         <div className="gradebook-info-grid">
           {classItem && (
-            <div>
+            <div className="gradebook-info-item">
               <span className="muted">Class</span>
               <strong>{classItem.name}</strong>
             </div>
           )}
           {subjectItem && (
-            <div>
+            <div className="gradebook-info-item">
               <span className="muted">Subject</span>
               <strong>{subjectItem.name}</strong>
             </div>
           )}
           {unitItem && (
-            <div>
+            <div className="gradebook-info-item">
               <span className="muted">Unit</span>
               <strong>{unitItem.name}</strong>
             </div>
