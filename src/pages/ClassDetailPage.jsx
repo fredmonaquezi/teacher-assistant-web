@@ -31,6 +31,7 @@ function ClassDetailPage({
   const classStudents = students.filter((student) => student.class_id === classId);
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [showAddStudent, setShowAddStudent] = useState(false);
+  const [addStudentError, setAddStudentError] = useState("");
   const [dragSubjectId, setDragSubjectId] = useState(null);
   const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderModeHook();
   const {
@@ -131,31 +132,199 @@ function ClassDetailPage({
   return (
     <>
       {formError && <div className="error">{formError}</div>}
-      <section className="panel">
-        <h2>{classItem.name}</h2>
-        <p className="muted">
-          {classItem.grade_level ? `${classItem.grade_level} • ` : ""}
-          {classStudents.length} students • {classSubjects.length} subjects
-        </p>
+      <div className="class-top-grid">
+        <section className="panel class-overview-panel compact">
+          <p className="class-overview-kicker">Class Overview</p>
+          <h2>{classItem.name}</h2>
+          <div className="class-overview-metrics">
+            <article className="class-overview-metric">
+              <span>Grade</span>
+              <strong>{classItem.grade_level || "Not set"}</strong>
+            </article>
+            <article className="class-overview-metric">
+              <span>Students</span>
+              <strong>{classStudents.length}</strong>
+            </article>
+            <article className="class-overview-metric">
+              <span>Subjects</span>
+              <strong>{classSubjects.length}</strong>
+            </article>
+          </div>
+          {classItem.school_year ? (
+            <p className="muted class-overview-year">School year: {classItem.school_year}</p>
+          ) : null}
+        </section>
+
+        <section className="panel class-quick-panel compact">
+          <h3>Quick Actions</h3>
+          <div className="quick-actions class-quick-actions">
+            <NavLink to={`/random?classId=${classId}`} className="quick-action action-orange">
+              <span className="class-quick-icon" aria-hidden="true">🎲</span>
+              <span>Random Picker</span>
+            </NavLink>
+            <NavLink to={`/groups?classId=${classId}`} className="quick-action action-purple">
+              <span className="class-quick-icon" aria-hidden="true">👥</span>
+              <span>Groups</span>
+            </NavLink>
+            <NavLink to={`/attendance?classId=${classId}`} className="quick-action action-blue">
+              <span className="class-quick-icon" aria-hidden="true">✅</span>
+              <span>Attendance</span>
+            </NavLink>
+          </div>
+        </section>
+      </div>
+
+      <section className="panel class-students-panel">
+        <div className="class-students-header">
+          <h3>Students</h3>
+          <button
+            type="button"
+            className="students-add-btn"
+            onClick={() => {
+              setStudentForm((prev) => ({ ...prev, classId }));
+              setAddStudentError("");
+              setShowAddStudent(true);
+            }}
+          >
+            + Add Student
+          </button>
+        </div>
+        <button
+          type="button"
+          className="students-add-btn mobile-only"
+          onClick={() => {
+            setStudentForm((prev) => ({ ...prev, classId }));
+            setAddStudentError("");
+            setShowAddStudent(true);
+          }}
+        >
+          + Add Student
+        </button>
+        <ul className="student-card-grid">
+          {classStudents.map((student) => {
+            const tone = student.missing_homework
+              ? "red"
+              : student.needs_help
+                ? "orange"
+                : student.is_participating_well
+                  ? "green"
+                  : "blue";
+            return (
+            <li key={student.id}>
+              <NavLink to={`/students/${student.id}`} className={`student-card-link student-tone-${tone}`}>
+                <span className="student-card-avatar">
+                  {(student.first_name || "S").charAt(0).toUpperCase()}
+                </span>
+                <div className="student-card-content">
+                  <strong>
+                    {student.first_name} {student.last_name}
+                  </strong>
+                  <span>Open student profile</span>
+                </div>
+                <div className="student-card-flags">
+                  {student.is_participating_well && (
+                    <span className="student-flag green" title="Participating well" aria-label="Participating well">
+                      ⭐
+                    </span>
+                  )}
+                  {student.needs_help && (
+                    <span className="student-flag orange" title="Needs help" aria-label="Needs help">
+                      ⚠️
+                    </span>
+                  )}
+                  {student.missing_homework && (
+                    <span className="student-flag red" title="Missing homework" aria-label="Missing homework">
+                      📚
+                    </span>
+                  )}
+                </div>
+              </NavLink>
+            </li>
+          );
+          })}
+          {classStudents.length === 0 && <li className="muted">No students yet.</li>}
+        </ul>
       </section>
 
-      <section className="panel quick-stats">
-        <div className="stat-card">
-          <div className="stat-value">{classStudents.length}</div>
-          <div className="stat-label">Students</div>
+      <section className="panel">
+        <div className="panel-heading-row">
+          <h3>Subjects</h3>
+          {isMobileLayout && classSubjects.length > 1 && (
+            <ReorderModeToggle isReorderMode={isReorderMode} setIsReorderMode={setIsReorderMode} />
+          )}
         </div>
-        <div className="stat-card">
-          <div className="stat-value">{classSubjects.length}</div>
-          <div className="stat-label">Subjects</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">
-            {classStudents.length > 0
-              ? Math.round((classSubjects.length / classStudents.length) * 10) / 10
-              : 0}
-          </div>
-          <div className="stat-label">Subjects per student</div>
-        </div>
+        <form onSubmit={(event) => handleCreateSubject(event, classId)} className="grid">
+          <label className="stack">
+            <span>Subject name</span>
+            <input
+              value={subjectForm.name}
+              onChange={(event) =>
+                setSubjectForm((prev) => ({ ...prev, name: event.target.value }))
+              }
+              placeholder="ELA"
+              required
+            />
+          </label>
+          <label className="stack">
+            <span>Notes</span>
+            <input
+              value={subjectForm.description}
+              onChange={(event) =>
+                setSubjectForm((prev) => ({ ...prev, description: event.target.value }))
+              }
+              placeholder="Optional notes"
+            />
+          </label>
+          <button type="submit">Add subject</button>
+        </form>
+
+        <ul className="subject-card-grid">
+          {classSubjects.map((subject) => (
+            <li
+              key={subject.id}
+              className="subject-card draggable"
+              draggable={isReorderEnabled}
+              onDragStart={(event) => {
+                if (!isSubjectDragAllowed(subject.id)) {
+                  event.preventDefault();
+                  return;
+                }
+                setDragSubjectId(subject.id);
+              }}
+              onDragEnd={() => {
+                setDragSubjectId(null);
+                resetSubjectHandleDrag();
+              }}
+              onDragOver={(event) => {
+                if (!isReorderEnabled) return;
+                event.preventDefault();
+              }}
+              onDrop={() =>
+                handleSwapSortOrder("subjects", classSubjects, draggedSubjectId, subject.id)
+              }
+            >
+              <NavLink to={`/subjects/${subject.id}`} className="subject-card-link">
+                <div className="subject-card-name">{subject.name}</div>
+                <div className="subject-card-description">
+                  {subject.description || "Open to manage units and assessments"}
+                </div>
+              </NavLink>
+              <button
+                type="button"
+                className={subjectHandleClassName}
+                aria-label={`Drag ${subject.name}`}
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => onSubjectHandlePointerDown(subject.id, event)}
+                onPointerMove={onSubjectHandlePointerMove}
+                onPointerUp={onSubjectHandlePointerUp}
+                onPointerCancel={onSubjectHandlePointerUp}
+              >
+                ⠿
+              </button>
+            </li>
+          ))}
+          {classSubjects.length === 0 && <li className="muted">No subjects yet.</li>}
+        </ul>
       </section>
 
       <section className="panel class-analytics">
@@ -270,155 +439,15 @@ function ClassDetailPage({
         )}
       </section>
 
-      <section className="panel">
-        <h3>Quick Actions</h3>
-        <div className="quick-actions">
-          <NavLink to={`/random?classId=${classId}`} className="quick-action action-orange">
-            Random Picker
-          </NavLink>
-          <NavLink to={`/groups?classId=${classId}`} className="quick-action action-purple">
-            Groups
-          </NavLink>
-          <NavLink to={`/attendance?classId=${classId}`} className="quick-action action-blue">
-            Attendance
-          </NavLink>
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="panel-heading-row">
-          <h3>Subjects</h3>
-          {isMobileLayout && classSubjects.length > 1 && (
-            <ReorderModeToggle isReorderMode={isReorderMode} setIsReorderMode={setIsReorderMode} />
-          )}
-        </div>
-        <form onSubmit={(event) => handleCreateSubject(event, classId)} className="grid">
-          <label className="stack">
-            <span>Subject name</span>
-            <input
-              value={subjectForm.name}
-              onChange={(event) =>
-                setSubjectForm((prev) => ({ ...prev, name: event.target.value }))
-              }
-              placeholder="ELA"
-              required
-            />
-          </label>
-          <label className="stack">
-            <span>Notes</span>
-            <input
-              value={subjectForm.description}
-              onChange={(event) =>
-                setSubjectForm((prev) => ({ ...prev, description: event.target.value }))
-              }
-              placeholder="Optional notes"
-            />
-          </label>
-          <button type="submit">Add subject</button>
-        </form>
-
-        <ul className="subject-card-grid">
-          {classSubjects.map((subject) => (
-            <li
-              key={subject.id}
-              className="subject-card draggable"
-              draggable={isReorderEnabled}
-              onDragStart={(event) => {
-                if (!isSubjectDragAllowed(subject.id)) {
-                  event.preventDefault();
-                  return;
-                }
-                setDragSubjectId(subject.id);
-              }}
-              onDragEnd={() => {
-                setDragSubjectId(null);
-                resetSubjectHandleDrag();
-              }}
-              onDragOver={(event) => {
-                if (!isReorderEnabled) return;
-                event.preventDefault();
-              }}
-              onDrop={() =>
-                handleSwapSortOrder("subjects", classSubjects, draggedSubjectId, subject.id)
-              }
-            >
-              <NavLink to={`/subjects/${subject.id}`} className="subject-card-link">
-                <div className="subject-card-name">{subject.name}</div>
-                <div className="subject-card-description">
-                  {subject.description || "Open to manage units and assessments"}
-                </div>
-              </NavLink>
-              <button
-                type="button"
-                className={subjectHandleClassName}
-                aria-label={`Drag ${subject.name}`}
-                onClick={(event) => event.stopPropagation()}
-                onPointerDown={(event) => onSubjectHandlePointerDown(subject.id, event)}
-                onPointerMove={onSubjectHandlePointerMove}
-                onPointerUp={onSubjectHandlePointerUp}
-                onPointerCancel={onSubjectHandlePointerUp}
-              >
-                ⠿
-              </button>
-            </li>
-          ))}
-          {classSubjects.length === 0 && <li className="muted">No subjects yet.</li>}
-        </ul>
-      </section>
-
-      <section className="panel">
-        <h3>Students</h3>
-        <button
-          type="button"
-          className="link"
-          onClick={() => {
-            setStudentForm((prev) => ({ ...prev, classId }));
-            setShowAddStudent(true);
-          }}
-        >
-          + Add Student
-        </button>
-        <ul className="student-card-grid">
-          {classStudents.map((student) => (
-            <li key={student.id}>
-              <NavLink to={`/students/${student.id}`} className="student-card-link">
-                <span className="student-card-avatar">
-                  {(student.first_name || "S").charAt(0).toUpperCase()}
-                </span>
-                <div className="student-card-content">
-                  <strong>
-                    {student.first_name} {student.last_name}
-                  </strong>
-                  <span>Open student profile</span>
-                </div>
-                <div className="student-card-flags">
-                  {student.is_participating_well && (
-                    <span className="student-flag green" title="Participating well" aria-label="Participating well">
-                      ⭐
-                    </span>
-                  )}
-                  {student.needs_help && (
-                    <span className="student-flag orange" title="Needs help" aria-label="Needs help">
-                      ⚠️
-                    </span>
-                  )}
-                  {student.missing_homework && (
-                    <span className="student-flag red" title="Missing homework" aria-label="Missing homework">
-                      📚
-                    </span>
-                  )}
-                </div>
-              </NavLink>
-            </li>
-          ))}
-          {classStudents.length === 0 && <li className="muted">No students yet.</li>}
-        </ul>
-      </section>
-
       {showAddStudent && (
         <div className="modal-overlay">
-          <div className="modal-card">
-            <h3>Add Student</h3>
+          <div className="modal-card add-student-modal">
+            <div className="add-student-header">
+              <h3>Add Student</h3>
+              <p className="muted">Basic profile details only. You can update more information later.</p>
+            </div>
+            <div className="add-student-form">
+            {(addStudentError || formError) && <div className="error">{addStudentError || formError}</div>}
             <label className="stack">
               <span>First name</span>
               <input
@@ -467,58 +496,34 @@ function ClassDetailPage({
                 placeholder="Optional"
               />
             </label>
-            <p className="muted student-separation-help">
-              Need to keep some students apart in groups? Use{" "}
-              <NavLink to={`/groups?classId=${classId}`}>Groups → Separations</NavLink>.
-            </p>
-            <label className="stack">
-              <span>Flags</span>
-              <div className="checkbox-row">
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={studentForm.isParticipatingWell}
-                    onChange={(event) =>
-                      setStudentForm((prev) => ({ ...prev, isParticipatingWell: event.target.checked }))
-                    }
-                  />
-                  Participating well
-                </label>
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={studentForm.needsHelp}
-                    onChange={(event) =>
-                      setStudentForm((prev) => ({ ...prev, needsHelp: event.target.checked }))
-                    }
-                  />
-                  Needs help
-                </label>
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={studentForm.missingHomework}
-                    onChange={(event) =>
-                      setStudentForm((prev) => ({ ...prev, missingHomework: event.target.checked }))
-                    }
-                  />
-                  Missing homework
-                </label>
-              </div>
-            </label>
-            <div className="modal-actions">
-              <button type="button" className="link" onClick={() => setShowAddStudent(false)}>
+            <div className="modal-actions add-student-actions">
+              <button
+                type="button"
+                className="link"
+                onClick={() => {
+                  setAddStudentError("");
+                  setShowAddStudent(false);
+                }}
+              >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={async () => {
-                  await handleCreateStudent({ preventDefault: () => {} });
-                  setShowAddStudent(false);
+                  setAddStudentError("");
+                  if (!studentForm.firstName.trim() || !studentForm.lastName.trim()) {
+                    setAddStudentError("Student first and last name are required.");
+                    return;
+                  }
+                  const created = await handleCreateStudent({ preventDefault: () => {} });
+                  if (created) {
+                    setShowAddStudent(false);
+                  }
                 }}
               >
                 Add
               </button>
+            </div>
             </div>
           </div>
         </div>

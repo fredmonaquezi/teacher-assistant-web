@@ -7,12 +7,13 @@ import {
   parseISO,
   startOfDay,
 } from "date-fns";
-import { BrowserRouter, NavLink, Route, Routes, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { BrowserRouter, NavLink, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ClassDetailPage from "./pages/ClassDetailPage";
 import AttendancePage from "./pages/AttendancePage";
 import AssessmentDetailPage from "./pages/AssessmentDetailPage";
 import AssessmentsPage from "./pages/AssessmentsPage";
 import CalendarPage from "./pages/CalendarPage";
+import ProfilePage from "./pages/ProfilePage";
 import RandomPickerPage from "./pages/RandomPickerPage";
 import RunningRecordsPage from "./pages/RunningRecordsPage";
 import { supabase } from "./supabaseClient";
@@ -33,6 +34,11 @@ const ATTENDANCE_STATUS_OPTIONS = [
   "Arrived late",
   "Left early",
 ];
+const DEFAULT_PROFILE_PREFERENCES = {
+  dateFormat: "MDY",
+  timeFormat: "12h",
+  defaultLandingPath: "/",
+};
 
 const DEFAULT_RUBRICS = [
   {
@@ -586,21 +592,28 @@ function RubricsPage({
       {formError && <div className="error">{formError}</div>}
       <section className="panel rubrics-page">
         <div className="rubrics-header-card">
-          <div className="rubrics-header-icon">📄</div>
-          <h2>Rubric Template Library</h2>
-          <p className="muted">
-            Browse, customize, and create development tracking templates.
-          </p>
+          <div className="rubrics-header-icon" aria-hidden="true">📄</div>
+          <div className="rubrics-header-copy">
+            <h2>Rubric Template Library</h2>
+            <p className="muted">
+              Browse, customize, and create development tracking templates.
+            </p>
+          </div>
         </div>
 
         <div className="rubrics-actions">
           <button type="button" onClick={() => setShowCreateTemplate(true)}>
             Create New
           </button>
-          <button type="button" onClick={handleSeedDefaultRubrics} disabled={seedingRubrics}>
+          <button type="button" className="secondary" onClick={handleSeedDefaultRubrics} disabled={seedingRubrics}>
             {seedingRubrics ? "Seeding default rubrics..." : "Create default rubrics"}
           </button>
         </div>
+        {seedingRubrics ? (
+          <p className="rubrics-seeding-message" role="status" aria-live="polite">
+            Creating default rubrics. This can take a few seconds...
+          </p>
+        ) : null}
 
         {loading ? (
           <p className="muted">Loading rubrics...</p>
@@ -2017,10 +2030,13 @@ function StudentDetailPage({
   assessmentEntries,
   rubricCriteria,
   rubricCategories,
+  rubrics,
   developmentScores,
   developmentScoreForm,
   setDevelopmentScoreForm,
   handleCreateDevelopmentScore,
+  handleCreateDevelopmentScoreEntry,
+  handleUpdateDevelopmentScore,
   handleUpdateStudent,
   formError,
 }) {
@@ -2028,6 +2044,19 @@ function StudentDetailPage({
   const student = students.find((item) => item.id === studentId);
   const [showEditInfo, setShowEditInfo] = useState(false);
   const [showDevelopmentForm, setShowDevelopmentForm] = useState(false);
+  const [activeDevelopmentCriterionId, setActiveDevelopmentCriterionId] = useState("");
+  const [editingDevelopmentScoreId, setEditingDevelopmentScoreId] = useState("");
+  const [showAddDevelopmentHistoryForm, setShowAddDevelopmentHistoryForm] = useState(false);
+  const [developmentHistoryEditForm, setDevelopmentHistoryEditForm] = useState({
+    rating: "3",
+    date: "",
+    notes: "",
+  });
+  const [newDevelopmentHistoryForm, setNewDevelopmentHistoryForm] = useState({
+    rating: "3",
+    date: format(new Date(), "yyyy-MM-dd"),
+    notes: "",
+  });
   const [editForm, setEditForm] = useState({
     gender: "Prefer not to say",
     notes: "",
@@ -2083,6 +2112,12 @@ function StudentDetailPage({
     rubricCategories.forEach((category) => map.set(category.id, category));
     return map;
   }, [rubricCategories]);
+  const rubricLookup = useMemo(() => {
+    const map = new Map();
+    rubrics.forEach((rubric) => map.set(rubric.id, rubric));
+    return map;
+  }, [rubrics]);
+  const [developmentYearFilter, setDevelopmentYearFilter] = useState("all");
 
   const normalizedLevel = (value) => {
     const level = (value || "").toLowerCase();
@@ -2157,6 +2192,133 @@ function StudentDetailPage({
   const averageColor = (value) => {
     return performanceColor(value);
   };
+  const activeDevelopmentHistory = activeDevelopmentCriterionId
+    ? studentScores.filter((score) => score.criterion_id === activeDevelopmentCriterionId)
+    : [];
+  const activeDevelopmentHistoryChronological = [...activeDevelopmentHistory].reverse();
+  const activeDevelopmentCriterion = activeDevelopmentCriterionId
+    ? criteriaLookup.get(activeDevelopmentCriterionId)
+    : null;
+  const activeDevelopmentCategoryName = activeDevelopmentCriterion
+    ? categoryLookup.get(activeDevelopmentCriterion.category_id)?.name || "Other"
+    : "";
+
+  const trendLabel = (current, previous) => {
+    if (!previous) return "Baseline";
+    const currentRating = Number(current?.rating || 0);
+    const previousRating = Number(previous?.rating || 0);
+    if (currentRating > previousRating) return "Improved";
+    if (currentRating < previousRating) return "Needs Support";
+    return "Steady";
+  };
+
+  const startEditingDevelopmentHistory = (score) => {
+    setEditingDevelopmentScoreId(score.id);
+    setDevelopmentHistoryEditForm({
+      rating: String(Number(score.rating || 3)),
+      date: score.score_date || "",
+      notes: score.notes || "",
+    });
+  };
+  const sparklineData = useMemo(() => {
+    const ratings = activeDevelopmentHistoryChronological
+      .map((item) => Number(item.rating))
+      .filter((value) => Number.isFinite(value));
+    if (!ratings.length) return null;
+    const width = 320;
+    const height = ratings.length <= 2 ? 56 : 88;
+    const padX = 12;
+    const padY = 12;
+    const usableWidth = width - padX * 2;
+    const usableHeight = height - padY * 2;
+    const xForIndex = (index) =>
+      ratings.length === 1 ? width / 2 : padX + (usableWidth * index) / (ratings.length - 1);
+    const yForRating = (rating) => padY + ((5 - rating) / 4) * usableHeight;
+    const points = ratings.map((rating, index) => `${xForIndex(index)},${yForRating(rating)}`).join(" ");
+    return {
+      width,
+      height,
+      points,
+      dots: ratings.map((rating, index) => ({
+        x: xForIndex(index),
+        y: yForRating(rating),
+        rating,
+      })),
+      first: ratings[0],
+      last: ratings[ratings.length - 1],
+      total: ratings.length,
+    };
+  }, [activeDevelopmentHistoryChronological]);
+
+  useEffect(() => {
+    setEditingDevelopmentScoreId("");
+    setShowAddDevelopmentHistoryForm(false);
+    setNewDevelopmentHistoryForm({
+      rating: "3",
+      date: format(new Date(), "yyyy-MM-dd"),
+      notes: "",
+    });
+  }, [activeDevelopmentCriterionId]);
+
+  const rubricYearOptions = useMemo(() => {
+    const values = new Set();
+    rubrics.forEach((rubric) => {
+      const gradeBand = (rubric.grade_band || "").trim();
+      if (gradeBand) values.add(gradeBand);
+    });
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }, [rubrics]);
+
+  const rubricCriteriaWithMeta = useMemo(() => {
+    return rubricCriteria.map((criterion) => {
+      const category = categoryLookup.get(criterion.category_id);
+      const rubric = rubricLookup.get(category?.rubric_id);
+      return {
+        ...criterion,
+        categoryName: category?.name || "Other",
+        gradeBand: (rubric?.grade_band || "General").trim() || "General",
+      };
+    });
+  }, [rubricCriteria, categoryLookup, rubricLookup]);
+
+  const filteredCriteriaForForm = useMemo(() => {
+    const byYear =
+      developmentYearFilter === "all"
+        ? rubricCriteriaWithMeta
+        : rubricCriteriaWithMeta.filter((criterion) => criterion.gradeBand === developmentYearFilter);
+    return byYear.sort((a, b) => {
+      const groupA = `${a.gradeBand} ${a.categoryName}`;
+      const groupB = `${b.gradeBand} ${b.categoryName}`;
+      if (groupA !== groupB) return groupA.localeCompare(groupB);
+      return (a.label || a.description || "").localeCompare(b.label || b.description || "");
+    });
+  }, [rubricCriteriaWithMeta, developmentYearFilter]);
+
+  const selectedCriterionMeta = useMemo(
+    () => rubricCriteriaWithMeta.find((criterion) => criterion.id === developmentScoreForm.criterionId) || null,
+    [rubricCriteriaWithMeta, developmentScoreForm.criterionId]
+  );
+
+  const filteredCriteriaIds = useMemo(
+    () => new Set(filteredCriteriaForForm.map((criterion) => criterion.id)),
+    [filteredCriteriaForForm]
+  );
+
+  useEffect(() => {
+    if (!developmentScoreForm.criterionId) return;
+    if (filteredCriteriaIds.has(developmentScoreForm.criterionId)) return;
+    setDevelopmentScoreForm((prev) => ({ ...prev, criterionId: "" }));
+  }, [developmentScoreForm.criterionId, filteredCriteriaIds, setDevelopmentScoreForm]);
+
+  const groupedCriterionOptions = useMemo(() => {
+    const groupMap = new Map();
+    filteredCriteriaForForm.forEach((criterion) => {
+      const groupLabel = `${criterion.gradeBand} • ${criterion.categoryName}`;
+      if (!groupMap.has(groupLabel)) groupMap.set(groupLabel, []);
+      groupMap.get(groupLabel).push(criterion);
+    });
+    return Array.from(groupMap.entries());
+  }, [filteredCriteriaForForm]);
 
   const toggleStatus = async (field) => {
     if (!student) return;
@@ -2312,7 +2474,9 @@ function StudentDetailPage({
       <section className="panel">
         <div className="student-section-title">
           <h3>Running Records</h3>
-          <NavLink to="/running-records">View All</NavLink>
+          <NavLink to="/running-records" className="student-view-all-btn">
+            View all
+          </NavLink>
         </div>
         {records.length === 0 ? (
           <p className="muted">No running records yet.</p>
@@ -2413,15 +2577,35 @@ function StudentDetailPage({
                   <ul className="list student-dev-list">
                     {scores.map((score) => {
                       const criterion = criteriaLookup.get(score.criterion_id);
+                      const scoreValue = Math.max(0, Number(score.rating || 0));
                       return (
                         <li key={score.id}>
-                          <span>{criterion?.label || "Criterion"}</span>
-                          <span>
-                            {"★".repeat(Math.max(0, Number(score.rating || 0)))}
-                            {"☆".repeat(Math.max(0, 5 - Number(score.rating || 0)))}
-                            {" "}
-                            {ratingLabel(Number(score.rating || 0))}
-                          </span>
+                          <button
+                            type="button"
+                            className="student-dev-row-btn"
+                            onClick={() => {
+                              setActiveDevelopmentCriterionId(score.criterion_id || "");
+                              setEditingDevelopmentScoreId("");
+                            }}
+                          >
+                            <span className="student-dev-criterion">
+                              <span className="student-dev-criterion-title">
+                                {criterion?.label || "Criterion"}
+                              </span>
+                              {score.notes ? (
+                                <span className="student-dev-criterion-note">{score.notes}</span>
+                              ) : (
+                                <span className="student-dev-criterion-note subtle">No notes added</span>
+                              )}
+                            </span>
+                            <span className="student-dev-rating">
+                              <span className="student-dev-stars" aria-label={`${scoreValue} out of 5 stars`}>
+                                {"★".repeat(scoreValue)}
+                                {"☆".repeat(Math.max(0, 5 - scoreValue))}
+                              </span>
+                              <span className="student-dev-label">{ratingLabel(scoreValue)}</span>
+                            </span>
+                          </button>
                         </li>
                       );
                     })}
@@ -2432,17 +2616,280 @@ function StudentDetailPage({
         )}
       </section>
 
+      {activeDevelopmentCriterion && (
+        <div className="modal-overlay">
+          <div className="modal-card development-history-modal">
+            <div className="development-history-header">
+              <div>
+                <h3>{activeDevelopmentCriterion.label || "Criterion History"}</h3>
+                <p className="muted">{activeDevelopmentCategoryName}</p>
+                {activeDevelopmentCriterion.description ? (
+                  <p className="development-history-description">{activeDevelopmentCriterion.description}</p>
+                ) : null}
+              </div>
+              <div className="development-history-header-actions">
+                <button
+                  type="button"
+                  onClick={() => setShowAddDevelopmentHistoryForm((prev) => !prev)}
+                >
+                  {showAddDevelopmentHistoryForm ? "Cancel new rating" : "+ Add New Rating"}
+                </button>
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() => {
+                    setActiveDevelopmentCriterionId("");
+                    setEditingDevelopmentScoreId("");
+                    setShowAddDevelopmentHistoryForm(false);
+                  }}
+                  aria-label="Close history"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {activeDevelopmentHistory.length === 0 ? (
+              <p className="muted">No history yet for this criterion.</p>
+            ) : (
+              <>
+                {sparklineData && (
+                  <section
+                    className={`development-sparkline-card ${sparklineData.total <= 2 ? "compact" : ""}`}
+                    aria-label="Progress trend"
+                  >
+                    <div className="development-sparkline-meta">
+                      <strong>Trend</strong>
+                      <span>{sparklineData.total} entries</span>
+                    </div>
+                    <svg
+                      className="development-sparkline"
+                      viewBox={`0 0 ${sparklineData.width} ${sparklineData.height}`}
+                      role="img"
+                      aria-label={`Ratings moved from ${sparklineData.first} to ${sparklineData.last}`}
+                    >
+                      <polyline
+                        className="development-sparkline-line"
+                        points={sparklineData.points}
+                      />
+                      {sparklineData.dots.map((dot, idx) => (
+                        <circle key={idx} cx={dot.x} cy={dot.y} r="3.2" className="development-sparkline-dot" />
+                      ))}
+                    </svg>
+                    <div className="development-sparkline-labels">
+                      <span>Earlier: {sparklineData.first}/5</span>
+                      <span>Latest: {sparklineData.last}/5</span>
+                    </div>
+                    {sparklineData.total === 1 && (
+                      <p className="development-sparkline-hint">Add one more rating to start visual trend tracking.</p>
+                    )}
+                  </section>
+                )}
+                {showAddDevelopmentHistoryForm && (
+                  <form
+                    className="development-history-add"
+                    onSubmit={async (event) => {
+                      event.preventDefault();
+                      const success = await handleCreateDevelopmentScoreEntry({
+                        studentId,
+                        criterionId: activeDevelopmentCriterionId,
+                        rating: newDevelopmentHistoryForm.rating,
+                        date: newDevelopmentHistoryForm.date,
+                        notes: newDevelopmentHistoryForm.notes,
+                      });
+                      if (!success) return;
+                      setShowAddDevelopmentHistoryForm(false);
+                      setNewDevelopmentHistoryForm({
+                        rating: "3",
+                        date: format(new Date(), "yyyy-MM-dd"),
+                        notes: "",
+                      });
+                    }}
+                  >
+                    <label className="stack">
+                      <span>Rating</span>
+                      <select
+                        value={newDevelopmentHistoryForm.rating}
+                        onChange={(event) =>
+                          setNewDevelopmentHistoryForm((prev) => ({ ...prev, rating: event.target.value }))
+                        }
+                      >
+                        <option value="1">1 - Needs Significant Support</option>
+                        <option value="2">2 - Beginning to Develop</option>
+                        <option value="3">3 - Developing</option>
+                        <option value="4">4 - Proficient</option>
+                        <option value="5">5 - Mastering / Exceeding</option>
+                      </select>
+                    </label>
+                    <label className="stack">
+                      <span>Date</span>
+                      <input
+                        type="date"
+                        value={newDevelopmentHistoryForm.date}
+                        onChange={(event) =>
+                          setNewDevelopmentHistoryForm((prev) => ({ ...prev, date: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label className="stack">
+                      <span>Notes</span>
+                      <textarea
+                        rows="2"
+                        value={newDevelopmentHistoryForm.notes}
+                        onChange={(event) =>
+                          setNewDevelopmentHistoryForm((prev) => ({ ...prev, notes: event.target.value }))
+                        }
+                        placeholder="Optional notes"
+                      />
+                    </label>
+                    <div className="modal-actions">
+                      <button type="submit">Save new rating</button>
+                    </div>
+                  </form>
+                )}
+                <ul className="list development-history-list">
+                {activeDevelopmentHistory.map((score, index) => {
+                  const nextOlderScore = activeDevelopmentHistory[index + 1];
+                  const trend = trendLabel(score, nextOlderScore);
+                  const scoreValue = Math.max(0, Number(score.rating || 0));
+                  const trendClass =
+                    trend === "Improved" ? "improved" : trend === "Needs Support" ? "declined" : "steady";
+                  const dateLabel = score.score_date || score.created_at?.slice(0, 10) || "No date";
+                  return (
+                    <li key={score.id}>
+                      <div className="development-history-item-head">
+                        <div className="development-history-rating">
+                          <span className="student-dev-stars" aria-label={`${scoreValue} out of 5 stars`}>
+                            {"★".repeat(scoreValue)}
+                            {"☆".repeat(Math.max(0, 5 - scoreValue))}
+                          </span>
+                          <span>{ratingLabel(scoreValue)}</span>
+                        </div>
+                        <div className={`development-trend ${trendClass}`}>{trend}</div>
+                      </div>
+                      <p className="development-history-date">{dateLabel}</p>
+                      {editingDevelopmentScoreId === score.id ? (
+                        <form
+                          className="development-history-edit"
+                          onSubmit={async (event) => {
+                            event.preventDefault();
+                            const success = await handleUpdateDevelopmentScore(score.id, {
+                              rating: developmentHistoryEditForm.rating,
+                              date: developmentHistoryEditForm.date,
+                              notes: developmentHistoryEditForm.notes,
+                            });
+                            if (!success) return;
+                            setEditingDevelopmentScoreId("");
+                          }}
+                        >
+                          <label className="stack">
+                            <span>Rating</span>
+                            <select
+                              value={developmentHistoryEditForm.rating}
+                              onChange={(event) =>
+                                setDevelopmentHistoryEditForm((prev) => ({
+                                  ...prev,
+                                  rating: event.target.value,
+                                }))
+                              }
+                            >
+                              <option value="1">1 - Needs Significant Support</option>
+                              <option value="2">2 - Beginning to Develop</option>
+                              <option value="3">3 - Developing</option>
+                              <option value="4">4 - Proficient</option>
+                              <option value="5">5 - Mastering / Exceeding</option>
+                            </select>
+                          </label>
+                          <label className="stack">
+                            <span>Date</span>
+                            <input
+                              type="date"
+                              value={developmentHistoryEditForm.date}
+                              onChange={(event) =>
+                                setDevelopmentHistoryEditForm((prev) => ({
+                                  ...prev,
+                                  date: event.target.value,
+                                }))
+                              }
+                            />
+                          </label>
+                          <label className="stack">
+                            <span>Notes</span>
+                            <textarea
+                              rows="2"
+                              value={developmentHistoryEditForm.notes}
+                              onChange={(event) =>
+                                setDevelopmentHistoryEditForm((prev) => ({
+                                  ...prev,
+                                  notes: event.target.value,
+                                }))
+                              }
+                              placeholder="Optional notes"
+                            />
+                          </label>
+                          <div className="modal-actions">
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() => setEditingDevelopmentScoreId("")}
+                            >
+                              Cancel
+                            </button>
+                            <button type="submit">Save changes</button>
+                          </div>
+                        </form>
+                      ) : (
+                        <>
+                          {score.notes ? (
+                            <p className="development-history-note">{score.notes}</p>
+                          ) : (
+                            <p className="development-history-note muted">No notes for this record.</p>
+                          )}
+                          <div className="development-history-actions">
+                            <button type="button" className="secondary" onClick={() => startEditingDevelopmentHistory(score)}>
+                              Edit
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </li>
+                  );
+                })}
+                </ul>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {showDevelopmentForm && (
         <div className="modal-overlay">
-          <div className="modal-card">
-            <h3>Update Development Tracking</h3>
+          <div className="modal-card development-modal">
+            <div className="development-modal-header">
+              <h3>Update Development Tracking</h3>
+              <p className="muted">Choose the year range first, then pick the criterion with context.</p>
+            </div>
             <form
               onSubmit={async (event) => {
                 await handleCreateDevelopmentScore(event, studentId);
                 setShowDevelopmentForm(false);
               }}
-              className="grid"
+              className="development-modal-form"
             >
+              <label className="stack">
+                <span>Year Range</span>
+                <select
+                  value={developmentYearFilter}
+                  onChange={(event) => setDevelopmentYearFilter(event.target.value)}
+                >
+                  <option value="all">All year ranges</option>
+                  {rubricYearOptions.map((yearRange) => (
+                    <option key={yearRange} value={yearRange}>
+                      {yearRange}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="stack">
                 <span>Criterion</span>
                 <select
@@ -2453,13 +2900,35 @@ function StudentDetailPage({
                   required
                 >
                   <option value="">Select criterion</option>
-                  {rubricCriteria.map((criterion) => (
-                    <option key={criterion.id} value={criterion.id}>
-                      {criterion.label || criterion.description}
-                    </option>
+                  {groupedCriterionOptions.map(([groupLabel, criteria]) => (
+                    <optgroup key={groupLabel} label={groupLabel}>
+                      {criteria.map((criterion) => (
+                        <option key={criterion.id} value={criterion.id}>
+                          {criterion.label || criterion.description || "Criterion"}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </label>
+              <div className="development-criterion-preview">
+                {selectedCriterionMeta ? (
+                  <>
+                    <strong>{selectedCriterionMeta.label || "Selected criterion"}</strong>
+                    <p className="muted">
+                      {selectedCriterionMeta.description || "No extra description for this criterion yet."}
+                    </p>
+                    <div className="development-criterion-meta">
+                      <span>{selectedCriterionMeta.gradeBand}</span>
+                      <span>{selectedCriterionMeta.categoryName}</span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="muted">
+                    Select a criterion to see what it measures before saving.
+                  </p>
+                )}
+              </div>
               <label className="stack">
                 <span>Rating (1-5)</span>
                 <select
@@ -2495,7 +2964,7 @@ function StudentDetailPage({
                   placeholder="Optional"
                 />
               </label>
-              <div className="modal-actions">
+              <div className="modal-actions development-modal-actions">
                 <button type="button" className="secondary" onClick={() => setShowDevelopmentForm(false)}>
                   Cancel
                 </button>
@@ -2598,14 +3067,18 @@ function AuthForm({ onSuccess }) {
   };
 
   return (
-    <div className="card">
-      <h1>Teacher Assistant</h1>
-      <p className="muted">Sign in to sync your data across devices.</p>
+    <div className="card auth-card">
+      <div className="auth-head">
+        <div className="auth-badge" aria-hidden="true">🎓</div>
+        <h1>Teacher Assistant</h1>
+        <p className="muted">Sign in to sync your data across devices.</p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="stack">
+      <form onSubmit={handleSubmit} className="stack auth-form">
         <label className="stack">
           <span>Email</span>
           <input
+            className="auth-input"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -2616,6 +3089,7 @@ function AuthForm({ onSuccess }) {
         <label className="stack">
           <span>Password</span>
           <input
+            className="auth-input"
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -2625,14 +3099,14 @@ function AuthForm({ onSuccess }) {
 
         {error && <div className="error">{error}</div>}
 
-        <button type="submit" disabled={loading}>
+        <button type="submit" className="auth-submit" disabled={loading}>
           {loading ? "Working..." : mode === "signup" ? "Create account" : "Sign in"}
         </button>
       </form>
 
       <button
         type="button"
-        className="link"
+        className="auth-switch"
         onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
       >
         {mode === "signup"
@@ -2654,9 +3128,20 @@ function formatDisplayName(user) {
     .join(" ");
 }
 
-function Layout({ user, onSignOut, children }) {
+function Layout({ user, onSignOut, preferences, children }) {
   const userEmail = user?.email || "";
   const displayName = formatDisplayName(user);
+  const sidebarIdentity =
+    user?.user_metadata?.display_name ||
+    user?.user_metadata?.full_name ||
+    userEmail;
+  const now = new Date();
+  const todayDateLabel = preferences?.dateFormat === "DMY"
+    ? format(now, "EEEE, d MMMM yyyy")
+    : format(now, "EEEE, MMMM d, yyyy");
+  const todayTimeLabel = preferences?.timeFormat === "24h"
+    ? format(now, "HH:mm")
+    : format(now, "h:mm a");
   const navLinks = [
     { label: "Dashboard", path: "/" },
     { label: "Classes", path: "/classes" },
@@ -2675,7 +3160,7 @@ function Layout({ user, onSignOut, children }) {
         <div className="sidebar-brand">
           <p className="sidebar-kicker">Teacher Assistant</p>
           <h1 className="sidebar-title">Classroom Hub</h1>
-          <p className="sidebar-email">Signed in as {userEmail}</p>
+          <p className="sidebar-email">Signed in as {sidebarIdentity}</p>
         </div>
         <nav className="nav-links">
           {navLinks.map((link) => (
@@ -2684,16 +3169,21 @@ function Layout({ user, onSignOut, children }) {
             </NavLink>
           ))}
         </nav>
-        <button type="button" className="secondary sidebar-signout" onClick={onSignOut}>
-          Sign out
-        </button>
+        <div className="sidebar-account">
+          <NavLink to="/profile" className="sidebar-account-link">
+            Profile
+          </NavLink>
+          <button type="button" className="secondary sidebar-signout" onClick={onSignOut}>
+            Sign out
+          </button>
+        </div>
       </aside>
       <div className="workspace">
         <header className="topbar">
           <div className="topbar-intro">
             <p className="topbar-kicker">Welcome back, {displayName}.</p>
             <h2 className="brand">
-              Today is <span className="today-pill">{format(new Date(), "EEEE, MMMM d, yyyy")}</span>
+              Today is <span className="today-pill">{todayDateLabel} · {todayTimeLabel}</span>
             </h2>
           </div>
         </header>
@@ -2704,6 +3194,19 @@ function Layout({ user, onSignOut, children }) {
 }
 
 function TeacherWorkspace({ user, onSignOut }) {
+  const [profilePreferences, setProfilePreferences] = useState(() => {
+    try {
+      const raw = localStorage.getItem("ta_profile_preferences");
+      if (!raw) return DEFAULT_PROFILE_PREFERENCES;
+      const parsed = JSON.parse(raw);
+      return {
+        ...DEFAULT_PROFILE_PREFERENCES,
+        ...parsed,
+      };
+    } catch {
+      return DEFAULT_PROFILE_PREFERENCES;
+    }
+  });
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
   const [_lessonPlans, setLessonPlans] = useState([]);
@@ -2745,6 +3248,10 @@ function TeacherWorkspace({ user, onSignOut }) {
     separationList: "",
     sortOrder: "",
   });
+
+  useEffect(() => {
+    localStorage.setItem("ta_profile_preferences", JSON.stringify(profilePreferences));
+  }, [profilePreferences]);
   const [lessonForm, setLessonForm] = useState({
     title: "",
     subject: "",
@@ -3080,7 +3587,7 @@ function TeacherWorkspace({ user, onSignOut }) {
 
     if (!payload.first_name || !payload.last_name) {
       setFormError("Student first and last name are required.");
-      return;
+      return false;
     }
 
     const { data: insertedStudent, error } = await supabase
@@ -3090,7 +3597,7 @@ function TeacherWorkspace({ user, onSignOut }) {
       .single();
     if (error || !insertedStudent?.id) {
       setFormError(error?.message || "Failed to create student.");
-      return;
+      return false;
     }
 
     if (insertedStudent.class_id) {
@@ -3132,6 +3639,7 @@ function TeacherWorkspace({ user, onSignOut }) {
       sortOrder: "",
     });
     await loadData();
+    return true;
   };
 
   const handleUpdateStudent = async (studentId, updates) => {
@@ -3723,29 +4231,45 @@ function TeacherWorkspace({ user, onSignOut }) {
 
   const handleCreateDevelopmentScore = async (event, studentIdOverride) => {
     event.preventDefault();
+    await handleCreateDevelopmentScoreEntry({
+      studentId: studentIdOverride || developmentScoreForm.studentId,
+      criterionId: developmentScoreForm.criterionId,
+      rating: developmentScoreForm.rating,
+      date: developmentScoreForm.date,
+      notes: developmentScoreForm.notes,
+    });
+  };
+
+  const handleCreateDevelopmentScoreEntry = async ({
+    studentId,
+    criterionId,
+    rating,
+    date,
+    notes,
+  }) => {
     setFormError("");
 
     const payload = {
-      student_id: studentIdOverride || developmentScoreForm.studentId,
-      criterion_id: developmentScoreForm.criterionId,
-      rating: Number(developmentScoreForm.rating),
-      score_date: developmentScoreForm.date || null,
-      notes: developmentScoreForm.notes.trim() || null,
+      student_id: studentId,
+      criterion_id: criterionId,
+      rating: Number(rating),
+      score_date: date || null,
+      notes: notes?.trim() || null,
     };
 
     if (!payload.student_id || !payload.criterion_id) {
       setFormError("Select a student and a rubric criterion.");
-      return;
+      return false;
     }
     if (!Number.isFinite(payload.rating) || payload.rating < 1 || payload.rating > 5) {
       setFormError("Rating must be between 1 and 5.");
-      return;
+      return false;
     }
 
     const { error } = await supabase.from("development_scores").insert(payload);
     if (error) {
       setFormError(error.message);
-      return;
+      return false;
     }
 
     setDevelopmentScoreForm({
@@ -3756,6 +4280,32 @@ function TeacherWorkspace({ user, onSignOut }) {
       notes: "",
     });
     await loadData();
+    return true;
+  };
+
+  const handleUpdateDevelopmentScore = async (scoreId, updates) => {
+    if (!scoreId) return false;
+    setFormError("");
+    const nextRating = Number(updates?.rating);
+    if (!Number.isFinite(nextRating) || nextRating < 1 || nextRating > 5) {
+      setFormError("Rating must be between 1 and 5.");
+      return false;
+    }
+
+    const payload = {
+      rating: nextRating,
+      score_date: updates?.date || null,
+      notes: updates?.notes?.trim() || null,
+    };
+
+    const { error } = await supabase.from("development_scores").update(payload).eq("id", scoreId);
+    if (error) {
+      setFormError(error.message);
+      return false;
+    }
+
+    await loadData();
+    return true;
   };
 
   const _handleCreateRubric = async (event) => {
@@ -4493,8 +5043,39 @@ function TeacherWorkspace({ user, onSignOut }) {
   );
 
   const TimerPage = () => {
-    const [customMinutes, setCustomMinutes] = useState(5);
-    const [customSeconds, setCustomSeconds] = useState(0);
+    const timerPrefsKey = "ta_timer_custom_duration";
+
+    const [customMinutes, setCustomMinutes] = useState(() => {
+      try {
+        const raw = localStorage.getItem(timerPrefsKey);
+        if (!raw) return 5;
+        const parsed = JSON.parse(raw);
+        const minutes = Number(parsed?.minutes);
+        if (!Number.isInteger(minutes)) return 5;
+        return Math.max(0, Math.min(180, minutes));
+      } catch {
+        return 5;
+      }
+    });
+    const [customSeconds, setCustomSeconds] = useState(() => {
+      try {
+        const raw = localStorage.getItem(timerPrefsKey);
+        if (!raw) return 0;
+        const parsed = JSON.parse(raw);
+        const seconds = Number(parsed?.seconds);
+        if (!Number.isInteger(seconds)) return 0;
+        return Math.max(0, Math.min(59, seconds));
+      } catch {
+        return 0;
+      }
+    });
+
+    useEffect(() => {
+      localStorage.setItem(
+        timerPrefsKey,
+        JSON.stringify({ minutes: customMinutes, seconds: customSeconds })
+      );
+    }, [customMinutes, customSeconds]);
 
     const totalCustomSeconds = customMinutes * 60 + customSeconds;
 
@@ -5363,9 +5944,17 @@ function TeacherWorkspace({ user, onSignOut }) {
 
   return (
     <BrowserRouter>
-      <Layout user={user} onSignOut={onSignOut}>
+      <Layout user={user} onSignOut={onSignOut} preferences={profilePreferences}>
         <Routes>
-          <Route path="/" element={<DashboardPage />} />
+          <Route
+            path="/"
+            element={
+              profilePreferences.defaultLandingPath &&
+              profilePreferences.defaultLandingPath !== "/"
+                ? <Navigate to={profilePreferences.defaultLandingPath} replace />
+                : <DashboardPage />
+            }
+          />
           <Route
             path="/classes"
             element={
@@ -5548,10 +6137,13 @@ function TeacherWorkspace({ user, onSignOut }) {
                 assessmentEntries={assessmentEntries}
                 rubricCriteria={rubricCriteria}
                 rubricCategories={rubricCategories}
+                rubrics={rubrics}
                 developmentScores={developmentScores}
                 developmentScoreForm={developmentScoreForm}
                 setDevelopmentScoreForm={setDevelopmentScoreForm}
                 handleCreateDevelopmentScore={handleCreateDevelopmentScore}
+                handleCreateDevelopmentScoreEntry={handleCreateDevelopmentScoreEntry}
+                handleUpdateDevelopmentScore={handleUpdateDevelopmentScore}
                 handleUpdateStudent={handleUpdateStudent}
                 formError={formError}
               />
@@ -5571,6 +6163,16 @@ function TeacherWorkspace({ user, onSignOut }) {
                 classes={classes}
                 subjects={subjects}
                 units={units}
+              />
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProfilePage
+                user={user}
+                preferences={profilePreferences}
+                onPreferencesChange={setProfilePreferences}
               />
             }
           />

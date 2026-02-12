@@ -36,9 +36,23 @@ const CalendarPage = ({
     const [viewMode, setViewMode] = useState("month");
     const [anchorDate, setAnchorDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
-    const [showDayDetail, setShowDayDetail] = useState(false);
-    const [showNewEntry, setShowNewEntry] = useState(false);
-    const [showNewEvent, setShowNewEvent] = useState(false);
+  const [showDayDetail, setShowDayDetail] = useState(false);
+  const [activeDiaryEntry, setActiveDiaryEntry] = useState(null);
+  const [showEditEntry, setShowEditEntry] = useState(false);
+  const [editingEntryId, setEditingEntryId] = useState("");
+  const [editEntryForm, setEditEntryForm] = useState({
+    classId: "",
+    subjectId: "",
+    unitId: "",
+    startTime: "",
+    endTime: "",
+    plan: "",
+    objectives: "",
+    materials: "",
+    notes: "",
+  });
+  const [showNewEntry, setShowNewEntry] = useState(false);
+  const [showNewEvent, setShowNewEvent] = useState(false);
     const [newEntry, setNewEntry] = useState({
       classId: "",
       subjectId: "",
@@ -71,7 +85,12 @@ const CalendarPage = ({
     const subjectOptionsForEntryClass = subjects.filter(
       (subject) => subject.class_id === (newEntry.classId || effectiveClassId || null)
     );
-    const unitOptionsForEntrySubject = units.filter((unit) => unit.subject_id === newEntry.subjectId);
+  const unitOptionsForEntrySubject = units.filter((unit) => unit.subject_id === newEntry.subjectId);
+  const subjectOptionsForEditClass = subjects.filter(
+    (subject) =>
+      subject.class_id === (editEntryForm.classId || activeDiaryEntry?.class_id || effectiveClassId || null)
+  );
+  const unitOptionsForEditSubject = units.filter((unit) => unit.subject_id === editEntryForm.subjectId);
 
     const monthTitle = viewMode === "month" ? format(anchorDate, "LLLL yyyy") : format(anchorDate, "PPP");
     const dayItems = filteredDiaryEntries
@@ -99,14 +118,20 @@ const CalendarPage = ({
             start: startOfWeek(anchorDate),
             end: endOfWeek(anchorDate),
           });
+    const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
     const diaryForDay = (dateObj) =>
       filteredDiaryEntries.filter((item) => item.entry_date === format(dateObj, "yyyy-MM-dd"));
     const eventsForDay = (dateObj) =>
       filteredEvents.filter((item) => item.event_date === format(dateObj, "yyyy-MM-dd"));
 
-    const mergeDateTime = (dateString, timeString) =>
-      timeString ? `${dateString}T${timeString}:00` : null;
+  const mergeDateTime = (dateString, timeString) =>
+    timeString ? `${dateString}T${timeString}:00` : null;
+  const splitLines = (value) =>
+    String(value || "")
+      .split(/\n|;|,/)
+      .map((item) => item.trim())
+      .filter(Boolean);
 
     const navigatePeriod = (delta) => {
       setAnchorDate((prev) => (viewMode === "month" ? addMonths(prev, delta) : addWeeks(prev, delta)));
@@ -160,7 +185,7 @@ const CalendarPage = ({
       await loadData();
     };
 
-    const handleDeleteDiaryEntry = async (entryId) => {
+  const handleDeleteDiaryEntry = async (entryId) => {
       if (!entryId) return;
       if (!window.confirm("Delete this diary entry?")) return;
       setFormError("");
@@ -169,8 +194,68 @@ const CalendarPage = ({
         setFormError(error.message);
         return;
       }
-      await loadData();
+    await loadData();
+  };
+
+  const openEditDiaryEntry = (entry) => {
+    if (!entry) return;
+    setEditingEntryId(entry.id);
+    setEditEntryForm({
+      classId: entry.class_id || "",
+      subjectId: entry.subject_id || "",
+      unitId: entry.unit_id || "",
+      startTime: entry.start_time ? format(parseISO(entry.start_time), "HH:mm") : "",
+      endTime: entry.end_time ? format(parseISO(entry.end_time), "HH:mm") : "",
+      plan: entry.plan || "",
+      objectives: entry.objectives || "",
+      materials: entry.materials || "",
+      notes: entry.notes || "",
+    });
+    setShowEditEntry(true);
+  };
+
+  const handleUpdateDiaryEntry = async (event) => {
+    event.preventDefault();
+    setFormError("");
+
+    if (!calendarTablesReady) {
+      setFormError(calendarSetupMessage);
+      return;
+    }
+    if (!editingEntryId) return;
+
+    const entryDate = activeDiaryEntry?.entry_date || selectedDate;
+    const payload = {
+      class_id: editEntryForm.classId || effectiveClassId || null,
+      subject_id: editEntryForm.subjectId || null,
+      unit_id: editEntryForm.unitId || null,
+      start_time: mergeDateTime(entryDate, editEntryForm.startTime),
+      end_time: mergeDateTime(entryDate, editEntryForm.endTime),
+      plan: editEntryForm.plan.trim() || null,
+      objectives: editEntryForm.objectives.trim() || null,
+      materials: editEntryForm.materials.trim() || null,
+      notes: editEntryForm.notes.trim() || null,
     };
+
+    if (!payload.class_id) {
+      setFormError("Select a class for the diary entry.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("calendar_diary_entries")
+      .update(payload)
+      .eq("id", editingEntryId);
+    if (error) {
+      setFormError(error.message);
+      return;
+    }
+
+    setShowEditEntry(false);
+    setEditingEntryId("");
+    setActiveDiaryEntry(null);
+    await loadData();
+  };
 
     const handleCreateEvent = async (event) => {
       event.preventDefault();
@@ -231,55 +316,63 @@ const CalendarPage = ({
         {formError && <div className="error">{formError}</div>}
         {!calendarTablesReady && <div className="error">{calendarSetupMessage}</div>}
         <section className="panel calendar-page">
-          <div className="calendar-header">
-            <button type="button" className="icon-button" onClick={() => navigatePeriod(-1)}>
-              ‹
-            </button>
-            <h2>{monthTitle}</h2>
-            <button type="button" className="icon-button" onClick={() => navigatePeriod(1)}>
-              ›
-            </button>
+          <div className="calendar-header-card">
+            <div className="calendar-header">
+              <button type="button" className="icon-button calendar-nav-btn" onClick={() => navigatePeriod(-1)}>
+                ‹
+              </button>
+              <h2>{monthTitle}</h2>
+              <button type="button" className="icon-button calendar-nav-btn" onClick={() => navigatePeriod(1)}>
+                ›
+              </button>
+            </div>
+            <div className="calendar-toolbar">
+              <div className="calendar-mode">
+                <button
+                  type="button"
+                  className={viewMode === "month" ? "active" : ""}
+                  onClick={() => setViewMode("month")}
+                >
+                  Month
+                </button>
+                <button
+                  type="button"
+                  className={viewMode === "week" ? "active" : ""}
+                  onClick={() => setViewMode("week")}
+                >
+                  Week
+                </button>
+              </div>
+              <div className="calendar-filters">
+                {!classId && (
+                  <select value={activeClassId} onChange={(event) => setActiveClassId(event.target.value)}>
+                    <option value="">All Classes</option>
+                    {classOptions.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {classId && <span className="badge">Class: {activeClassLabel || "Selected class"}</span>}
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    setAnchorDate(new Date());
+                    setSelectedDate(format(new Date(), "yyyy-MM-dd"));
+                  }}
+                >
+                  Today
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="calendar-toolbar">
-            <div className="calendar-mode">
-              <button
-                type="button"
-                className={viewMode === "month" ? "active" : ""}
-                onClick={() => setViewMode("month")}
-              >
-                Month
-              </button>
-              <button
-                type="button"
-                className={viewMode === "week" ? "active" : ""}
-                onClick={() => setViewMode("week")}
-              >
-                Week
-              </button>
-            </div>
-            <div className="calendar-filters">
-              {!classId && (
-                <select value={activeClassId} onChange={(event) => setActiveClassId(event.target.value)}>
-                  <option value="">All Classes</option>
-                  {classOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {classId && <span className="badge">Class: {activeClassLabel || "Selected class"}</span>}
-              <button
-                type="button"
-                onClick={() => {
-                  setAnchorDate(new Date());
-                  setSelectedDate(format(new Date(), "yyyy-MM-dd"));
-                }}
-              >
-                Today
-              </button>
-            </div>
+          <div className="calendar-weekdays" aria-hidden="true">
+            {weekdayLabels.map((label) => (
+              <span key={label}>{label}</span>
+            ))}
           </div>
 
           <div className={`calendar-grid ${viewMode}`}>
@@ -290,7 +383,8 @@ const CalendarPage = ({
               const dayKey = format(dateObj, "yyyy-MM-dd");
               const selected = dayKey === selectedDate;
               const inMonth = format(dateObj, "M") === format(anchorDate, "M");
-              const previews = [...cellEvents.slice(0, 2), ...cellLessons.slice(0, 2)];
+              const previewLimit = viewMode === "week" ? 10 : 6;
+              const previews = [...cellEvents.slice(0, 5), ...cellLessons.slice(0, 5)].slice(0, previewLimit);
               const remaining = cellEvents.length + cellLessons.length - previews.length;
 
               return (
@@ -304,7 +398,9 @@ const CalendarPage = ({
                   }}
                 >
                   <div className="calendar-day-top">
-                    <span>{dayLabel}</span>
+                    <span className="calendar-day-number">
+                      {viewMode === "week" ? format(dateObj, "EEE d") : dayLabel}
+                    </span>
                     {isToday(dateObj) && <span className="calendar-dot" />}
                   </div>
                   <div className="calendar-day-list">
@@ -338,10 +434,11 @@ const CalendarPage = ({
           {upcomingEvents.length === 0 ? (
             <p className="muted">No upcoming alerts.</p>
           ) : (
-            <ul className="list">
+            <ul className="list calendar-upcoming-list">
               {upcomingEvents.map((item) => (
                 <li key={item.id}>
-                  <strong>{item.title}</strong> • {item.event_date}
+                  <strong>{item.title}</strong>
+                  <span className="calendar-upcoming-date">{format(parseISO(item.event_date), "EEE, MMM d")}</span>
                 </li>
               ))}
             </ul>
@@ -387,31 +484,35 @@ const CalendarPage = ({
                       return (
                         <article key={entry.id} className="calendar-entry-card">
                           <div className="calendar-entry-top">
-                            <strong>
-                              {units.find((item) => item.id === entry.unit_id)?.name ||
-                                subjects.find((item) => item.id === entry.subject_id)?.name ||
-                                "Diary Entry"}
-                            </strong>
+                            <button
+                              type="button"
+                              className="calendar-entry-summary-btn"
+                              onClick={() => setActiveDiaryEntry(entry)}
+                            >
+                              <strong>
+                                {units.find((item) => item.id === entry.unit_id)?.name ||
+                                  subjects.find((item) => item.id === entry.subject_id)?.name ||
+                                  "Class Entry"}
+                              </strong>
+                              <p className="muted">{className}</p>
+                              <p className="calendar-entry-basic">
+                                {format(parseISO(selectedDate), "EEE, MMM d")} •{" "}
+                                {(entry.start_time || entry.end_time)
+                                  ? [entry.start_time && format(parseISO(entry.start_time), "p"), entry.end_time && format(parseISO(entry.end_time), "p")]
+                                      .filter(Boolean)
+                                      .join(" – ")
+                                  : "Time not set"}
+                              </p>
+                            </button>
                             <button
                               type="button"
                               className="icon-button"
                               onClick={() => handleDeleteDiaryEntry(entry.id)}
+                              aria-label="Delete diary entry"
                             >
                               🗑
                             </button>
                           </div>
-                          <p className="muted">{className}</p>
-                          {(entry.start_time || entry.end_time) && (
-                            <p className="muted">
-                              {[entry.start_time && format(parseISO(entry.start_time), "p"), entry.end_time && format(parseISO(entry.end_time), "p")]
-                                .filter(Boolean)
-                                .join(" – ")}
-                            </p>
-                          )}
-                          {entry.plan && <p>{entry.plan}</p>}
-                          {entry.objectives && <p className="muted">Objectives: {entry.objectives}</p>}
-                          {entry.materials && <p className="muted">Materials: {entry.materials}</p>}
-                          {entry.notes && <p className="muted">Notes: {entry.notes}</p>}
                         </article>
                       );
                     })}
@@ -470,10 +571,12 @@ const CalendarPage = ({
 
         {showNewEntry && (
           <div className="modal-overlay">
-            <div className="modal-card">
-              <h3>New Diary Entry</h3>
-              <p className="muted">{format(parseISO(selectedDate), "PPPP")}</p>
-              <form onSubmit={handleCreateDiaryEntry} className="grid">
+            <div className="modal-card calendar-entry-modal">
+              <div className="calendar-entry-modal-header">
+                <h3>New Diary Entry</h3>
+                <p className="calendar-entry-date-chip">{format(parseISO(selectedDate), "PPPP")}</p>
+              </div>
+              <form onSubmit={handleCreateDiaryEntry} className="calendar-entry-form">
                 <label className="stack">
                   <span>Class</span>
                   <select
@@ -559,7 +662,7 @@ const CalendarPage = ({
                     placeholder="Learning goals"
                   />
                 </label>
-                <label className="stack">
+                <label className="stack calendar-entry-field-full">
                   <span>Materials</span>
                   <textarea
                     rows="2"
@@ -570,7 +673,7 @@ const CalendarPage = ({
                     placeholder="Books, slides, worksheets..."
                   />
                 </label>
-                <label className="stack">
+                <label className="stack calendar-entry-field-full">
                   <span>Notes</span>
                   <textarea
                     rows="2"
@@ -579,7 +682,7 @@ const CalendarPage = ({
                     placeholder="Optional notes"
                   />
                 </label>
-                <div className="modal-actions">
+                <div className="modal-actions calendar-entry-actions">
                   <button type="button" className="secondary" onClick={() => setShowNewEntry(false)}>
                     Cancel
                   </button>
@@ -594,10 +697,12 @@ const CalendarPage = ({
 
         {showNewEvent && (
           <div className="modal-overlay">
-            <div className="modal-card">
-              <h3>New Event</h3>
-              <p className="muted">{format(parseISO(selectedDate), "PPPP")}</p>
-              <form onSubmit={handleCreateEvent} className="grid">
+            <div className="modal-card calendar-event-modal">
+              <div className="calendar-entry-modal-header">
+                <h3>New Event</h3>
+                <p className="calendar-entry-date-chip">{format(parseISO(selectedDate), "PPPP")}</p>
+              </div>
+              <form onSubmit={handleCreateEvent} className="calendar-event-form">
                 <label className="stack">
                   <span>Class</span>
                   <select
@@ -632,7 +737,7 @@ const CalendarPage = ({
                   All day
                 </label>
                 {!newEvent.isAllDay && (
-                  <div className="calendar-time-grid">
+                  <div className="calendar-time-grid calendar-event-time-grid">
                     <label className="stack">
                       <span>Start Time</span>
                       <input
@@ -655,7 +760,7 @@ const CalendarPage = ({
                     </label>
                   </div>
                 )}
-                <label className="stack">
+                <label className="stack calendar-entry-field-full">
                   <span>Details</span>
                   <textarea
                     rows="3"
@@ -664,12 +769,240 @@ const CalendarPage = ({
                     placeholder="Optional details"
                   />
                 </label>
-                <div className="modal-actions">
+                <div className="modal-actions calendar-entry-actions">
                   <button type="button" className="secondary" onClick={() => setShowNewEvent(false)}>
                     Cancel
                   </button>
                   <button type="submit" disabled={!calendarTablesReady}>
                     Save Event
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {activeDiaryEntry && (
+          <div className="modal-overlay">
+            <div className="modal-card calendar-entry-detail-modal">
+              <div className="calendar-day-header">
+                <div>
+                  <h3>
+                    {units.find((item) => item.id === activeDiaryEntry.unit_id)?.name ||
+                      subjects.find((item) => item.id === activeDiaryEntry.subject_id)?.name ||
+                      "Class Entry"}
+                  </h3>
+                  <p className="muted">
+                    {classes.find((item) => item.id === activeDiaryEntry.class_id)?.name || "All Classes"} •{" "}
+                    {format(parseISO(selectedDate), "PPPP")}
+                  </p>
+                </div>
+                <div className="calendar-detail-actions">
+                  <button type="button" className="secondary" onClick={() => openEditDiaryEntry(activeDiaryEntry)}>
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    onClick={() => {
+                      setActiveDiaryEntry(null);
+                      setShowEditEntry(false);
+                      setEditingEntryId("");
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              <div className="calendar-lesson-sheet">
+                <section className="calendar-sheet-block">
+                  <h4>Goals</h4>
+                  {splitLines(activeDiaryEntry.objectives).length > 0 ? (
+                    <ol>
+                      {splitLines(activeDiaryEntry.objectives)
+                        .slice(0, 6)
+                        .map((goal, idx) => (
+                          <li key={`${goal}-${idx}`}>{goal}</li>
+                        ))}
+                    </ol>
+                  ) : (
+                    <p className="muted">No goals added.</p>
+                  )}
+                </section>
+
+                <section className="calendar-sheet-grid">
+                  <article className="calendar-sheet-block">
+                    <h4>Materials Needed</h4>
+                    {activeDiaryEntry.materials ? (
+                      <p>{activeDiaryEntry.materials}</p>
+                    ) : (
+                      <p className="muted">No materials listed.</p>
+                    )}
+                  </article>
+                  <article className="calendar-sheet-block">
+                    <h4>Notes</h4>
+                    {activeDiaryEntry.notes ? (
+                      <p>{activeDiaryEntry.notes}</p>
+                    ) : (
+                      <p className="muted">No homework/notes added.</p>
+                    )}
+                  </article>
+                </section>
+
+                <section className="calendar-sheet-block">
+                  <h4>Class Development</h4>
+                  {activeDiaryEntry.plan ? <p>{activeDiaryEntry.plan}</p> : <p className="muted">No plan added.</p>}
+                </section>
+
+                <section className="calendar-sheet-block">
+                  <h4>Day Observations</h4>
+                  {activeDiaryEntry.notes ? (
+                    <p>{activeDiaryEntry.notes}</p>
+                  ) : (
+                    <p className="muted">No observations recorded.</p>
+                  )}
+                </section>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showEditEntry && (
+          <div className="modal-overlay">
+            <div className="modal-card calendar-entry-modal">
+              <div className="calendar-entry-modal-header">
+                <h3>Edit Diary Entry</h3>
+                <p className="calendar-entry-date-chip">
+                  {format(parseISO(activeDiaryEntry?.entry_date || selectedDate), "PPPP")}
+                </p>
+              </div>
+              <form onSubmit={handleUpdateDiaryEntry} className="calendar-entry-form">
+                <label className="stack">
+                  <span>Class</span>
+                  <select
+                    value={editEntryForm.classId || effectiveClassId}
+                    onChange={(event) =>
+                      setEditEntryForm((prev) => ({
+                        ...prev,
+                        classId: event.target.value,
+                        subjectId: "",
+                        unitId: "",
+                      }))
+                    }
+                  >
+                    <option value="">All Classes</option>
+                    {classOptions.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="stack">
+                  <span>Subject</span>
+                  <select
+                    value={editEntryForm.subjectId}
+                    onChange={(event) =>
+                      setEditEntryForm((prev) => ({ ...prev, subjectId: event.target.value, unitId: "" }))
+                    }
+                  >
+                    <option value="">None</option>
+                    {subjectOptionsForEditClass.map((subject) => (
+                      <option key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="stack">
+                  <span>Unit</span>
+                  <select
+                    value={editEntryForm.unitId}
+                    onChange={(event) => setEditEntryForm((prev) => ({ ...prev, unitId: event.target.value }))}
+                  >
+                    <option value="">None</option>
+                    {unitOptionsForEditSubject.map((unit) => (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="calendar-time-grid">
+                  <label className="stack">
+                    <span>Start Time</span>
+                    <input
+                      type="time"
+                      value={editEntryForm.startTime}
+                      onChange={(event) =>
+                        setEditEntryForm((prev) => ({ ...prev, startTime: event.target.value }))
+                      }
+                    />
+                  </label>
+                  <label className="stack">
+                    <span>End Time</span>
+                    <input
+                      type="time"
+                      value={editEntryForm.endTime}
+                      onChange={(event) =>
+                        setEditEntryForm((prev) => ({ ...prev, endTime: event.target.value }))
+                      }
+                    />
+                  </label>
+                </div>
+                <label className="stack">
+                  <span>Plan</span>
+                  <input
+                    value={editEntryForm.plan}
+                    onChange={(event) => setEditEntryForm((prev) => ({ ...prev, plan: event.target.value }))}
+                    placeholder="What will be taught"
+                  />
+                </label>
+                <label className="stack">
+                  <span>Objectives</span>
+                  <textarea
+                    rows="2"
+                    value={editEntryForm.objectives}
+                    onChange={(event) =>
+                      setEditEntryForm((prev) => ({ ...prev, objectives: event.target.value }))
+                    }
+                    placeholder="Learning goals"
+                  />
+                </label>
+                <label className="stack calendar-entry-field-full">
+                  <span>Materials</span>
+                  <textarea
+                    rows="2"
+                    value={editEntryForm.materials}
+                    onChange={(event) =>
+                      setEditEntryForm((prev) => ({ ...prev, materials: event.target.value }))
+                    }
+                    placeholder="Books, slides, worksheets..."
+                  />
+                </label>
+                <label className="stack calendar-entry-field-full">
+                  <span>Notes</span>
+                  <textarea
+                    rows="2"
+                    value={editEntryForm.notes}
+                    onChange={(event) => setEditEntryForm((prev) => ({ ...prev, notes: event.target.value }))}
+                    placeholder="Optional notes"
+                  />
+                </label>
+                <div className="modal-actions calendar-entry-actions">
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => {
+                      setShowEditEntry(false);
+                      setEditingEntryId("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={!calendarTablesReady}>
+                    Save changes
                   </button>
                 </div>
               </form>
