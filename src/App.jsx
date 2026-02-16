@@ -18,6 +18,10 @@ import RandomPickerPage from "./pages/RandomPickerPage";
 import RunningRecordsPage from "./pages/RunningRecordsPage";
 import { supabase } from "./supabaseClient";
 import {
+  DEFAULT_PROFILE_PREFERENCES,
+  STUDENT_GENDER_OPTIONS,
+} from "./constants/options";
+import {
   averageFromPercents,
   entryToPercent,
   getAssessmentMaxScore,
@@ -26,19 +30,6 @@ import {
 } from "./utils/assessmentMetrics";
 import "./App.css";
 import "react-day-picker/dist/style.css";
-
-const STUDENT_GENDER_OPTIONS = ["Male", "Female", "Non-binary", "Prefer not to say"];
-const ATTENDANCE_STATUS_OPTIONS = [
-  "Present",
-  "Didn't come",
-  "Arrived late",
-  "Left early",
-];
-const DEFAULT_PROFILE_PREFERENCES = {
-  dateFormat: "MDY",
-  timeFormat: "12h",
-  defaultLandingPath: "/",
-};
 
 const DEFAULT_RUBRICS = [
   {
