@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { supabase } from "../supabaseClient";
 
 function RubricsPage({
   formError,
@@ -9,7 +8,14 @@ function RubricsPage({
   loading,
   seedingRubrics,
   handleSeedDefaultRubrics,
-  loadData,
+  handleCreateRubricTemplate,
+  handleUpdateRubricTemplate,
+  handleDeleteRubricTemplate,
+  handleCreateRubricCategory,
+  handleDeleteRubricCategory,
+  handleCreateRubricCriterion,
+  handleDeleteRubricCriterion,
+  handleUpdateRubricCriterion,
 }) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showCreateTemplate, setShowCreateTemplate] = useState(false);
@@ -134,55 +140,44 @@ function RubricsPage({
   };
 
   const handleCreateTemplate = async () => {
-    const payload = {
+    const created = await handleCreateRubricTemplate({
       title: newTemplateForm.title.trim(),
-      grade_band: newTemplateForm.gradeBand.trim(),
+      gradeBand: newTemplateForm.gradeBand.trim(),
       subject: newTemplateForm.subject.trim(),
-    };
-    if (!payload.title || !payload.grade_band || !payload.subject) return;
-    const { error } = await supabase.from("rubrics").insert(payload);
-    if (error) {
-      return;
-    }
+    });
+    if (!created) return;
     setNewTemplateForm({ title: "", gradeBand: "", subject: "" });
     setShowCreateTemplate(false);
-    await loadData();
   };
 
   const handleUpdateTemplate = async (rubricId, updates) => {
-    const { error } = await supabase.from("rubrics").update(updates).eq("id", rubricId);
-    if (error) return;
-    await loadData();
+    await handleUpdateRubricTemplate(rubricId, updates);
   };
 
   const handleDeleteTemplate = async (rubricId) => {
     if (!window.confirm("Delete this template?")) return;
-    const { error } = await supabase.from("rubrics").delete().eq("id", rubricId);
-    if (error) return;
+    const deleted = await handleDeleteRubricTemplate(rubricId);
+    if (!deleted) return;
     if (selectedTemplate?.id === rubricId) setSelectedTemplate(null);
-    await loadData();
   };
 
   const handleCreateCategory = async () => {
     if (!selectedTemplate?.id) return;
     const name = newCategoryName.trim();
     if (!name) return;
-    const { error } = await supabase.from("rubric_categories").insert({
-      rubric_id: selectedTemplate.id,
+    const created = await handleCreateRubricCategory({
+      rubricId: selectedTemplate.id,
       name,
-      sort_order: rubricCategories.filter((c) => c.rubric_id === selectedTemplate.id).length,
+      sortOrder: rubricCategories.filter((c) => c.rubric_id === selectedTemplate.id).length,
     });
-    if (error) return;
+    if (!created) return;
     setNewCategoryName("");
     setShowAddCategory(false);
-    await loadData();
   };
 
   const handleDeleteCategory = async (categoryId) => {
     if (!window.confirm("Delete this category and its criteria?")) return;
-    const { error } = await supabase.from("rubric_categories").delete().eq("id", categoryId);
-    if (error) return;
-    await loadData();
+    await handleDeleteRubricCategory(categoryId);
   };
 
   const handleCreateCriterion = async () => {
@@ -190,37 +185,30 @@ function RubricsPage({
     const label = newCriterionForm.label.trim();
     const description = newCriterionForm.description.trim();
     if (!label && !description) return;
-    const { error } = await supabase.from("rubric_criteria").insert({
-      category_id: showAddCriterion.id,
+    const created = await handleCreateRubricCriterion({
+      categoryId: showAddCriterion.id,
       label: label || null,
       description,
-      sort_order: rubricCriteria.filter((c) => c.category_id === showAddCriterion.id).length,
+      sortOrder: rubricCriteria.filter((c) => c.category_id === showAddCriterion.id).length,
     });
-    if (error) return;
+    if (!created) return;
     setNewCriterionForm({ label: "", description: "" });
     setShowAddCriterion(null);
-    await loadData();
   };
 
   const handleDeleteCriterion = async (criterionId) => {
     if (!window.confirm("Delete this criterion?")) return;
-    const { error } = await supabase.from("rubric_criteria").delete().eq("id", criterionId);
-    if (error) return;
-    await loadData();
+    await handleDeleteRubricCriterion(criterionId);
   };
 
   const handleUpdateCriterion = async () => {
     if (!editingCriterion?.id) return;
-    const { error } = await supabase
-      .from("rubric_criteria")
-      .update({
-        label: editingCriterion.label.trim() || null,
-        description: editingCriterion.description.trim(),
-      })
-      .eq("id", editingCriterion.id);
-    if (error) return;
+    const updated = await handleUpdateRubricCriterion(editingCriterion.id, {
+      label: editingCriterion.label,
+      description: editingCriterion.description,
+    });
+    if (!updated) return;
     setEditingCriterion(null);
-    await loadData();
   };
 
   const templateCategories = selectedTemplate

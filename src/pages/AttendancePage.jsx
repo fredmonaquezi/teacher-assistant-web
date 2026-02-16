@@ -7,7 +7,6 @@ import {
   parseISO,
 } from "date-fns";
 import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "../supabaseClient";
 
 const AttendancePage = ({
   classOptions,
@@ -16,7 +15,8 @@ const AttendancePage = ({
   attendanceEntries,
   formError,
   setFormError,
-  loadData,
+  handleCreateAttendanceSessionForDate,
+  handleDeleteAttendanceSession,
 }) => {
   const navigate = useNavigate();
   const attendanceClassStorageKey = "ta_attendance_active_class";
@@ -95,52 +95,9 @@ const AttendancePage = ({
     setIsCreatingSession(true);
     setFormError("");
     try {
-      if (!effectiveClassId) {
-        setFormError("Select a class first.");
-        return false;
-      }
-      if (!dateString) {
-        setFormError("Choose a date.");
-        return false;
-      }
-      const existingSession = classSessions.find((session) => session.session_date === dateString);
-      if (existingSession?.id) {
-        navigate(`/attendance/${existingSession.id}`);
-        return true;
-      }
-
-      const { data: sessionRow, error: sessionError } = await supabase
-        .from("attendance_sessions")
-        .insert({
-          session_date: dateString,
-          title: null,
-          class_id: effectiveClassId,
-        })
-        .select()
-        .single();
-      if (sessionError) {
-        setFormError(sessionError.message);
-        return false;
-      }
-
-      if (classStudents.length > 0) {
-        const entryRows = classStudents.map((student) => ({
-          session_id: sessionRow.id,
-          student_id: student.id,
-          status: "Present",
-          note: null,
-        }));
-        const { error: entryError } = await supabase
-          .from("attendance_entries")
-          .insert(entryRows);
-        if (entryError) {
-          setFormError(entryError.message);
-          return false;
-        }
-      }
-
-      await loadData();
-      navigate(`/attendance/${sessionRow.id}`);
+      const result = await handleCreateAttendanceSessionForDate(effectiveClassId, dateString);
+      if (!result?.ok || !result.sessionId) return false;
+      navigate(`/attendance/${result.sessionId}`);
       return true;
     } finally {
       setIsCreatingSession(false);
@@ -153,12 +110,7 @@ const AttendancePage = ({
     setDeletingSessionId(sessionId);
     setFormError("");
     try {
-      const { error } = await supabase.from("attendance_sessions").delete().eq("id", sessionId);
-      if (error) {
-        setFormError(error.message);
-        return;
-      }
-      await loadData();
+      await handleDeleteAttendanceSession(sessionId);
     } finally {
       setDeletingSessionId("");
     }

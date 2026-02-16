@@ -83,7 +83,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     isGeneratingGroups,
     groupsScrollTopRef,
     classOptions,
-    loadData,
     handleCreateClass,
     handleCreateStudent,
     handleUpdateStudent,
@@ -91,7 +90,11 @@ function TeacherWorkspace({ user, onSignOut }) {
     handleUpdateSortOrder,
     handleSwapSortOrder,
     handleUpdateAttendanceEntry,
+    handleCreateAttendanceSessionForDate,
+    handleDeleteAttendanceSession,
     handleUpdateAssessmentEntry,
+    handleEnsureAssessmentEntries,
+    handleUpdateAssessmentNotes,
     handleCreateRunningRecord,
     handleDeleteRunningRecord,
     handleCreateSubject,
@@ -104,6 +107,19 @@ function TeacherWorkspace({ user, onSignOut }) {
     handleCreateDevelopmentScoreEntry,
     handleUpdateDevelopmentScore,
     handleSeedDefaultRubrics,
+    handleCreateRubricTemplate,
+    handleUpdateRubricTemplate,
+    handleDeleteRubricTemplate,
+    handleCreateRubricCategory,
+    handleDeleteRubricCategory,
+    handleCreateRubricCriterion,
+    handleDeleteRubricCriterion,
+    handleUpdateRubricCriterion,
+    handleCreateCalendarDiaryEntry,
+    handleUpdateCalendarDiaryEntry,
+    handleDeleteCalendarDiaryEntry,
+    handleCreateCalendarEvent,
+    handleDeleteCalendarEvent,
     handleAddConstraint,
     handleDeleteConstraint,
     handleGenerateGroups,
@@ -187,7 +203,8 @@ function TeacherWorkspace({ user, onSignOut }) {
                 attendanceEntries={attendanceEntries}
                 formError={formError}
                 setFormError={setFormError}
-                loadData={loadData}
+                handleCreateAttendanceSessionForDate={handleCreateAttendanceSessionForDate}
+                handleDeleteAttendanceSession={handleDeleteAttendanceSession}
               />
             }
           />
@@ -230,8 +247,8 @@ function TeacherWorkspace({ user, onSignOut }) {
                 students={students}
                 handleUpdateAssessmentEntry={handleUpdateAssessmentEntry}
                 setAssessments={setAssessments}
-                setFormError={setFormError}
-                loadData={loadData}
+                handleEnsureAssessmentEntries={handleEnsureAssessmentEntries}
+                handleUpdateAssessmentNotes={handleUpdateAssessmentNotes}
               />
             }
           />
@@ -278,7 +295,14 @@ function TeacherWorkspace({ user, onSignOut }) {
                 handleSeedDefaultRubrics={handleSeedDefaultRubrics}
                 handleUpdateSortOrder={handleUpdateSortOrder}
                 handleSwapSortOrder={handleSwapSortOrder}
-                loadData={loadData}
+                handleCreateRubricTemplate={handleCreateRubricTemplate}
+                handleUpdateRubricTemplate={handleUpdateRubricTemplate}
+                handleDeleteRubricTemplate={handleDeleteRubricTemplate}
+                handleCreateRubricCategory={handleCreateRubricCategory}
+                handleDeleteRubricCategory={handleDeleteRubricCategory}
+                handleCreateRubricCriterion={handleCreateRubricCriterion}
+                handleDeleteRubricCriterion={handleDeleteRubricCriterion}
+                handleUpdateRubricCriterion={handleUpdateRubricCriterion}
               />
             }
           />
@@ -363,7 +387,6 @@ function TeacherWorkspace({ user, onSignOut }) {
               <CalendarPage
                 formError={formError}
                 setFormError={setFormError}
-                loadData={loadData}
                 classOptions={classOptions}
                 calendarDiaryEntries={calendarDiaryEntries}
                 calendarEvents={calendarEvents}
@@ -371,6 +394,11 @@ function TeacherWorkspace({ user, onSignOut }) {
                 classes={classes}
                 subjects={subjects}
                 units={units}
+                handleCreateCalendarDiaryEntry={handleCreateCalendarDiaryEntry}
+                handleUpdateCalendarDiaryEntry={handleUpdateCalendarDiaryEntry}
+                handleDeleteCalendarDiaryEntry={handleDeleteCalendarDiaryEntry}
+                handleCreateCalendarEvent={handleCreateCalendarEvent}
+                handleDeleteCalendarEvent={handleDeleteCalendarEvent}
               />
             }
           />

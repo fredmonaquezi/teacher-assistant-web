@@ -13,12 +13,10 @@ import {
 } from "date-fns";
 import { DayPicker } from "react-day-picker";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "../supabaseClient";
 
 const CalendarPage = ({
   formError,
   setFormError,
-  loadData,
   classOptions,
   calendarDiaryEntries,
   calendarEvents,
@@ -26,6 +24,11 @@ const CalendarPage = ({
   classes,
   subjects,
   units,
+  handleCreateCalendarDiaryEntry,
+  handleUpdateCalendarDiaryEntry,
+  handleDeleteCalendarDiaryEntry,
+  handleCreateCalendarEvent,
+  handleDeleteCalendarEvent,
 }) => {
     const calendarSetupMessage =
       "Calendar tables are not set up yet. Run /Users/fred/Documents/teacher-assistant-web/supabase_calendar_tables.sql in Supabase SQL Editor, then refresh.";
@@ -164,9 +167,8 @@ const CalendarPage = ({
         return;
       }
 
-      const { error } = await supabase.from("calendar_diary_entries").insert(payload);
-      if (error) {
-        setFormError(error.message);
+      const created = await handleCreateCalendarDiaryEntry(payload);
+      if (!created) {
         return;
       }
 
@@ -182,19 +184,12 @@ const CalendarPage = ({
         notes: "",
       });
       setShowNewEntry(false);
-      await loadData();
     };
 
   const handleDeleteDiaryEntry = async (entryId) => {
       if (!entryId) return;
       if (!window.confirm("Delete this diary entry?")) return;
-      setFormError("");
-      const { error } = await supabase.from("calendar_diary_entries").delete().eq("id", entryId);
-      if (error) {
-        setFormError(error.message);
-        return;
-      }
-    await loadData();
+      await handleDeleteCalendarDiaryEntry(entryId);
   };
 
   const openEditDiaryEntry = (entry) => {
@@ -242,19 +237,14 @@ const CalendarPage = ({
       return;
     }
 
-    const { error } = await supabase
-      .from("calendar_diary_entries")
-      .update(payload)
-      .eq("id", editingEntryId);
-    if (error) {
-      setFormError(error.message);
+    const updated = await handleUpdateCalendarDiaryEntry(editingEntryId, payload);
+    if (!updated) {
       return;
     }
 
     setShowEditEntry(false);
     setEditingEntryId("");
     setActiveDiaryEntry(null);
-    await loadData();
   };
 
     const handleCreateEvent = async (event) => {
@@ -281,9 +271,8 @@ const CalendarPage = ({
         return;
       }
 
-      const { error } = await supabase.from("calendar_events").insert(payload);
-      if (error) {
-        setFormError(error.message);
+      const created = await handleCreateCalendarEvent(payload);
+      if (!created) {
         return;
       }
 
@@ -296,19 +285,12 @@ const CalendarPage = ({
         endTime: "",
       });
       setShowNewEvent(false);
-      await loadData();
     };
 
     const handleDeleteEvent = async (eventId) => {
       if (!eventId) return;
       if (!window.confirm("Delete this event?")) return;
-      setFormError("");
-      const { error } = await supabase.from("calendar_events").delete().eq("id", eventId);
-      if (error) {
-        setFormError(error.message);
-        return;
-      }
-      await loadData();
+      await handleDeleteCalendarEvent(eventId);
     };
 
     return (

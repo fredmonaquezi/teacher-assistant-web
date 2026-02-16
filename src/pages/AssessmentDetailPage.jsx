@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { useParams } from "react-router-dom";
-import { supabase } from "../supabaseClient";
 import { averageFromPercents, getAssessmentMaxScore, performanceColor, scoreToPercent } from "../utils/assessmentMetrics";
 
 const AssessmentEntryRow = ({ entry, student, handleUpdateAssessmentEntry, assessmentMaxScore }) => {
@@ -66,8 +65,8 @@ const AssessmentDetailPage = ({
   students,
   handleUpdateAssessmentEntry,
   setAssessments,
-  setFormError,
-  loadData,
+  handleEnsureAssessmentEntries,
+  handleUpdateAssessmentNotes,
 }) => {
   const { assessmentId } = useParams();
   const assessment = assessments.find((item) => item.id === assessmentId);
@@ -82,34 +81,14 @@ const AssessmentDetailPage = ({
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
   useEffect(() => {
-    const ensureEntries = async () => {
-      if (!assessment || classStudents.length === 0) return;
-      const existingIds = new Set(assessmentEntriesForAssessment.map((e) => e.student_id));
-      const missing = classStudents.filter((student) => !existingIds.has(student.id));
-      if (missing.length === 0) return;
-
-      const rows = missing.map((student) => ({
-        assessment_id: assessment.id,
-        student_id: student.id,
-        score: null,
-        notes: null,
-      }));
-      const { error } = await supabase
-        .from("assessment_entries")
-        .upsert(rows, { onConflict: "assessment_id,student_id", ignoreDuplicates: true });
-      if (error) {
-        setFormError(
-          error.code === "23505"
-            ? "Some assessment entries already existed. Refresh and try again."
-            : error.message
-        );
-        return;
-      }
-      await loadData();
-    };
-
-    ensureEntries();
-  }, [assessment, assessmentEntriesForAssessment, classStudents, loadData, setFormError]);
+    if (!assessment?.id || classStudents.length === 0) return;
+    handleEnsureAssessmentEntries(assessment.id);
+  }, [
+    assessment,
+    classStudents,
+    assessmentEntriesForAssessment,
+    handleEnsureAssessmentEntries,
+  ]);
 
   if (!assessment) {
     return (
@@ -202,10 +181,7 @@ const AssessmentDetailPage = ({
             )
           }
           onBlur={(event) =>
-            supabase
-              .from("assessments")
-              .update({ notes: event.target.value })
-              .eq("id", assessment.id)
+            handleUpdateAssessmentNotes(assessment.id, event.target.value)
           }
           placeholder="Add description"
         />
