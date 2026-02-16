@@ -190,13 +190,13 @@ const AssessmentsPage = ({
             <div className="gradebook-matrix-stats">
               <div className="stat-card gradebook-stat-card">
                 <div className="stat-label">Students</div>
-                <div className="stat-value" style={{ color: "#2563eb" }}>
+                <div className="stat-value" style={{ color: "#8a5c34" }}>
                   {studentsForClass.length}
                 </div>
               </div>
               <div className="stat-card gradebook-stat-card">
                 <div className="stat-label">Assessments</div>
-                <div className="stat-value" style={{ color: "#7c3aed" }}>
+                <div className="stat-value" style={{ color: "#9b6a3f" }}>
                   {assessmentsForUnit.length}
                 </div>
               </div>
@@ -250,13 +250,13 @@ const AssessmentsPage = ({
                             const entry = entryByAssessmentAndStudent.get(key);
                             const percent = scoreToPercent(entry?.score, getAssessmentMaxScore(assessment));
                             const cellColor =
-                              percent === null ? "#64748b" : performanceColor(percent);
+                              percent === null ? "#7c6446" : performanceColor(percent);
                             const cellBg =
                               percent === null
-                                ? "rgba(148, 163, 184, 0.10)"
+                                ? "rgba(201, 164, 110, 0.18)"
                                 : percent >= 70
-                                  ? "rgba(22, 163, 74, 0.12)"
-                                  : percent >= 50
+                                ? "rgba(22, 163, 74, 0.12)"
+                                : percent >= 50
                                     ? "rgba(234, 88, 12, 0.14)"
                                     : "rgba(220, 38, 38, 0.12)";
 

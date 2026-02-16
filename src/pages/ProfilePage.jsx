@@ -88,7 +88,12 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
   return (
     <section className="panel profile-page">
       <div className="profile-hero">
-        <div className="profile-hero-badge" aria-hidden="true">👤</div>
+        <div className="profile-hero-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" className="profile-line-icon">
+            <circle cx="12" cy="8" r="3.2" />
+            <path d="M5.5 18c0-2.7 2.9-4.6 6.5-4.6s6.5 1.9 6.5 4.6" />
+          </svg>
+        </div>
         <div>
           <h2>Profile & Preferences</h2>
           <p className="muted">Manage your account, security, and app preferences.</p>
