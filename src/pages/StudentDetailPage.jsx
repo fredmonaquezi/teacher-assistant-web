@@ -4,6 +4,38 @@ import { NavLink, useParams } from "react-router-dom";
 import { STUDENT_GENDER_OPTIONS } from "../constants/options";
 import { averageFromPercents, entryToPercent, performanceColor } from "../utils/assessmentMetrics";
 
+function renderStudentStatusIcon(kind) {
+  switch (kind) {
+    case "participating":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="7.5" r="2.7" />
+          <path d="M6.2 18c0-2.5 2.1-4.5 4.6-4.5h2.4c2.6 0 4.6 2 4.6 4.5" />
+          <path d="M6 11.8l2.4 2.3 3.2-3.3" />
+        </svg>
+      );
+    case "needsHelp":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 4.7 20 19H4L12 4.7Z" />
+          <line x1="12" y1="9.2" x2="12" y2="13.1" />
+          <circle cx="12" cy="16" r="0.9" />
+        </svg>
+      );
+    case "homework":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 4.5h8.4l3.6 3.6v11.4H6z" />
+          <path d="M14.4 4.5v3.6H18" />
+          <line x1="8.8" y1="12" x2="15.2" y2="12" />
+          <line x1="8.8" y1="15" x2="13.4" y2="15" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 function StudentDetailPage({
   students,
   classes,
@@ -204,6 +236,19 @@ function StudentDetailPage({
       notes: score.notes || "",
     });
   };
+  const resetDevelopmentHistoryState = () => {
+    setEditingDevelopmentScoreId("");
+    setShowAddDevelopmentHistoryForm(false);
+    setNewDevelopmentHistoryForm({
+      rating: "3",
+      date: format(new Date(), "yyyy-MM-dd"),
+      notes: "",
+    });
+  };
+  const selectDevelopmentCriterion = (criterionId) => {
+    setActiveDevelopmentCriterionId(criterionId);
+    resetDevelopmentHistoryState();
+  };
   const sparklineData = useMemo(() => {
     const ratings = activeDevelopmentHistoryChronological
       .map((item) => Number(item.rating))
@@ -233,16 +278,6 @@ function StudentDetailPage({
       total: ratings.length,
     };
   }, [activeDevelopmentHistoryChronological]);
-
-  useEffect(() => {
-    setEditingDevelopmentScoreId("");
-    setShowAddDevelopmentHistoryForm(false);
-    setNewDevelopmentHistoryForm({
-      rating: "3",
-      date: format(new Date(), "yyyy-MM-dd"),
-      notes: "",
-    });
-  }, [activeDevelopmentCriterionId]);
 
   const rubricYearOptions = useMemo(() => {
     const values = new Set();
@@ -338,38 +373,6 @@ function StudentDetailPage({
     ? `${classItem.name}${classItem.grade_level ? ` (${classItem.grade_level})` : ""}`
     : "No class";
 
-  const StudentStatusIcon = ({ kind }) => {
-    switch (kind) {
-      case "participating":
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="7.5" r="2.7" />
-            <path d="M6.2 18c0-2.5 2.1-4.5 4.6-4.5h2.4c2.6 0 4.6 2 4.6 4.5" />
-            <path d="M6 11.8l2.4 2.3 3.2-3.3" />
-          </svg>
-        );
-      case "needsHelp":
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 4.7 20 19H4L12 4.7Z" />
-            <line x1="12" y1="9.2" x2="12" y2="13.1" />
-            <circle cx="12" cy="16" r="0.9" />
-          </svg>
-        );
-      case "homework":
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 4.5h8.4l3.6 3.6v11.4H6z" />
-            <path d="M14.4 4.5v3.6H18" />
-            <line x1="8.8" y1="12" x2="15.2" y2="12" />
-            <line x1="8.8" y1="15" x2="13.4" y2="15" />
-          </svg>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <>
       {formError && <div className="error">{formError}</div>}
@@ -416,7 +419,7 @@ function StudentDetailPage({
             onClick={() => toggleStatus("isParticipatingWell")}
           >
             <span className="student-status-icon" aria-hidden="true">
-              <StudentStatusIcon kind="participating" />
+              {renderStudentStatusIcon("participating")}
             </span>
             <div>
               <strong>Participating Well</strong>
@@ -429,7 +432,7 @@ function StudentDetailPage({
             onClick={() => toggleStatus("needsHelp")}
           >
             <span className="student-status-icon" aria-hidden="true">
-              <StudentStatusIcon kind="needsHelp" />
+              {renderStudentStatusIcon("needsHelp")}
             </span>
             <div>
               <strong>Needs Help</strong>
@@ -442,7 +445,7 @@ function StudentDetailPage({
             onClick={() => toggleStatus("missingHomework")}
           >
             <span className="student-status-icon" aria-hidden="true">
-              <StudentStatusIcon kind="homework" />
+              {renderStudentStatusIcon("homework")}
             </span>
             <div>
               <strong>Missing Homework</strong>
@@ -606,8 +609,7 @@ function StudentDetailPage({
                             type="button"
                             className="student-dev-row-btn"
                             onClick={() => {
-                              setActiveDevelopmentCriterionId(score.criterion_id || "");
-                              setEditingDevelopmentScoreId("");
+                              selectDevelopmentCriterion(score.criterion_id || "");
                             }}
                           >
                             <span className="student-dev-criterion">
@@ -659,11 +661,7 @@ function StudentDetailPage({
                 <button
                   type="button"
                   className="icon-button"
-                  onClick={() => {
-                    setActiveDevelopmentCriterionId("");
-                    setEditingDevelopmentScoreId("");
-                    setShowAddDevelopmentHistoryForm(false);
-                  }}
+                  onClick={() => selectDevelopmentCriterion("")}
                   aria-label="Close history"
                 >
                   ×

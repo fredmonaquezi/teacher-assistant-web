@@ -661,7 +661,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
-  const handleCreateAssessment = async (event) => {
+  const _handleCreateAssessment = async (event) => {
     event.preventDefault();
     setFormError("");
 
