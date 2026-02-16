@@ -1,34 +1,33 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  format,
-  parseISO,
-} from "date-fns";
-import { BrowserRouter, NavLink, Navigate, Route, Routes, useParams, useSearchParams } from "react-router-dom";
-import ClassesPage from "./pages/ClassesPage";
-import ClassDetailPage from "./pages/ClassDetailPage";
-import AttendancePage from "./pages/AttendancePage";
-import AssessmentDetailPage from "./pages/AssessmentDetailPage";
-import AssessmentsPage from "./pages/AssessmentsPage";
-import CalendarPage from "./pages/CalendarPage";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AuthForm from "./components/auth/AuthForm";
 import ReorderModeToggle from "./components/common/ReorderModeToggle";
 import Layout from "./components/layout/Layout";
-import TileIcon from "./components/navigation/TileIcon";
+import {
+  DEFAULT_PROFILE_PREFERENCES,
+  STUDENT_GENDER_OPTIONS,
+} from "./constants/options";
+import { DEFAULT_RUBRICS } from "./data/defaultRubrics";
 import { useHandleDrag } from "./hooks/useHandleDrag";
 import { useReorderMode } from "./hooks/useReorderMode";
+import AssessmentDetailPage from "./pages/AssessmentDetailPage";
+import AssessmentsPage from "./pages/AssessmentsPage";
+import AttendancePage from "./pages/AttendancePage";
+import AttendanceSessionDetailPage from "./pages/AttendanceSessionDetailPage";
+import CalendarPage from "./pages/CalendarPage";
+import ClassDetailPage from "./pages/ClassDetailPage";
+import ClassesPage from "./pages/ClassesPage";
+import DashboardPage from "./pages/DashboardPage";
+import GroupsPage from "./pages/GroupsPage";
 import ProfilePage from "./pages/ProfilePage";
 import RandomPickerPage from "./pages/RandomPickerPage";
 import RunningRecordsPage from "./pages/RunningRecordsPage";
 import RubricsPage from "./pages/RubricsPage";
 import StudentDetailPage from "./pages/StudentDetailPage";
 import SubjectDetailPage from "./pages/SubjectDetailPage";
+import TimerPage from "./pages/TimerPage";
 import UnitDetailPage from "./pages/UnitDetailPage";
 import { supabase } from "./supabaseClient";
-import {
-  DEFAULT_PROFILE_PREFERENCES,
-  STUDENT_GENDER_OPTIONS,
-} from "./constants/options";
-import { DEFAULT_RUBRICS } from "./data/defaultRubrics";
 import {
   averageFromPercents,
   getAssessmentMaxScore,
@@ -36,11 +35,6 @@ import {
 } from "./utils/assessmentMetrics";
 import "./App.css";
 import "react-day-picker/dist/style.css";
-
-
-
-
-
 
 function TeacherWorkspace({ user, onSignOut }) {
   const [profilePreferences, setProfilePreferences] = useState(() => {
@@ -1752,16 +1746,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     pickRandomStudent(memberStudents);
   };
 
-  const timerPresets = [
-    { minutes: 1, label: "1 min", color: "#2563eb", icon: "🐇" },
-    { minutes: 5, label: "5 min", color: "#16a34a", icon: "⚡" },
-    { minutes: 10, label: "10 min", color: "#f97316", icon: "🔥" },
-    { minutes: 15, label: "15 min", color: "#7c3aed", icon: "⭐" },
-    { minutes: 30, label: "30 min", color: "#ec4899", icon: "💗" },
-    { minutes: 45, label: "45 min", color: "#4f46e5", icon: "✨" },
-    { minutes: 60, label: "1 hour", color: "#dc2626", icon: "⏲️" },
-  ];
-
   const timerIntervalRef = useRef(null);
   const timerAudioRef = useRef(null);
   const [timerIsRunning, setTimerIsRunning] = useState(false);
@@ -1878,146 +1862,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     return `${seconds} second${seconds === 1 ? "" : "s"} remaining`;
   };
 
-  const tiles = [
-    { label: "Classes", path: "/classes", accent: "#c9604a", icon: "classes", iconTilt: -1.2, iconX: -0.7, iconY: -0.5, iconStroke: 1.95, wobbleMs: 950 },
-    { label: "Attendance", path: "/attendance", accent: "#6f8f5f", icon: "attendance", iconTilt: 0.8, iconX: 0.3, iconY: -0.6, iconStroke: 1.8, wobbleMs: 980 },
-    { label: "Gradebook", path: "/assessments", accent: "#cf8a4b", icon: "gradebook", iconTilt: -0.4, iconX: -0.4, iconY: -0.3, iconStroke: 1.85, wobbleMs: 1020 },
-    { label: "Rubrics", path: "/rubrics", accent: "#8a74b0", icon: "rubrics", iconTilt: 1.1, iconX: 0.5, iconY: -0.2, iconStroke: 1.75, wobbleMs: 930 },
-    { label: "Groups", path: "/groups", accent: "#5f9b99", icon: "groups", iconTilt: -0.8, iconX: -0.2, iconY: -0.5, iconStroke: 1.9, wobbleMs: 970 },
-    { label: "Random Picker", path: "/random", accent: "#be6973", icon: "random", iconTilt: 0.6, iconX: 0.6, iconY: -0.4, iconStroke: 1.82, wobbleMs: 1010 },
-    { label: "Timer", path: "/timer", accent: "#c36f4b", icon: "timer", iconTilt: -1, iconX: -0.5, iconY: -0.3, iconStroke: 1.88, wobbleMs: 990 },
-    { label: "Running Records", path: "/running-records", accent: "#69885f", icon: "records", iconTilt: 0.9, iconX: 0.4, iconY: -0.5, iconStroke: 1.78, wobbleMs: 940 },
-    { label: "Calendar", path: "/calendar", accent: "#6384b5", icon: "calendar", iconTilt: -0.5, iconX: -0.4, iconY: -0.4, iconStroke: 1.86, wobbleMs: 1000 },
-  ];
-
-  const PlaceholderPage = ({ title, message }) => (
-    <section className="panel">
-      <h2>{title}</h2>
-      <p className="muted">{message}</p>
-    </section>
-  );
-
-  const TimerPage = () => {
-    const timerPrefsKey = "ta_timer_custom_duration";
-
-    const [customMinutes, setCustomMinutes] = useState(() => {
-      try {
-        const raw = localStorage.getItem(timerPrefsKey);
-        if (!raw) return 5;
-        const parsed = JSON.parse(raw);
-        const minutes = Number(parsed?.minutes);
-        if (!Number.isInteger(minutes)) return 5;
-        return Math.max(0, Math.min(180, minutes));
-      } catch {
-        return 5;
-      }
-    });
-    const [customSeconds, setCustomSeconds] = useState(() => {
-      try {
-        const raw = localStorage.getItem(timerPrefsKey);
-        if (!raw) return 0;
-        const parsed = JSON.parse(raw);
-        const seconds = Number(parsed?.seconds);
-        if (!Number.isInteger(seconds)) return 0;
-        return Math.max(0, Math.min(59, seconds));
-      } catch {
-        return 0;
-      }
-    });
-
-    useEffect(() => {
-      localStorage.setItem(
-        timerPrefsKey,
-        JSON.stringify({ minutes: customMinutes, seconds: customSeconds })
-      );
-    }, [customMinutes, customSeconds]);
-
-    const totalCustomSeconds = customMinutes * 60 + customSeconds;
-
-    return (
-      <section className="panel timer-page">
-        <div className="timer-header-card">
-          <div className="timer-header-copy">
-            <span className="timer-kicker">Focus Tool</span>
-            <h2>Classroom Timer</h2>
-            <p className="muted">Choose a duration and keep every activity on track.</p>
-          </div>
-          <div className="timer-icon" aria-hidden="true">⏱️</div>
-        </div>
-
-        <div className="timer-section">
-          <h3>Quick Timers</h3>
-          <div className="timer-presets">
-            {timerPresets.map((preset) => (
-              <button
-                key={preset.minutes}
-                type="button"
-                className="timer-preset"
-                style={{ borderColor: preset.color, background: `${preset.color}22` }}
-                onClick={() => startTimerSeconds(preset.minutes * 60)}
-              >
-                <div className="timer-preset-icon" style={{ color: preset.color }}>
-                  {preset.icon}
-                </div>
-                <div className="timer-preset-label">{preset.label}</div>
-                <div className="timer-preset-sub">{preset.minutes} min</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="timer-section">
-          <h3>Custom Timer</h3>
-          <div className="timer-custom-card">
-            <div className="timer-display">
-              <span>{String(customMinutes).padStart(2, "0")}</span>
-              <span>:</span>
-              <span>{String(customSeconds).padStart(2, "0")}</span>
-            </div>
-            <p className="timer-custom-hint">Set your exact countdown length</p>
-
-            <div className="timer-picker-row">
-              <label className="stack">
-                <span>Minutes</span>
-                <select
-                  value={customMinutes}
-                  onChange={(event) => setCustomMinutes(Number(event.target.value))}
-                >
-                  {Array.from({ length: 181 }).map((_, idx) => (
-                    <option key={idx} value={idx}>
-                      {idx}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="stack">
-                <span>Seconds</span>
-                <select
-                  value={customSeconds}
-                  onChange={(event) => setCustomSeconds(Number(event.target.value))}
-                >
-                  {Array.from({ length: 60 }).map((_, idx) => (
-                    <option key={idx} value={idx}>
-                      {idx}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <button
-              type="button"
-              className="timer-start-btn"
-              disabled={totalCustomSeconds === 0}
-              onClick={() => startTimerSeconds(totalCustomSeconds)}
-            >
-              ▶ Start Custom Timer
-            </button>
-          </div>
-        </div>
-      </section>
-    );
-  };
 
   const TimerOverlay = () => {
     const clampedProgress = Math.max(0, Math.min(1, timerProgress));
@@ -2178,624 +2022,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     </div>
   );
 
-  const AttendanceEntryRow = ({ entry, student, statusButtons }) => {
-    const [noteValue, setNoteValue] = useState(entry.note || "");
-    const statusColor =
-      statusButtons.find((item) => item.value === entry.status)?.color || "#94a3b8";
-
-    const StatusIcon = ({ kind }) => {
-      if (kind === "present") {
-        return (
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M4.5 10.2 8.2 13.8 15.5 6.5" />
-          </svg>
-        );
-      }
-      if (kind === "late") {
-        return (
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <circle cx="10" cy="10" r="6.2" />
-            <path d="M10 6.6v3.8l2.6 1.6" />
-          </svg>
-        );
-      }
-      if (kind === "left-early") {
-        return (
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M15.5 10H7.5" />
-            <path d="m10.8 6.8-3.3 3.2 3.3 3.2" />
-            <path d="M16.5 4.8v10.4" />
-          </svg>
-        );
-      }
-      return (
-        <svg viewBox="0 0 20 20" aria-hidden="true">
-          <path d="M5.4 5.4 14.6 14.6" />
-          <path d="M14.6 5.4 5.4 14.6" />
-        </svg>
-      );
-    };
-
-    useEffect(() => {
-      setNoteValue(entry.note || "");
-    }, [entry.note]);
-
-    return (
-      <div className="attendance-student-card">
-        <div className="attendance-student-row">
-          <div className="attendance-student-info">
-            <div
-              className="attendance-avatar"
-              style={{ background: `${statusColor}22`, color: statusColor }}
-            >
-              👤
-            </div>
-            <div>
-              <div className="attendance-student-name">
-                {student.first_name} {student.last_name}
-              </div>
-            </div>
-          </div>
-          <div className="attendance-status-buttons">
-            {statusButtons.map((status) => (
-              <button
-                key={status.value}
-                type="button"
-                className={`status-btn ${
-                  status.value === "Present"
-                    ? "present"
-                    : status.value === "Arrived late"
-                      ? "late"
-                      : status.value === "Left early"
-                        ? "left-early"
-                        : "absent"
-                } ${entry.status === status.value ? "selected" : ""}`}
-                style={
-                  entry.status === status.value
-                    ? { background: status.color, color: "#fff" }
-                    : undefined
-                }
-                onClick={() => handleUpdateAttendanceEntry(entry.id, { status: status.value })}
-                aria-label={status.value}
-                title={status.value}
-              >
-                <span className="status-btn-icon">
-                  <StatusIcon kind={status.kind} />
-                </span>
-                <span className="status-btn-text">{status.shortLabel}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {entry.status !== "Present" && (
-          <div className="attendance-note">
-            <span className="muted">Notes</span>
-            <input
-              value={noteValue}
-              onChange={(event) => setNoteValue(event.target.value)}
-              onBlur={() =>
-                handleUpdateAttendanceEntry(entry.id, {
-                  note: noteValue.trim() || null,
-                })
-              }
-              placeholder="Add notes (optional)"
-            />
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const AttendanceSessionDetailPage = () => {
-    const { sessionId } = useParams();
-    const session = attendanceSessions.find((item) => item.id === sessionId);
-    const sessionEntries = attendanceEntries.filter((entry) => entry.session_id === sessionId);
-    const sessionClass = classes.find((c) => c.id === session?.class_id);
-    const sessionStudents = students
-      .filter((student) => student.class_id === session?.class_id)
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-
-    const entryMap = new Map(sessionEntries.map((entry) => [entry.student_id, entry]));
-    const rows = sessionStudents.map((student) => ({
-      student,
-      entry: entryMap.get(student.id),
-    }));
-
-    const counts = {
-      present: sessionEntries.filter((e) => e.status === "Present").length,
-      absent: sessionEntries.filter((e) => e.status === "Didn't come").length,
-      late: sessionEntries.filter((e) => e.status === "Arrived late").length,
-      leftEarly: sessionEntries.filter((e) => e.status === "Left early").length,
-    };
-
-    const summaryRate = sessionEntries.length
-      ? Math.round((counts.present / sessionEntries.length) * 100)
-      : 0;
-
-    const summaryColor =
-      summaryRate >= 90 ? "#16a34a" : summaryRate >= 75 ? "#f59e0b" : "#ef4444";
-
-    const statusButtons = [
-      { value: "Present", shortLabel: "Present", kind: "present", color: "#16a34a" },
-      { value: "Arrived late", shortLabel: "Late", kind: "late", color: "#f59e0b" },
-      { value: "Left early", shortLabel: "Left early", kind: "left-early", color: "#eab308" },
-      { value: "Didn't come", shortLabel: "Absent", kind: "absent", color: "#ef4444" },
-    ];
-
-    if (!session) {
-      return (
-        <section className="panel">
-          <h2>Session not found</h2>
-          <p className="muted">Select a session from Attendance.</p>
-        </section>
-      );
-    }
-
-    return (
-      <section className="panel attendance-session">
-        <div className="attendance-session-summary">
-          <div className="attendance-summary-header">
-            <div className="attendance-summary-icon">📆</div>
-            <div>
-              <div className="attendance-summary-title">
-                {format(parseISO(session.session_date), "MMMM d, yyyy")}
-              </div>
-              <div className="muted">
-                {sessionClass ? sessionClass.name : "Class"} • {sessionEntries.length} students
-              </div>
-            </div>
-          </div>
-
-          <div className="attendance-summary-stats">
-            <div>
-              <div className="muted">Present</div>
-              <strong style={{ color: "#16a34a" }}>{counts.present}</strong>
-            </div>
-            <div>
-              <div className="muted">Didn't come</div>
-              <strong style={{ color: "#ef4444" }}>{counts.absent}</strong>
-            </div>
-            <div>
-              <div className="muted">Late</div>
-              <strong style={{ color: "#f59e0b" }}>{counts.late}</strong>
-            </div>
-            <div>
-              <div className="muted">Left early</div>
-              <strong style={{ color: "#eab308" }}>{counts.leftEarly}</strong>
-            </div>
-          </div>
-
-          <div className="attendance-rate">
-            <div className="muted">Attendance Rate</div>
-            <div className="attendance-rate-bar">
-              <span style={{ width: `${summaryRate}%`, background: summaryColor }} />
-            </div>
-            <div className="attendance-rate-value" style={{ color: summaryColor }}>
-              {summaryRate}%
-            </div>
-          </div>
-        </div>
-
-        <div className="attendance-student-list">
-          <h3>Mark Attendance</h3>
-          {rows.map(({ student, entry }) =>
-            entry ? (
-              <AttendanceEntryRow
-                key={entry.id}
-                entry={entry}
-                student={student}
-                statusButtons={statusButtons}
-              />
-            ) : null
-          )}
-        </div>
-      </section>
-    );
-  };
-
-  const GroupsPage = () => {
-    const [searchParams] = useSearchParams();
-    const openSeparationsModal = () => {
-      if (typeof window !== "undefined") {
-        groupsScrollTopRef.current = window.scrollY;
-      }
-      setGroupsShowSeparations(true);
-    };
-
-    const closeSeparationsModal = () => {
-      if (typeof window !== "undefined") {
-        groupsScrollTopRef.current = window.scrollY;
-      }
-      setGroupsShowSeparations(false);
-      if (typeof window !== "undefined") {
-        window.requestAnimationFrame(() => {
-          window.requestAnimationFrame(() => {
-            window.scrollTo({ top: groupsScrollTopRef.current, behavior: "auto" });
-          });
-        });
-      }
-    };
-
-    useEffect(() => {
-      if (!groupsShowSeparations || typeof window === "undefined") return;
-      window.requestAnimationFrame(() => {
-        window.scrollTo({ top: groupsScrollTopRef.current, behavior: "auto" });
-      });
-    }, [groupsShowSeparations]);
-
-    const classId = searchParams.get("classId") || "";
-
-    useEffect(() => {
-      if (classId && groupGenForm.classId != classId) {
-        setGroupGenForm((prev) => ({ ...prev, classId }));
-      }
-    }, [classId]);
-
-    const activeClassId = classId || groupGenForm.classId;
-    const classStudents = activeClassId
-      ? students.filter((student) => student.class_id === activeClassId)
-      : [];
-    const classStudentIdSet = new Set(classStudents.map((student) => student.id));
-    const classConstraintList = activeClassId
-      ? groupConstraints.filter(
-          (constraint) =>
-            classStudentIdSet.has(constraint.student_a) && classStudentIdSet.has(constraint.student_b)
-        )
-      : groupConstraints;
-    const classGroups = activeClassId
-      ? groups.filter((group) => group.class_id === activeClassId)
-      : [];
-    const classGroupMembers = classGroups.length
-      ? groupMembers.filter((member) => classGroups.some((g) => g.id === member.group_id))
-      : [];
-
-    const grouped = classGroups.map((group) => {
-      const memberIds = classGroupMembers
-        .filter((m) => m.group_id === group.id)
-        .map((m) => m.student_id);
-      const members = classStudents.filter((student) => memberIds.includes(student.id));
-      return { group, members };
-    });
-
-    const groupSize = Number(groupGenForm.size) || 4;
-    const expectedGroupCount =
-      classStudents.length > 0 ? Math.ceil(classStudents.length / groupSize) : 0;
-
-    const genderIcon = (gender) => {
-      const value = (gender || "").toLowerCase();
-      if (value.includes("female")) return "♀";
-      if (value.includes("male")) return "♂";
-      if (value.includes("non")) return "⚧";
-      return "•";
-    };
-
-    const genderColor = (gender) => {
-      const value = (gender || "").toLowerCase();
-      if (value.includes("female")) return "#ec4899";
-      if (value.includes("male")) return "#3b82f6";
-      if (value.includes("non")) return "#8b5cf6";
-      return "#94a3b8";
-    };
-
-    const gradientForGroup = (index) => {
-      const gradients = [
-        ["#f1dfbe", "#e7d0a6"],
-        ["#efe2c8", "#e4d3ad"],
-        ["#ead7b4", "#e0c596"],
-        ["#f0e3ca", "#e7d6b2"],
-        ["#ebddc1", "#dfcaa3"],
-        ["#f2e5cf", "#e7d7b7"],
-      ];
-      const pair = gradients[index % gradients.length];
-      return `linear-gradient(90deg, ${pair[0]}, ${pair[1]})`;
-    };
-
-    return (
-      <>
-        {formError && <div className="error">{formError}</div>}
-        <section className="panel groups-page">
-          <div className="groups-header-card">
-            <div className="groups-header-icon">👥</div>
-            <h2>Smart Group Generator</h2>
-            <p className="muted">Create balanced student groups with advanced options.</p>
-            <div className="groups-header-info">
-              <div>
-                <span className="muted">Students</span>
-                <strong>{classStudents.length || "—"}</strong>
-              </div>
-              <div>
-                <span className="muted">Groups</span>
-                <strong>{classGroups.length || "—"}</strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="groups-controls-card">
-            <div className="groups-controls-header">
-              <h3>Group Settings</h3>
-              {!classId && (
-                <select
-                  value={groupGenForm.classId}
-                  onChange={(event) =>
-                    setGroupGenForm((prev) => ({ ...prev, classId: event.target.value }))
-                  }
-                >
-                  <option value="">Select class</option>
-                  {classOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <div className="groups-size-row">
-              <div className="groups-size-display">
-                <div className="muted">Students per group</div>
-                <div className="groups-size-value">{groupSize}</div>
-              </div>
-              <div className="groups-size-controls">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setGroupGenForm((prev) => ({
-                      ...prev,
-                      size: String(Math.max(2, groupSize - 1)),
-                    }))
-                  }
-                  disabled={groupSize <= 2}
-                >
-                  −
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setGroupGenForm((prev) => ({
-                      ...prev,
-                      size: String(Math.min(10, groupSize + 1)),
-                    }))
-                  }
-                  disabled={groupSize >= 10}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {classStudents.length > 0 && (
-              <div className="groups-info-row">
-                This will create approximately {expectedGroupCount} groups.
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleGenerateGroups}
-              className={`groups-generate-btn ${isGeneratingGroups ? "button-with-spinner" : ""}`}
-              disabled={isGeneratingGroups}
-              aria-busy={isGeneratingGroups}
-            >
-              {isGeneratingGroups && <span className="inline-spinner" aria-hidden="true" />}
-              {classGroups.length ? "Regenerate Groups" : "Generate Groups"}
-            </button>
-          </div>
-
-          <div className="groups-advanced-card">
-            <div className="groups-advanced-header">
-              <h3>Advanced Options</h3>
-              <button type="button" className="link" onClick={() => setGroupsShowAdvanced((prev) => !prev)}>
-                {groupsShowAdvanced ? "Hide" : "Show"}
-              </button>
-            </div>
-            {groupsShowAdvanced && (
-              <div className="groups-advanced-options">
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={groupGenForm.balanceGender}
-                    onChange={(event) =>
-                      setGroupGenForm((prev) => ({ ...prev, balanceGender: event.target.checked }))
-                    }
-                  />
-                  Balance Gender
-                </label>
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={groupGenForm.balanceAbility}
-                    onChange={(event) =>
-                      setGroupGenForm((prev) => ({ ...prev, balanceAbility: event.target.checked }))
-                    }
-                  />
-                  Balance Academic Levels
-                </label>
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={groupGenForm.pairSupportPartners}
-                    onChange={(event) =>
-                      setGroupGenForm((prev) => ({ ...prev, pairSupportPartners: event.target.checked }))
-                    }
-                  />
-                  Pair Learning Partners
-                </label>
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={groupGenForm.respectSeparations}
-                    onChange={(event) =>
-                      setGroupGenForm((prev) => ({
-                        ...prev,
-                        respectSeparations: event.target.checked,
-                      }))
-                    }
-                  />
-                  Respect Separation Rules
-                </label>
-                <button type="button" className="link" onClick={openSeparationsModal}>
-                  Separations
-                </button>
-                <p className="muted groups-option-help">
-                  Academic levels are estimated from recent gradebook scores for this class.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {grouped.length === 0 ? (
-            <div className="groups-empty">
-              <div className="groups-empty-icon">✨</div>
-              <div className="groups-empty-title">No groups yet</div>
-              <div className="muted">Configure your settings and click Generate Groups.</div>
-            </div>
-          ) : (
-            <div className="groups-results">
-              <div className="groups-results-header">
-                <h3>Generated Groups</h3>
-              </div>
-              <div className="groups-grid">
-                {grouped.map(({ group, members }, index) => (
-                  <div key={group.id} className="group-card">
-                    <div className="group-card-header" style={{ background: gradientForGroup(index) }}>
-                      <span>Group {index + 1}</span>
-                      <span className="group-card-count">{members.length}</span>
-                    </div>
-                    <div className="group-card-body">
-                      {members.map((student) => (
-                        <div key={student.id} className="group-student">
-                          <span style={{ color: genderColor(student.gender) }}>
-                            {genderIcon(student.gender)}
-                          </span>
-                          <span>
-                            {student.first_name} {student.last_name}
-                          </span>
-                          {student.needs_help && <span className="group-need">✋</span>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-
-        {groupsShowSeparations && (
-          <div className="modal-overlay">
-            <div className="modal-card separations-modal">
-              <h3>Separation Rules</h3>
-              <div className="grid">
-                <label className="stack">
-                  <span>Student A</span>
-                  <select
-                    value={constraintForm.studentA}
-                    onChange={(event) =>
-                      setConstraintForm((prev) => ({ ...prev, studentA: event.target.value }))
-                    }
-                    required
-                  >
-                    <option value="">Select student</option>
-                    {classStudents.map((student) => (
-                      <option key={student.id} value={student.id}>
-                        {student.first_name} {student.last_name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="stack">
-                  <span>Student B</span>
-                  <select
-                    value={constraintForm.studentB}
-                    onChange={(event) =>
-                      setConstraintForm((prev) => ({ ...prev, studentB: event.target.value }))
-                    }
-                    required
-                  >
-                    <option value="">Select student</option>
-                    {classStudents.map((student) => (
-                      <option key={student.id} value={student.id}>
-                        {student.first_name} {student.last_name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button type="button" className="separations-add-btn" onClick={handleAddConstraint}>
-                  Add separation
-                </button>
-              </div>
-              {classConstraintList.length > 0 && (
-                <ul className="list">
-                  {classConstraintList.map((constraint) => {
-                    const studentA = students.find((item) => item.id === constraint.student_a);
-                    const studentB = students.find((item) => item.id === constraint.student_b);
-                    return (
-                      <li key={constraint.id}>
-                        <div className="list-row">
-                          <span>
-                            {studentA ? `${studentA.first_name} ${studentA.last_name}` : "Student"}
-                            {" ↔ "}
-                            {studentB ? `${studentB.first_name} ${studentB.last_name}` : "Student"}
-                          </span>
-                          <button
-                            type="button"
-                            className="link danger separation-delete-btn"
-                            onClick={() => handleDeleteConstraint(constraint.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-              <div className="modal-actions separations-actions">
-                <button type="button" className="secondary" onClick={closeSeparationsModal}>
-                  Done
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </>
-    );
-  };
-
-  const DashboardPage = () => {
-    return (
-      <>
-        <section className="panel quick-actions-panel">
-          <div className="tile-grid">
-            {tiles.map((tile) => (
-              <NavLink
-                key={tile.label}
-                to={tile.path}
-                className="tile"
-                style={{
-                  "--tile-accent": tile.accent,
-                  "--tile-accent-soft": `${tile.accent}26`,
-                  "--icon-tilt": `${tile.iconTilt}deg`,
-                  "--icon-offset-x": `${tile.iconX}px`,
-                  "--icon-offset-y": `${tile.iconY}px`,
-                  "--icon-stroke": tile.iconStroke,
-                  "--icon-wobble-ms": `${tile.wobbleMs}ms`,
-                }}
-              >
-                <span className="tile-circle" aria-hidden="true">
-                  <TileIcon kind={tile.icon} />
-                </span>
-                <span className="tile-label">{tile.label}</span>
-                <span className="tile-scratch" aria-hidden="true" />
-              </NavLink>
-            ))}
-          </div>
-        </section>
-      </>
-    );
-  };
-
   return (
     <BrowserRouter>
       <Layout
@@ -2875,7 +2101,18 @@ function TeacherWorkspace({ user, onSignOut }) {
               />
             }
           />
-          <Route path="/attendance/:sessionId" element={<AttendanceSessionDetailPage />} />
+          <Route
+            path="/attendance/:sessionId"
+            element={
+              <AttendanceSessionDetailPage
+                attendanceSessions={attendanceSessions}
+                attendanceEntries={attendanceEntries}
+                classes={classes}
+                students={students}
+                handleUpdateAttendanceEntry={handleUpdateAttendanceEntry}
+              />
+            }
+          />
           <Route
             path="/assessments"
             element={
@@ -2908,7 +2145,32 @@ function TeacherWorkspace({ user, onSignOut }) {
               />
             }
           />
-          <Route path="/groups" element={<GroupsPage />} />
+          <Route
+            path="/groups"
+            element={
+              <GroupsPage
+                formError={formError}
+                classOptions={classOptions}
+                students={students}
+                groups={groups}
+                groupMembers={groupMembers}
+                groupConstraints={groupConstraints}
+                groupGenForm={groupGenForm}
+                setGroupGenForm={setGroupGenForm}
+                constraintForm={constraintForm}
+                setConstraintForm={setConstraintForm}
+                groupsShowAdvanced={groupsShowAdvanced}
+                setGroupsShowAdvanced={setGroupsShowAdvanced}
+                groupsShowSeparations={groupsShowSeparations}
+                setGroupsShowSeparations={setGroupsShowSeparations}
+                groupsScrollTopRef={groupsScrollTopRef}
+                handleGenerateGroups={handleGenerateGroups}
+                isGeneratingGroups={isGeneratingGroups}
+                handleAddConstraint={handleAddConstraint}
+                handleDeleteConstraint={handleDeleteConstraint}
+              />
+            }
+          />
           <Route
             path="/random"
             element={<RandomPickerPage formError={formError} classOptions={classOptions} students={students} />}
@@ -2930,10 +2192,7 @@ function TeacherWorkspace({ user, onSignOut }) {
               />
             }
           />
-          <Route
-            path="/timer"
-            element={<TimerPage />}
-          />
+          <Route path="/timer" element={<TimerPage startTimerSeconds={startTimerSeconds} />} />
           <Route
             path="/subjects/:subjectId"
             element={
