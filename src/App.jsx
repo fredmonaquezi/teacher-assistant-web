@@ -95,40 +95,6 @@ function TeacherWorkspace({ user, onSignOut }) {
   useEffect(() => {
     localStorage.setItem("ta_profile_preferences", JSON.stringify(profilePreferences));
   }, [profilePreferences]);
-  const [lessonForm, setLessonForm] = useState({
-    title: "",
-    subject: "",
-    unit: "",
-    scheduledDate: "",
-    classId: "",
-    notes: "",
-  });
-  const [attendanceSessionForm, setAttendanceSessionForm] = useState({
-    sessionDate: "",
-    title: "",
-    classId: "",
-  });
-  const [attendanceEntryForm, setAttendanceEntryForm] = useState({
-    sessionId: "",
-    studentId: "",
-    status: "Present",
-    note: "",
-  });
-  const [assessmentForm, setAssessmentForm] = useState({
-    title: "",
-    subject: "",
-    assessmentDate: "",
-    classId: "",
-    maxScore: "",
-    notes: "",
-    sortOrder: "",
-  });
-  const [assessmentEntryForm, setAssessmentEntryForm] = useState({
-    assessmentId: "",
-    studentId: "",
-    score: "",
-    notes: "",
-  });
   const [runningRecordForm, setRunningRecordForm] = useState({
     studentId: "",
     recordDate: "",
@@ -157,34 +123,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     date: "",
     notes: "",
   });
-  const [rubricForm, setRubricForm] = useState({
-    title: "",
-    subject: "",
-    gradeBand: "",
-    description: "",
-    sortOrder: "",
-  });
-  const [rubricCategoryForm, setRubricCategoryForm] = useState({
-    rubricId: "",
-    name: "",
-    sortOrder: "",
-  });
-  const [rubricCriterionForm, setRubricCriterionForm] = useState({
-    categoryId: "",
-    label: "",
-    description: "",
-    sortOrder: "",
-  });
-  const [groupForm, setGroupForm] = useState({
-    name: "",
-    classId: "",
-  });
-  const [groupMemberForm, setGroupMemberForm] = useState({
-    groupId: "",
-    studentId: "",
-  });
-  const [randomGroupId, setRandomGroupId] = useState("");
-  const [_randomResult, setRandomResult] = useState("");
   const [groupGenForm, setGroupGenForm] = useState({
     classId: "",
     size: "3",
@@ -571,85 +509,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     await loadData();
   };
 
-  const _handleCreateLesson = async (event) => {
-    event.preventDefault();
-    setFormError("");
-
-    const payload = {
-      title: lessonForm.title.trim(),
-      subject: lessonForm.subject.trim() || null,
-      unit: lessonForm.unit.trim() || null,
-      scheduled_date: lessonForm.scheduledDate || null,
-      class_id: lessonForm.classId || null,
-      notes: lessonForm.notes.trim() || null,
-    };
-
-    if (!payload.title) {
-      setFormError("Lesson title is required.");
-      return;
-    }
-
-    const { error } = await supabase.from("lesson_plans").insert(payload);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-
-    setLessonForm({ title: "", subject: "", unit: "", scheduledDate: "", classId: "", notes: "" });
-    await loadData();
-  };
-
-  const _handleCreateAttendanceSession = async (event) => {
-    event.preventDefault();
-    setFormError("");
-
-    const payload = {
-      session_date: attendanceSessionForm.sessionDate,
-      title: attendanceSessionForm.title.trim() || null,
-      class_id: attendanceSessionForm.classId || null,
-    };
-
-    if (!payload.session_date) {
-      setFormError("Attendance date is required.");
-      return;
-    }
-
-    const { error } = await supabase.from("attendance_sessions").insert(payload);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-
-    setAttendanceSessionForm({ sessionDate: "", title: "", classId: "" });
-    await loadData();
-  };
-
-  const _handleCreateAttendanceEntry = async (event) => {
-    event.preventDefault();
-    setFormError("");
-
-    const payload = {
-      session_id: attendanceEntryForm.sessionId,
-      student_id: attendanceEntryForm.studentId,
-      status: attendanceEntryForm.status,
-      note: attendanceEntryForm.note.trim() || null,
-    };
-
-    if (!payload.session_id || !payload.student_id) {
-      setFormError("Select a session and a student.");
-      return;
-    }
-
-    const { error } = await supabase.from("attendance_entries").insert(payload);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-
-    setAttendanceEntryForm({ sessionId: "", studentId: "", status: "Present", note: "" });
-    await loadData();
-  };
-
   const handleUpdateAttendanceEntry = async (entryId, updates) => {
     if (!entryId) return;
     setFormError("");
@@ -658,86 +517,6 @@ function TeacherWorkspace({ user, onSignOut }) {
       setFormError(error.message);
       return;
     }
-    await loadData();
-  };
-
-  const _handleCreateAssessment = async (event) => {
-    event.preventDefault();
-    setFormError("");
-
-    const sortOrder = assessmentForm.sortOrder ? Number(assessmentForm.sortOrder) : 0;
-    const maxScoreValue = assessmentForm.maxScore ? Number(assessmentForm.maxScore) : 10;
-    const payload = {
-      title: assessmentForm.title.trim(),
-      subject: assessmentForm.subject.trim() || null,
-      assessment_date: assessmentForm.assessmentDate || null,
-      class_id: assessmentForm.classId || null,
-      max_score: maxScoreValue,
-      notes: assessmentForm.notes.trim() || null,
-      sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
-    };
-
-    if (!payload.title) {
-      setFormError("Assessment title is required.");
-      return;
-    }
-    if (!Number.isFinite(payload.max_score) || payload.max_score <= 0) {
-      setFormError("Max score must be greater than 0.");
-      return;
-    }
-
-    const { error } = await supabase.from("assessments").insert(payload);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-
-    setAssessmentForm({
-      title: "",
-      subject: "",
-      assessmentDate: "",
-      classId: "",
-      maxScore: "",
-      notes: "",
-      sortOrder: "",
-    });
-    await loadData();
-  };
-
-  const _handleCreateAssessmentEntry = async (event) => {
-    event.preventDefault();
-    setFormError("");
-
-    const payload = {
-      assessment_id: assessmentEntryForm.assessmentId,
-      student_id: assessmentEntryForm.studentId,
-      score: assessmentEntryForm.score ? Number(assessmentEntryForm.score) : null,
-      notes: assessmentEntryForm.notes.trim() || null,
-    };
-
-    if (!payload.assessment_id || !payload.student_id) {
-      setFormError("Select an assessment and a student.");
-      return;
-    }
-
-    const { error } = await supabase
-      .from("assessment_entries")
-      .upsert(payload, { onConflict: "assessment_id,student_id" });
-    if (error) {
-      setFormError(
-        error.code === "23505"
-          ? "This student already has an entry for that assessment."
-          : error.message
-      );
-      return;
-    }
-
-    setAssessmentEntryForm({
-      assessmentId: "",
-      studentId: "",
-      score: "",
-      notes: "",
-    });
     await loadData();
   };
 
@@ -1152,87 +931,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     return true;
   };
 
-  const _handleCreateRubric = async (event) => {
-    event.preventDefault();
-    setFormError("");
-
-    const sortOrder = rubricForm.sortOrder ? Number(rubricForm.sortOrder) : 0;
-    const payload = {
-      title: rubricForm.title.trim(),
-      subject: rubricForm.subject.trim() || null,
-      grade_band: rubricForm.gradeBand.trim() || null,
-      description: rubricForm.description.trim() || null,
-      sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
-    };
-
-    if (!payload.title) {
-      setFormError("Rubric title is required.");
-      return;
-    }
-
-    const { error } = await supabase.from("rubrics").insert(payload);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-
-    setRubricForm({ title: "", subject: "", gradeBand: "", description: "", sortOrder: "" });
-    await loadData();
-  };
-
-  const _handleCreateRubricCategory = async (event) => {
-    event.preventDefault();
-    setFormError("");
-
-    const sortOrder = rubricCategoryForm.sortOrder ? Number(rubricCategoryForm.sortOrder) : 0;
-    const payload = {
-      rubric_id: rubricCategoryForm.rubricId,
-      name: rubricCategoryForm.name.trim(),
-      sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
-    };
-
-    if (!payload.rubric_id || !payload.name) {
-      setFormError("Select a rubric and enter a category name.");
-      return;
-    }
-
-    const { error } = await supabase.from("rubric_categories").insert(payload);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-
-    setRubricCategoryForm({ rubricId: "", name: "", sortOrder: "" });
-    await loadData();
-  };
-
-  const _handleCreateRubricCriterion = async (event) => {
-    event.preventDefault();
-    setFormError("");
-
-    const sortOrder = rubricCriterionForm.sortOrder ? Number(rubricCriterionForm.sortOrder) : 0;
-    const payload = {
-      category_id: rubricCriterionForm.categoryId,
-      label: rubricCriterionForm.label.trim() || null,
-      description: rubricCriterionForm.description.trim(),
-      sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
-    };
-
-    if (!payload.category_id || !payload.description) {
-      setFormError("Select a category and enter a criterion description.");
-      return;
-    }
-
-    const { error } = await supabase.from("rubric_criteria").insert(payload);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-
-    setRubricCriterionForm({ categoryId: "", label: "", description: "", sortOrder: "" });
-    await loadData();
-  };
-
   const handleSeedDefaultRubrics = async () => {
     setFormError("");
     setSeedingRubrics(true);
@@ -1293,54 +991,6 @@ function TeacherWorkspace({ user, onSignOut }) {
 
     await loadData();
     setSeedingRubrics(false);
-  };
-
-  const _handleCreateGroup = async (event) => {
-    event.preventDefault();
-    setFormError("");
-
-    const payload = {
-      name: groupForm.name.trim(),
-      class_id: groupForm.classId || null,
-    };
-
-    if (!payload.name) {
-      setFormError("Group name is required.");
-      return;
-    }
-
-    const { error } = await supabase.from("groups").insert(payload);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-
-    setGroupForm({ name: "", classId: "" });
-    await loadData();
-  };
-
-  const _handleAddGroupMember = async (event) => {
-    event.preventDefault();
-    setFormError("");
-
-    const payload = {
-      group_id: groupMemberForm.groupId,
-      student_id: groupMemberForm.studentId,
-    };
-
-    if (!payload.group_id || !payload.student_id) {
-      setFormError("Select a group and a student.");
-      return;
-    }
-
-    const { error } = await supabase.from("group_members").insert(payload);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-
-    setGroupMemberForm({ groupId: "", studentId: "" });
-    await loadData();
   };
 
   const handleAddConstraint = async (event) => {
@@ -1615,7 +1265,6 @@ function TeacherWorkspace({ user, onSignOut }) {
     if (isGeneratingGroups) return;
     setIsGeneratingGroups(true);
     setFormError("");
-    setRandomResult("");
     try {
       const classId = groupGenForm.classId;
       const size = Number(groupGenForm.size);
@@ -1714,36 +1363,9 @@ function TeacherWorkspace({ user, onSignOut }) {
       }
 
       await loadData();
-      setRandomResult(`Generated ${groupList.length} groups for the class.`);
     } finally {
       setIsGeneratingGroups(false);
     }
-  };
-
-  const pickRandomStudent = (list) => {
-    if (!list.length) {
-      setRandomResult("No students available.");
-      return;
-    }
-    const randomStudent = list[Math.floor(Math.random() * list.length)];
-    setRandomResult(`${randomStudent.first_name} ${randomStudent.last_name}`);
-  };
-
-  const _handleRandomAll = () => {
-    setRandomGroupId("");
-    pickRandomStudent(students);
-  };
-
-  const _handleRandomFromGroup = () => {
-    if (!randomGroupId) {
-      setRandomResult("Select a group first.");
-      return;
-    }
-    const memberIds = groupMembers
-      .filter((member) => member.group_id === randomGroupId)
-      .map((member) => member.student_id);
-    const memberStudents = students.filter((student) => memberIds.includes(student.id));
-    pickRandomStudent(memberStudents);
   };
 
   const timerIntervalRef = useRef(null);
