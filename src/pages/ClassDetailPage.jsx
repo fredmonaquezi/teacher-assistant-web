@@ -2,6 +2,78 @@ import { useState } from "react";
 import { NavLink, useParams } from "react-router-dom";
 import { averageFromPercents, entryToPercent, performanceColor } from "../utils/assessmentMetrics";
 
+function studentToneFromGender(gender) {
+  const value = (gender || "").trim().toLowerCase();
+  if (value === "female") return "pink";
+  if (value === "non-binary") return "yellow";
+  return "blue";
+}
+
+function ClassQuickIcon({ kind }) {
+  switch (kind) {
+    case "random":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="5" y="5" width="14" height="14" rx="3" />
+          <circle cx="9" cy="9" r="1" />
+          <circle cx="15" cy="9" r="1" />
+          <circle cx="12" cy="12" r="1" />
+          <circle cx="9" cy="15" r="1" />
+          <circle cx="15" cy="15" r="1" />
+        </svg>
+      );
+    case "groups":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="8" cy="9" r="2" />
+          <circle cx="16" cy="9" r="2" />
+          <circle cx="12" cy="7" r="2" />
+          <path d="M5.5 17c0-1.7 1.4-3 3-3h7c1.6 0 3 1.3 3 3" />
+        </svg>
+      );
+    case "attendance":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4.5" y="4.5" width="15" height="15" rx="3" />
+          <path d="M8.2 12.4l2.2 2.3 5-5.1" />
+          <line x1="8" y1="8" x2="16" y2="8" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+function StudentFlagIcon({ kind }) {
+  switch (kind) {
+    case "star":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 4.5l2.2 4.5 4.8.7-3.5 3.4.8 4.9L12 16l-4.3 2.3.8-4.9L5 9.7l4.8-.7Z" />
+        </svg>
+      );
+    case "warning":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 5l8 14H4L12 5Z" />
+          <line x1="12" y1="9" x2="12" y2="13" />
+          <circle cx="12" cy="16.3" r="0.9" />
+        </svg>
+      );
+    case "book":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5.5 6a2 2 0 0 1 2-2h10v15H7.5a2 2 0 0 0-2 2V6Z" />
+          <line x1="9" y1="8" x2="15" y2="8" />
+          <line x1="9" y1="11" x2="15" y2="11" />
+          <line x1="9" y1="14" x2="13.5" y2="14" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 function ClassDetailPage({
   formError,
   classes,
@@ -159,15 +231,15 @@ function ClassDetailPage({
           <h3>Quick Actions</h3>
           <div className="quick-actions class-quick-actions">
             <NavLink to={`/random?classId=${classId}`} className="quick-action action-orange">
-              <span className="class-quick-icon" aria-hidden="true">🎲</span>
+              <span className="class-quick-icon" aria-hidden="true"><ClassQuickIcon kind="random" /></span>
               <span>Random Picker</span>
             </NavLink>
             <NavLink to={`/groups?classId=${classId}`} className="quick-action action-purple">
-              <span className="class-quick-icon" aria-hidden="true">👥</span>
+              <span className="class-quick-icon" aria-hidden="true"><ClassQuickIcon kind="groups" /></span>
               <span>Groups</span>
             </NavLink>
             <NavLink to={`/attendance?classId=${classId}`} className="quick-action action-blue">
-              <span className="class-quick-icon" aria-hidden="true">✅</span>
+              <span className="class-quick-icon" aria-hidden="true"><ClassQuickIcon kind="attendance" /></span>
               <span>Attendance</span>
             </NavLink>
           </div>
@@ -202,13 +274,7 @@ function ClassDetailPage({
         </button>
         <ul className="student-card-grid">
           {classStudents.map((student) => {
-            const tone = student.missing_homework
-              ? "red"
-              : student.needs_help
-                ? "orange"
-                : student.is_participating_well
-                  ? "green"
-                  : "blue";
+            const tone = studentToneFromGender(student.gender);
             return (
             <li key={student.id}>
               <NavLink to={`/students/${student.id}`} className={`student-card-link student-tone-${tone}`}>
@@ -224,17 +290,17 @@ function ClassDetailPage({
                 <div className="student-card-flags">
                   {student.is_participating_well && (
                     <span className="student-flag green" title="Participating well" aria-label="Participating well">
-                      ⭐
+                      <StudentFlagIcon kind="star" />
                     </span>
                   )}
                   {student.needs_help && (
                     <span className="student-flag orange" title="Needs help" aria-label="Needs help">
-                      ⚠️
+                      <StudentFlagIcon kind="warning" />
                     </span>
                   )}
                   {student.missing_homework && (
                     <span className="student-flag red" title="Missing homework" aria-label="Missing homework">
-                      📚
+                      <StudentFlagIcon kind="book" />
                     </span>
                   )}
                 </div>

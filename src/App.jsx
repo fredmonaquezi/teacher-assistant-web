@@ -451,13 +451,76 @@ function RubricsPage({
   });
 
   const normalizeSubject = (value) => (value || "").trim().toLowerCase();
-  const subjectIcon = (subject) => {
+  const subjectKind = (subject) => {
     const normalized = normalizeSubject(subject);
-    if (["english", "inglês", "ingles"].includes(normalized)) return "📘";
-    if (["math", "mathematics", "matemática", "matematica"].includes(normalized)) return "➗";
-    if (["science", "ciência", "ciencia", "ciências", "ciencias"].includes(normalized)) return "🧪";
-    if (["general", "geral"].includes(normalized)) return "⭐";
-    return "📄";
+    if (["english", "inglês", "ingles"].includes(normalized)) return "english";
+    if (["math", "mathematics", "matemática", "matematica"].includes(normalized)) return "math";
+    if (["science", "ciência", "ciencia", "ciências", "ciencias"].includes(normalized)) return "science";
+    if (["general", "geral"].includes(normalized)) return "general";
+    return "default";
+  };
+  const renderRubricIcon = (kind) => {
+    switch (kind) {
+      case "header":
+        return (
+          <svg viewBox="0 0 24 24" className="rubric-line-icon" aria-hidden="true">
+            <path d="M6 4.5h10a2 2 0 0 1 2 2V19H8a2 2 0 0 1-2-2V4.5Z" />
+            <line x1="9" y1="8" x2="15" y2="8" />
+            <line x1="9" y1="11" x2="15" y2="11" />
+            <path d="M9 15l1.2 1.2L12.8 14" />
+            <path d="M5 6.5h2v10H5z" />
+          </svg>
+        );
+      case "level":
+        return (
+          <svg viewBox="0 0 24 24" className="rubric-line-icon" aria-hidden="true">
+            <path d="M3.5 9.2 12 5l8.5 4.2L12 13.5 3.5 9.2Z" />
+            <path d="M7 11.2V14c0 1.8 2.4 3.2 5 3.2s5-1.4 5-3.2v-2.8" />
+            <path d="M20.5 9.2v5.1" />
+          </svg>
+        );
+      case "english":
+        return (
+          <svg viewBox="0 0 24 24" className="rubric-line-icon" aria-hidden="true">
+            <path d="M5 6a2 2 0 0 1 2-2h10v15H7a2 2 0 0 0-2 2V6Z" />
+            <line x1="9" y1="8" x2="15" y2="8" />
+            <line x1="9" y1="11" x2="15" y2="11" />
+            <path d="M9 15h4" />
+          </svg>
+        );
+      case "math":
+        return (
+          <svg viewBox="0 0 24 24" className="rubric-line-icon" aria-hidden="true">
+            <rect x="5" y="4.5" width="14" height="15" rx="2.5" />
+            <line x1="9" y1="8.5" x2="15" y2="8.5" />
+            <line x1="9" y1="12" x2="15" y2="12" />
+            <path d="M10 15.5h4" />
+          </svg>
+        );
+      case "science":
+        return (
+          <svg viewBox="0 0 24 24" className="rubric-line-icon" aria-hidden="true">
+            <path d="M9 4.5h6" />
+            <path d="M10 4.5v5.4l-3.4 5.6a2.2 2.2 0 0 0 1.9 3.3h7a2.2 2.2 0 0 0 1.9-3.3L14 9.9V4.5" />
+            <path d="M9 13h6" />
+          </svg>
+        );
+      case "general":
+        return (
+          <svg viewBox="0 0 24 24" className="rubric-line-icon" aria-hidden="true">
+            <path d="m12 5 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7L12 5Z" />
+          </svg>
+        );
+      default:
+        return (
+          <svg viewBox="0 0 24 24" className="rubric-line-icon" aria-hidden="true">
+            <rect x="6" y="4.5" width="12" height="15" rx="2" />
+            <line x1="9" y1="8" x2="15" y2="8" />
+            <line x1="9" y1="11" x2="15" y2="11" />
+            <path d="M9 14h4" />
+          </svg>
+        );
+    }
   };
   const subjectColor = (subject) => {
     const normalized = normalizeSubject(subject);
@@ -592,7 +655,7 @@ function RubricsPage({
       {formError && <div className="error">{formError}</div>}
       <section className="panel rubrics-page">
         <div className="rubrics-header-card">
-          <div className="rubrics-header-icon" aria-hidden="true">📄</div>
+          <div className="rubrics-header-icon" aria-hidden="true">{renderRubricIcon("header")}</div>
           <div className="rubrics-header-copy">
             <h2>Rubric Template Library</h2>
             <p className="muted">
@@ -624,7 +687,7 @@ function RubricsPage({
             return (
               <div key={level} className="rubrics-section">
                 <div className="rubrics-section-title">
-                  <span>🎓</span>
+                  {renderRubricIcon("level")}
                   <strong>{level}</strong>
                 </div>
                 <div className="rubrics-grid">
@@ -647,7 +710,7 @@ function RubricsPage({
                           className="rubric-card-icon"
                           style={{ color: subjectColor(template.subject) }}
                         >
-                          {subjectIcon(template.subject)}
+                          {renderRubricIcon(subjectKind(template.subject))}
                         </div>
                         <button
                           type="button"
@@ -729,19 +792,29 @@ function RubricsPage({
         <div className="modal-overlay">
           <div className="modal-card rubrics-editor">
             <div className="rubrics-editor-header">
-              <div
-                className="rubrics-editor-icon"
-                style={{ color: subjectColor(selectedTemplate.subject) }}
-              >
-                {subjectIcon(selectedTemplate.subject)}
-              </div>
-              <div>
-                <div className="rubrics-editor-subject" style={{ color: subjectColor(selectedTemplate.subject) }}>
-                  {selectedTemplate.subject || "Subject"}
+              <div className="rubrics-editor-heading">
+                <div
+                  className="rubrics-editor-icon"
+                  style={{ color: subjectColor(selectedTemplate.subject) }}
+                >
+                  {renderRubricIcon(subjectKind(selectedTemplate.subject))}
                 </div>
-                <div className="rubrics-editor-title">{selectedTemplate.title}</div>
-                <div className="muted">{selectedTemplate.grade_band || "Grade band"}</div>
+                <div>
+                  <div className="rubrics-editor-subject" style={{ color: subjectColor(selectedTemplate.subject) }}>
+                    {selectedTemplate.subject || "Subject"}
+                  </div>
+                  <div className="rubrics-editor-title">{selectedTemplate.title}</div>
+                  <div className="muted">{selectedTemplate.grade_band || "Grade band"}</div>
+                </div>
               </div>
+              <button
+                type="button"
+                className="icon-button rubrics-editor-close"
+                onClick={() => setSelectedTemplate(null)}
+                aria-label="Close rubric editor"
+              >
+                ×
+              </button>
             </div>
 
             <div className="rubrics-info-card">
@@ -859,8 +932,8 @@ function RubricsPage({
               )}
             </div>
 
-            <div className="modal-actions">
-              <button type="button" className="link" onClick={() => setSelectedTemplate(null)}>
+            <div className="modal-actions rubrics-editor-actions">
+              <button type="button" className="secondary" onClick={() => setSelectedTemplate(null)}>
                 Done
               </button>
             </div>
@@ -1123,18 +1196,25 @@ function ClassesPage({
   } = useHandleDrag(isReorderEnabled);
 
   const classHandleClassName = `drag-handle${isReorderEnabled ? "" : " disabled"}`;
+  const classCount = classes.length;
+  const classSummaryLabel = loading
+    ? "Loading your classes..."
+    : `${classCount} class${classCount === 1 ? "" : "es"} • ${students.length} students • ${subjects.length} subjects`;
 
   return (
     <>
       {formError && <div className="error">{formError}</div>}
       <section className="panel classes-page">
         <div className="classes-header">
-          <h2>Classes</h2>
+          <div className="classes-header-copy">
+            <h2>Classes</h2>
+            <p>{classSummaryLabel}</p>
+          </div>
           <div className="classes-header-actions">
             {isMobileLayout && classes.length > 1 && (
               <ReorderModeToggle isReorderMode={isReorderMode} setIsReorderMode={setIsReorderMode} />
             )}
-            <button type="button" onClick={() => setShowAddClass(true)}>
+            <button type="button" className="classes-add-btn" onClick={() => setShowAddClass(true)}>
               + Add Class
             </button>
           </div>
@@ -1178,39 +1258,49 @@ function ClassesPage({
                   }}
                   onDrop={() => handleSwapSortOrder("classes", classes, dragClassId, item.id)}
                 >
-                  <div className="class-card-actions">
-                    <button
-                      type="button"
-                      className={classHandleClassName}
-                      aria-label={`Drag ${item.name}`}
-                      onClick={(event) => event.stopPropagation()}
-                      onPointerDown={(event) => onClassHandlePointerDown(item.id, event)}
-                      onPointerMove={onClassHandlePointerMove}
-                      onPointerUp={onClassHandlePointerUp}
-                      onPointerCancel={onClassHandlePointerUp}
-                    >
-                      ⠿
-                    </button>
-                    <button
-                      type="button"
-                      className="icon-button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleDeleteClass(item.id);
-                      }}
-                      aria-label={`Delete ${item.name}`}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div className="class-card-title">{item.name}</div>
-                  <div className="class-card-subtitle">
-                    {item.grade_level || "—"}
-                    {item.school_year ? ` • ${item.school_year}` : ""}
+                  <div className="class-card-head">
+                    <div className="class-card-main">
+                      <div className="class-card-title">{item.name}</div>
+                      <div className="class-card-subtitle">
+                        {item.grade_level || "—"}
+                        {item.school_year ? ` • ${item.school_year}` : ""}
+                      </div>
+                    </div>
+                    <div className="class-card-actions">
+                      <button
+                        type="button"
+                        className={classHandleClassName}
+                        aria-label={`Drag ${item.name}`}
+                        onClick={(event) => event.stopPropagation()}
+                        onPointerDown={(event) => onClassHandlePointerDown(item.id, event)}
+                        onPointerMove={onClassHandlePointerMove}
+                        onPointerUp={onClassHandlePointerUp}
+                        onPointerCancel={onClassHandlePointerUp}
+                      >
+                        ⠿
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteClass(item.id);
+                        }}
+                        aria-label={`Delete ${item.name}`}
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                   <div className="class-card-meta">
-                    <span>{studentCount} students</span>
-                    <span>{subjectCount} subjects</span>
+                    <div className="class-card-stat">
+                      <strong>{studentCount}</strong>
+                      <span>students</span>
+                    </div>
+                    <div className="class-card-stat">
+                      <strong>{subjectCount}</strong>
+                      <span>subjects</span>
+                    </div>
                   </div>
                 </div>
               );
@@ -1651,11 +1741,11 @@ function UnitDetailPage({
         </article>
         <article className="panel unit-stat-card">
           <p className="muted">Assessments</p>
-          <p style={{ color: "#2563eb" }}>{unitAssessments.length}</p>
+          <p style={{ color: "#8a5c34" }}>{unitAssessments.length}</p>
         </article>
         <article className="panel unit-stat-card">
           <p className="muted">Total Grades</p>
-          <p style={{ color: "#7c3aed" }}>{gradedEntries.length}</p>
+          <p style={{ color: "#9b6a3f" }}>{gradedEntries.length}</p>
         </article>
       </section>
 
@@ -1902,7 +1992,7 @@ function UnitDetailPage({
 
         {showCopyCriteriaFlow && (
           <div className="modal-overlay">
-            <div className="modal-card">
+            <div className="modal-card copy-criteria-modal">
               {copyStep === "subject" && (
                 <>
                   <h3>Copy Criteria: Choose Subject</h3>
@@ -2354,6 +2444,38 @@ function StudentDetailPage({
     ? `${classItem.name}${classItem.grade_level ? ` (${classItem.grade_level})` : ""}`
     : "No class";
 
+  const StudentStatusIcon = ({ kind }) => {
+    switch (kind) {
+      case "participating":
+        return (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="7.5" r="2.7" />
+            <path d="M6.2 18c0-2.5 2.1-4.5 4.6-4.5h2.4c2.6 0 4.6 2 4.6 4.5" />
+            <path d="M6 11.8l2.4 2.3 3.2-3.3" />
+          </svg>
+        );
+      case "needsHelp":
+        return (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 4.7 20 19H4L12 4.7Z" />
+            <line x1="12" y1="9.2" x2="12" y2="13.1" />
+            <circle cx="12" cy="16" r="0.9" />
+          </svg>
+        );
+      case "homework":
+        return (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 4.5h8.4l3.6 3.6v11.4H6z" />
+            <path d="M14.4 4.5v3.6H18" />
+            <line x1="8.8" y1="12" x2="15.2" y2="12" />
+            <line x1="8.8" y1="15" x2="13.4" y2="15" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
       {formError && <div className="error">{formError}</div>}
@@ -2396,10 +2518,12 @@ function StudentDetailPage({
         <div className="student-status-grid">
           <button
             type="button"
-            className={`student-status-card ${student.is_participating_well ? "active green" : ""}`}
+            className={`student-status-card status-participating ${student.is_participating_well ? "active green" : ""}`}
             onClick={() => toggleStatus("isParticipatingWell")}
           >
-            <span>⭐</span>
+            <span className="student-status-icon" aria-hidden="true">
+              <StudentStatusIcon kind="participating" />
+            </span>
             <div>
               <strong>Participating Well</strong>
               <p>{student.is_participating_well ? "Active" : "Inactive"}</p>
@@ -2407,10 +2531,12 @@ function StudentDetailPage({
           </button>
           <button
             type="button"
-            className={`student-status-card ${student.needs_help ? "active orange" : ""}`}
+            className={`student-status-card status-needs-help ${student.needs_help ? "active orange" : ""}`}
             onClick={() => toggleStatus("needsHelp")}
           >
-            <span>⚠️</span>
+            <span className="student-status-icon" aria-hidden="true">
+              <StudentStatusIcon kind="needsHelp" />
+            </span>
             <div>
               <strong>Needs Help</strong>
               <p>{student.needs_help ? "Active" : "Inactive"}</p>
@@ -2418,10 +2544,12 @@ function StudentDetailPage({
           </button>
           <button
             type="button"
-            className={`student-status-card ${student.missing_homework ? "active red" : ""}`}
+            className={`student-status-card status-missing-homework ${student.missing_homework ? "active red" : ""}`}
             onClick={() => toggleStatus("missingHomework")}
           >
-            <span>📚</span>
+            <span className="student-status-icon" aria-hidden="true">
+              <StudentStatusIcon kind="homework" />
+            </span>
             <div>
               <strong>Missing Homework</strong>
               <p>{student.missing_homework ? "Active" : "Inactive"}</p>
@@ -2437,7 +2565,7 @@ function StudentDetailPage({
         </article>
         <article className="panel student-stat-card">
           <p className="muted">Total Assessments</p>
-          <p style={{ color: "#2563eb" }}>{assessmentsForStudent.length}</p>
+          <p style={{ color: "#8a5c34" }}>{assessmentsForStudent.length}</p>
         </article>
       </section>
 
@@ -3128,7 +3256,103 @@ function formatDisplayName(user) {
     .join(" ");
 }
 
-function Layout({ user, onSignOut, preferences, children }) {
+function TileIcon({ kind }) {
+  switch (kind) {
+    case "classes":
+      return (
+        <svg viewBox="0 0 24 24" className="tile-icon" aria-hidden="true">
+          <rect x="4" y="4" width="16" height="10" rx="2" />
+          <circle cx="8" cy="18" r="1.2" />
+          <circle cx="12" cy="18" r="1.2" />
+          <circle cx="16" cy="18" r="1.2" />
+          <line x1="10" y1="10" x2="14" y2="7" />
+        </svg>
+      );
+    case "attendance":
+      return (
+        <svg viewBox="0 0 24 24" className="tile-icon" aria-hidden="true">
+          <rect x="4.5" y="4.5" width="15" height="15" rx="3" />
+          <path d="M8.2 12.4l2.2 2.3 5-5.1" />
+          <line x1="8" y1="8" x2="16" y2="8" />
+        </svg>
+      );
+    case "gradebook":
+      return (
+        <svg viewBox="0 0 24 24" className="tile-icon" aria-hidden="true">
+          <path d="M6 4.5h10a2 2 0 0 1 2 2V19H8a2 2 0 0 1-2-2V4.5Z" />
+          <line x1="9" y1="8" x2="15" y2="8" />
+          <line x1="9" y1="11" x2="15" y2="11" />
+          <line x1="9" y1="14" x2="13" y2="14" />
+          <path d="M5 6.5h2v10H5z" />
+        </svg>
+      );
+    case "rubrics":
+      return (
+        <svg viewBox="0 0 24 24" className="tile-icon" aria-hidden="true">
+          <rect x="6" y="4.5" width="12" height="15" rx="2" />
+          <rect x="9" y="3" width="6" height="3" rx="1" />
+          <line x1="9" y1="9" x2="15" y2="9" />
+          <line x1="9" y1="12" x2="15" y2="12" />
+          <path d="M9 15l1.2 1.2L12.8 14" />
+        </svg>
+      );
+    case "groups":
+      return (
+        <svg viewBox="0 0 24 24" className="tile-icon" aria-hidden="true">
+          <circle cx="8" cy="9" r="2" />
+          <circle cx="16" cy="9" r="2" />
+          <circle cx="12" cy="7" r="2" />
+          <path d="M5.5 17c0-1.7 1.4-3 3-3h7c1.6 0 3 1.3 3 3" />
+        </svg>
+      );
+    case "random":
+      return (
+        <svg viewBox="0 0 24 24" className="tile-icon" aria-hidden="true">
+          <rect x="5" y="5" width="14" height="14" rx="3" />
+          <circle cx="9" cy="9" r="1" />
+          <circle cx="15" cy="9" r="1" />
+          <circle cx="12" cy="12" r="1" />
+          <circle cx="9" cy="15" r="1" />
+          <circle cx="15" cy="15" r="1" />
+        </svg>
+      );
+    case "timer":
+      return (
+        <svg viewBox="0 0 24 24" className="tile-icon" aria-hidden="true">
+          <circle cx="12" cy="13" r="6" />
+          <line x1="12" y1="13" x2="15.5" y2="11" />
+          <line x1="12" y1="13" x2="12" y2="9" />
+          <path d="M10 3.5h4" />
+          <path d="M14.5 6 16.5 4" />
+        </svg>
+      );
+    case "records":
+      return (
+        <svg viewBox="0 0 24 24" className="tile-icon" aria-hidden="true">
+          <path d="M5 6a2 2 0 0 1 2-2h10v15H7a2 2 0 0 0-2 2V6Z" />
+          <line x1="9" y1="8" x2="15" y2="8" />
+          <line x1="9" y1="11" x2="15" y2="11" />
+          <path d="M9 15h3l2-2.4" />
+        </svg>
+      );
+    case "calendar":
+      return (
+        <svg viewBox="0 0 24 24" className="tile-icon" aria-hidden="true">
+          <rect x="4" y="5.5" width="16" height="14" rx="2.5" />
+          <line x1="8" y1="3.5" x2="8" y2="7" />
+          <line x1="16" y1="3.5" x2="16" y2="7" />
+          <line x1="4" y1="10" x2="20" y2="10" />
+          <circle cx="9" cy="13.5" r="1" />
+          <circle cx="13" cy="13.5" r="1" />
+          <circle cx="17" cy="13.5" r="1" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+function Layout({ user, onSignOut, preferences, calendarEvents = [], children }) {
   const userEmail = user?.email || "";
   const displayName = formatDisplayName(user);
   const sidebarIdentity =
@@ -3142,6 +3366,27 @@ function Layout({ user, onSignOut, preferences, children }) {
   const todayTimeLabel = preferences?.timeFormat === "24h"
     ? format(now, "HH:mm")
     : format(now, "h:mm a");
+  const upcomingStickyEvents = useMemo(() => {
+    const currentDate = new Date();
+    const windowStart = startOfDay(currentDate);
+    const windowEnd = endOfDay(addDays(currentDate, 15));
+    return calendarEvents
+      .filter((item) => {
+        if (!item?.event_date) return false;
+        const eventDate = parseISO(String(item.event_date));
+        if (!isValid(eventDate)) return false;
+        return eventDate >= windowStart && eventDate <= windowEnd;
+      })
+      .sort((a, b) => {
+        const firstDate = parseISO(String(a.event_date));
+        const secondDate = parseISO(String(b.event_date));
+        const dateCompare = firstDate.getTime() - secondDate.getTime();
+        if (dateCompare !== 0) return dateCompare;
+        if (!!a.is_all_day !== !!b.is_all_day) return a.is_all_day ? -1 : 1;
+        return (a.start_time || "").localeCompare(b.start_time || "");
+      })
+      .slice(0, 4);
+  }, [calendarEvents]);
   const navLinks = [
     { label: "Dashboard", path: "/" },
     { label: "Classes", path: "/classes" },
@@ -3180,14 +3425,53 @@ function Layout({ user, onSignOut, preferences, children }) {
       </aside>
       <div className="workspace">
         <header className="topbar">
-          <div className="topbar-intro">
-            <p className="topbar-kicker">Welcome back, {displayName}.</p>
-            <h2 className="brand">
-              Today is <span className="today-pill">{todayDateLabel} · {todayTimeLabel}</span>
-            </h2>
-          </div>
+          <section className="postit postit-greeting">
+            <span className="postit-tape postit-tape-top-left" aria-hidden="true" />
+            <span className="postit-tape postit-tape-top-right" aria-hidden="true" />
+            <p className="postit-kicker">Teacher Assistant</p>
+            <h2 className="postit-title">Hello, {displayName}.</h2>
+            <p className="postit-line">Today is {todayDateLabel}</p>
+            <p className="postit-line">{todayTimeLabel}</p>
+          </section>
+          <section className="postit postit-events">
+            <span className="postit-tape postit-tape-top-left" aria-hidden="true" />
+            <span className="postit-tape postit-tape-top-right" aria-hidden="true" />
+            <div className="postit-header">
+              <h3>Upcoming Events</h3>
+              <NavLink to="/calendar" className="postit-calendar-link">
+                Calendar
+              </NavLink>
+            </div>
+            {upcomingStickyEvents.length === 0 ? (
+              <p className="postit-empty">No events in the next 15 days.</p>
+            ) : (
+              <ul className="postit-events-list">
+                {upcomingStickyEvents.map((item) => {
+                  const parsedEventDate = parseISO(String(item.event_date));
+                  const eventDateLabel = isValid(parsedEventDate)
+                    ? format(parsedEventDate, "EEE, MMM d")
+                    : "Date TBD";
+                  const parsedStartTime = item.start_time ? parseISO(String(item.start_time)) : null;
+                  const eventTimeLabel = item.is_all_day
+                    ? "All day"
+                    : parsedStartTime && isValid(parsedStartTime)
+                      ? format(parsedStartTime, "p")
+                      : "Time TBD";
+                  return (
+                    <li key={item.id}>
+                      <span>{eventDateLabel}</span>
+                      <strong>{item.title || "Untitled event"}</strong>
+                      <em>{eventTimeLabel}</em>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
         </header>
-        <main className="content">{children}</main>
+        <main className="content notebook-board">
+          <div className="notebook-content">{children}</div>
+        </main>
       </div>
     </div>
   );
@@ -3358,6 +3642,7 @@ function TeacherWorkspace({ user, onSignOut }) {
   });
   const [groupsShowAdvanced, setGroupsShowAdvanced] = useState(true);
   const [groupsShowSeparations, setGroupsShowSeparations] = useState(false);
+  const [isGeneratingGroups, setIsGeneratingGroups] = useState(false);
   const groupsScrollTopRef = useRef(0);
 
   const classOptions = useMemo(
@@ -4768,107 +5053,112 @@ function TeacherWorkspace({ user, onSignOut }) {
   };
 
   const handleGenerateGroups = async () => {
+    if (isGeneratingGroups) return;
+    setIsGeneratingGroups(true);
     setFormError("");
     setRandomResult("");
+    try {
+      const classId = groupGenForm.classId;
+      const size = Number(groupGenForm.size);
+      const prefix = groupGenForm.prefix.trim() || "Group";
+      const clearExisting = groupGenForm.clearExisting;
+      const balanceGender = groupGenForm.balanceGender;
+      const balanceAbility = groupGenForm.balanceAbility;
+      const pairSupportPartners = groupGenForm.pairSupportPartners;
+      const respectSeparations = groupGenForm.respectSeparations;
 
-    const classId = groupGenForm.classId;
-    const size = Number(groupGenForm.size);
-    const prefix = groupGenForm.prefix.trim() || "Group";
-    const clearExisting = groupGenForm.clearExisting;
-    const balanceGender = groupGenForm.balanceGender;
-    const balanceAbility = groupGenForm.balanceAbility;
-    const pairSupportPartners = groupGenForm.pairSupportPartners;
-    const respectSeparations = groupGenForm.respectSeparations;
-
-    if (!classId) {
-      setFormError("Select a class to generate groups.");
-      return;
-    }
-    if (!Number.isFinite(size) || size < 2) {
-      setFormError("Group size must be 2 or more.");
-      return;
-    }
-
-    const classStudents = students.filter((student) => student.class_id === classId);
-    if (classStudents.length === 0) {
-      setFormError("No students found in that class.");
-      return;
-    }
-
-    const constraintSet = respectSeparations ? buildConstraintSet(classStudents) : new Set();
-    const abilityByStudentId = buildAbilityProfiles(classId, classStudents);
-    const groupList = generateGroups(
-      classStudents,
-      size,
-      constraintSet,
-      { balanceGender, balanceAbility, pairSupportPartners, respectSeparations },
-      abilityByStudentId
-    );
-    if (!groupList) {
-      setFormError("Could not satisfy the grouping rules. Try adjusting constraints or size.");
-      return;
-    }
-
-    if (clearExisting) {
-      const { data: existingGroups, error: groupFetchError } = await supabase
-        .from("groups")
-        .select("id")
-        .eq("class_id", classId);
-      if (groupFetchError) {
-        setFormError(groupFetchError.message);
+      if (!classId) {
+        setFormError("Select a class to generate groups.");
         return;
       }
-      const existingIds = (existingGroups ?? []).map((g) => g.id);
-      if (existingIds.length > 0) {
-        const { error: memberDeleteError } = await supabase
-          .from("group_members")
-          .delete()
-          .in("group_id", existingIds);
-        if (memberDeleteError) {
-          setFormError(memberDeleteError.message);
-          return;
-        }
-        const { error: groupDeleteError } = await supabase
+      if (!Number.isFinite(size) || size < 2) {
+        setFormError("Group size must be 2 or more.");
+        return;
+      }
+
+      const classStudents = students.filter((student) => student.class_id === classId);
+      if (classStudents.length === 0) {
+        setFormError("No students found in that class.");
+        return;
+      }
+
+      const constraintSet = respectSeparations ? buildConstraintSet(classStudents) : new Set();
+      const abilityByStudentId = buildAbilityProfiles(classId, classStudents);
+      const groupList = generateGroups(
+        classStudents,
+        size,
+        constraintSet,
+        { balanceGender, balanceAbility, pairSupportPartners, respectSeparations },
+        abilityByStudentId
+      );
+      if (!groupList) {
+        setFormError("Could not satisfy the grouping rules. Try adjusting constraints or size.");
+        return;
+      }
+
+      if (clearExisting) {
+        const { data: existingGroups, error: groupFetchError } = await supabase
           .from("groups")
-          .delete()
-          .in("id", existingIds);
-        if (groupDeleteError) {
-          setFormError(groupDeleteError.message);
+          .select("id")
+          .eq("class_id", classId);
+        if (groupFetchError) {
+          setFormError(groupFetchError.message);
           return;
         }
+        const existingIds = (existingGroups ?? []).map((g) => g.id);
+        if (existingIds.length > 0) {
+          const { error: memberDeleteError } = await supabase
+            .from("group_members")
+            .delete()
+            .in("group_id", existingIds);
+          if (memberDeleteError) {
+            setFormError(memberDeleteError.message);
+            return;
+          }
+          const { error: groupDeleteError } = await supabase
+            .from("groups")
+            .delete()
+            .in("id", existingIds);
+          if (groupDeleteError) {
+            setFormError(groupDeleteError.message);
+            return;
+          }
+        }
       }
-    }
 
-    const createdGroups = [];
-    for (let index = 0; index < groupList.length; index += 1) {
-      const label = `${prefix} ${index + 1}`;
-      const { data, error } = await supabase
-        .from("groups")
-        .insert({ name: label, class_id: classId })
-        .select()
-        .single();
-      if (error) {
-        setFormError(error.message);
+      const createdGroups = [];
+      for (let index = 0; index < groupList.length; index += 1) {
+        const label = `${prefix} ${index + 1}`;
+        const { data, error } = await supabase
+          .from("groups")
+          .insert({ name: label, class_id: classId })
+          .select()
+          .single();
+        if (error) {
+          setFormError(error.message);
+          return;
+        }
+        createdGroups.push(data);
+      }
+
+      const memberRows = groupList.flatMap((memberList, idx) =>
+        memberList.map((student) => ({
+          group_id: createdGroups[idx].id,
+          student_id: student.id,
+        }))
+      );
+
+      const { error: memberError } = await supabase.from("group_members").insert(memberRows);
+      if (memberError) {
+        setFormError(memberError.message);
         return;
       }
-      createdGroups.push(data);
+
+      await loadData();
+      setRandomResult(`Generated ${groupList.length} groups for the class.`);
+    } finally {
+      setIsGeneratingGroups(false);
     }
-
-    const memberRows = groupList.flatMap((memberList, idx) =>
-      memberList.map((student) => ({
-        group_id: createdGroups[idx].id,
-        student_id: student.id,
-      }))
-    );
-
-    const { error: memberError } = await supabase.from("group_members").insert(memberRows);
-    if (memberError) {
-      setFormError(memberError.message);
-      return;
-    }
-
-    await loadData();
-    setRandomResult(`Generated ${groupList.length} groups for the class.`);
   };
 
   const pickRandomStudent = (list) => {
@@ -5024,15 +5314,15 @@ function TeacherWorkspace({ user, onSignOut }) {
   };
 
   const tiles = [
-    { label: "Classes", path: "/classes", accent: "#2563eb", desc: "Students and lesson plans", shortcut: "CL" },
-    { label: "Attendance", path: "/attendance", accent: "#16a34a", desc: "Track presence quickly", shortcut: "AT" },
-    { label: "Gradebook", path: "/assessments", accent: "#ea580c", desc: "Record and review scores", shortcut: "GB" },
-    { label: "Rubrics", path: "/rubrics", accent: "#7c3aed", desc: "Build clear criteria", shortcut: "RB" },
-    { label: "Groups", path: "/groups", accent: "#0f766e", desc: "Create balanced teams", shortcut: "GP" },
-    { label: "Random Picker", path: "/random", accent: "#ef4444", desc: "Choose a student fairly", shortcut: "RP" },
-    { label: "Timer", path: "/timer", accent: "#dc2626", desc: "Run classroom timers", shortcut: "TM" },
-    { label: "Running Records", path: "/running-records", accent: "#0284c7", desc: "Monitor reading growth", shortcut: "RR" },
-    { label: "Calendar", path: "/calendar", accent: "#0369a1", desc: "Plan classes and events", shortcut: "CA" },
+    { label: "Classes", path: "/classes", accent: "#c9604a", icon: "classes", iconTilt: -1.2, iconX: -0.7, iconY: -0.5, iconStroke: 1.95, wobbleMs: 950 },
+    { label: "Attendance", path: "/attendance", accent: "#6f8f5f", icon: "attendance", iconTilt: 0.8, iconX: 0.3, iconY: -0.6, iconStroke: 1.8, wobbleMs: 980 },
+    { label: "Gradebook", path: "/assessments", accent: "#cf8a4b", icon: "gradebook", iconTilt: -0.4, iconX: -0.4, iconY: -0.3, iconStroke: 1.85, wobbleMs: 1020 },
+    { label: "Rubrics", path: "/rubrics", accent: "#8a74b0", icon: "rubrics", iconTilt: 1.1, iconX: 0.5, iconY: -0.2, iconStroke: 1.75, wobbleMs: 930 },
+    { label: "Groups", path: "/groups", accent: "#5f9b99", icon: "groups", iconTilt: -0.8, iconX: -0.2, iconY: -0.5, iconStroke: 1.9, wobbleMs: 970 },
+    { label: "Random Picker", path: "/random", accent: "#be6973", icon: "random", iconTilt: 0.6, iconX: 0.6, iconY: -0.4, iconStroke: 1.82, wobbleMs: 1010 },
+    { label: "Timer", path: "/timer", accent: "#c36f4b", icon: "timer", iconTilt: -1, iconX: -0.5, iconY: -0.3, iconStroke: 1.88, wobbleMs: 990 },
+    { label: "Running Records", path: "/running-records", accent: "#69885f", icon: "records", iconTilt: 0.9, iconX: 0.4, iconY: -0.5, iconStroke: 1.78, wobbleMs: 940 },
+    { label: "Calendar", path: "/calendar", accent: "#6384b5", icon: "calendar", iconTilt: -0.5, iconX: -0.4, iconY: -0.4, iconStroke: 1.86, wobbleMs: 1000 },
   ];
 
   const PlaceholderPage = ({ title, message }) => (
@@ -5328,6 +5618,39 @@ function TeacherWorkspace({ user, onSignOut }) {
     const statusColor =
       statusButtons.find((item) => item.value === entry.status)?.color || "#94a3b8";
 
+    const StatusIcon = ({ kind }) => {
+      if (kind === "present") {
+        return (
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M4.5 10.2 8.2 13.8 15.5 6.5" />
+          </svg>
+        );
+      }
+      if (kind === "late") {
+        return (
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="10" cy="10" r="6.2" />
+            <path d="M10 6.6v3.8l2.6 1.6" />
+          </svg>
+        );
+      }
+      if (kind === "left-early") {
+        return (
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M15.5 10H7.5" />
+            <path d="m10.8 6.8-3.3 3.2 3.3 3.2" />
+            <path d="M16.5 4.8v10.4" />
+          </svg>
+        );
+      }
+      return (
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M5.4 5.4 14.6 14.6" />
+          <path d="M14.6 5.4 5.4 14.6" />
+        </svg>
+      );
+    };
+
     useEffect(() => {
       setNoteValue(entry.note || "");
     }, [entry.note]);
@@ -5371,7 +5694,10 @@ function TeacherWorkspace({ user, onSignOut }) {
                 aria-label={status.value}
                 title={status.value}
               >
-                {status.icon}
+                <span className="status-btn-icon">
+                  <StatusIcon kind={status.kind} />
+                </span>
+                <span className="status-btn-text">{status.shortLabel}</span>
               </button>
             ))}
           </div>
@@ -5426,10 +5752,10 @@ function TeacherWorkspace({ user, onSignOut }) {
       summaryRate >= 90 ? "#16a34a" : summaryRate >= 75 ? "#f59e0b" : "#ef4444";
 
     const statusButtons = [
-      { value: "Present", icon: "✓", color: "#16a34a" },
-      { value: "Arrived late", icon: "⏰", color: "#f59e0b" },
-      { value: "Left early", icon: "↪", color: "#eab308" },
-      { value: "Didn't come", icon: "✕", color: "#ef4444" },
+      { value: "Present", shortLabel: "Present", kind: "present", color: "#16a34a" },
+      { value: "Arrived late", shortLabel: "Late", kind: "late", color: "#f59e0b" },
+      { value: "Left early", shortLabel: "Left early", kind: "left-early", color: "#eab308" },
+      { value: "Didn't come", shortLabel: "Absent", kind: "absent", color: "#ef4444" },
     ];
 
     if (!session) {
@@ -5589,12 +5915,12 @@ function TeacherWorkspace({ user, onSignOut }) {
 
     const gradientForGroup = (index) => {
       const gradients = [
-        ["#a855f7", "#3b82f6"],
-        ["#3b82f6", "#22d3ee"],
-        ["#22c55e", "#86efac"],
-        ["#fb923c", "#fde047"],
-        ["#ec4899", "#a855f7"],
-        ["#ef4444", "#f97316"],
+        ["#f1dfbe", "#e7d0a6"],
+        ["#efe2c8", "#e4d3ad"],
+        ["#ead7b4", "#e0c596"],
+        ["#f0e3ca", "#e7d6b2"],
+        ["#ebddc1", "#dfcaa3"],
+        ["#f2e5cf", "#e7d7b7"],
       ];
       const pair = gradients[index % gradients.length];
       return `linear-gradient(90deg, ${pair[0]}, ${pair[1]})`;
@@ -5679,7 +6005,14 @@ function TeacherWorkspace({ user, onSignOut }) {
               </div>
             )}
 
-            <button type="button" onClick={handleGenerateGroups} className="groups-generate-btn">
+            <button
+              type="button"
+              onClick={handleGenerateGroups}
+              className={`groups-generate-btn ${isGeneratingGroups ? "button-with-spinner" : ""}`}
+              disabled={isGeneratingGroups}
+              aria-busy={isGeneratingGroups}
+            >
+              {isGeneratingGroups && <span className="inline-spinner" aria-hidden="true" />}
               {classGroups.length ? "Regenerate Groups" : "Generate Groups"}
             </button>
           </div>
@@ -5786,7 +6119,7 @@ function TeacherWorkspace({ user, onSignOut }) {
 
         {groupsShowSeparations && (
           <div className="modal-overlay">
-            <div className="modal-card">
+            <div className="modal-card separations-modal">
               <h3>Separation Rules</h3>
               <div className="grid">
                 <label className="stack">
@@ -5823,7 +6156,7 @@ function TeacherWorkspace({ user, onSignOut }) {
                     ))}
                   </select>
                 </label>
-                <button type="button" onClick={handleAddConstraint}>
+                <button type="button" className="separations-add-btn" onClick={handleAddConstraint}>
                   Add separation
                 </button>
               </div>
@@ -5853,8 +6186,8 @@ function TeacherWorkspace({ user, onSignOut }) {
                   })}
                 </ul>
               )}
-              <div className="modal-actions">
-                <button type="button" className="link" onClick={closeSeparationsModal}>
+              <div className="modal-actions separations-actions">
+                <button type="button" className="secondary" onClick={closeSeparationsModal}>
                   Done
                 </button>
               </div>
@@ -5866,74 +6199,30 @@ function TeacherWorkspace({ user, onSignOut }) {
   };
 
   const DashboardPage = () => {
-    const now = new Date();
-    const windowStart = startOfDay(now);
-    const windowEnd = endOfDay(addDays(now, 15));
-    const upcomingEventReminders = calendarEvents
-      .filter((item) => {
-        if (!item?.event_date) return false;
-        const eventDate = parseISO(String(item.event_date));
-        if (!isValid(eventDate)) return false;
-        return eventDate >= windowStart && eventDate <= windowEnd;
-      })
-      .sort((a, b) => {
-        const firstDate = parseISO(String(a.event_date));
-        const secondDate = parseISO(String(b.event_date));
-        const dateCompare = firstDate.getTime() - secondDate.getTime();
-        if (dateCompare !== 0) return dateCompare;
-        if (!!a.is_all_day !== !!b.is_all_day) return a.is_all_day ? -1 : 1;
-        return (a.start_time || "").localeCompare(b.start_time || "");
-      });
-
     return (
       <>
-        <section className="panel reminders-panel">
-          <div className="reminders-header">
-            <h2>Upcoming Events (Next 15 Days)</h2>
-            <NavLink to="/calendar" className="reminders-icon-link" aria-label="Open calendar" title="Open calendar">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M7 3a1 1 0 0 1 1 1v1h8V4a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8a3 3 0 0 1 3-3h1V4a1 1 0 0 1 1-1Zm13 8H4v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6ZM5 7a1 1 0 0 0-1 1v1h16V8a1 1 0 0 0-1-1h-1v1a1 1 0 1 1-2 0V7H8v1a1 1 0 1 1-2 0V7H5Z" />
-              </svg>
-            </NavLink>
-          </div>
-          {upcomingEventReminders.length === 0 ? (
-            <p className="muted">No upcoming events in the next 15 days.</p>
-          ) : (
-            <div className="reminders-list">
-              {upcomingEventReminders.map((item) => {
-                const eventDateLabel = format(parseISO(item.event_date), "EEE, MMM d");
-                const eventTimeLabel = item.is_all_day
-                  ? "All day"
-                  : item.start_time
-                    ? format(parseISO(item.start_time), "p")
-                    : "Time not set";
-                return (
-                  <article key={item.id} className="reminder-card">
-                    <div className="reminder-date">{eventDateLabel}</div>
-                    <div className="reminder-main">
-                      <strong>{item.title || "Untitled event"}</strong>
-                      <p>{eventTimeLabel}</p>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        <section className="panel">
-          <h3>Quick Actions</h3>
+        <section className="panel quick-actions-panel">
           <div className="tile-grid">
             {tiles.map((tile) => (
               <NavLink
                 key={tile.label}
                 to={tile.path}
                 className="tile"
-                style={{ "--tile-accent": tile.accent }}
+                style={{
+                  "--tile-accent": tile.accent,
+                  "--tile-accent-soft": `${tile.accent}26`,
+                  "--icon-tilt": `${tile.iconTilt}deg`,
+                  "--icon-offset-x": `${tile.iconX}px`,
+                  "--icon-offset-y": `${tile.iconY}px`,
+                  "--icon-stroke": tile.iconStroke,
+                  "--icon-wobble-ms": `${tile.wobbleMs}ms`,
+                }}
               >
-                <span className="tile-badge">{tile.shortcut}</span>
+                <span className="tile-circle" aria-hidden="true">
+                  <TileIcon kind={tile.icon} />
+                </span>
                 <span className="tile-label">{tile.label}</span>
-                <span className="tile-desc">{tile.desc}</span>
+                <span className="tile-scratch" aria-hidden="true" />
               </NavLink>
             ))}
           </div>
@@ -5944,7 +6233,12 @@ function TeacherWorkspace({ user, onSignOut }) {
 
   return (
     <BrowserRouter>
-      <Layout user={user} onSignOut={onSignOut} preferences={profilePreferences}>
+      <Layout
+        user={user}
+        onSignOut={onSignOut}
+        preferences={profilePreferences}
+        calendarEvents={calendarEvents}
+      >
         <Routes>
           <Route
             path="/"

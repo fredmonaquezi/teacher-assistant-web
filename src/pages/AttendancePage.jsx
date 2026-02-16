@@ -6,7 +6,7 @@ import {
   isYesterday,
   parseISO,
 } from "date-fns";
-import { NavLink, useSearchParams } from "react-router-dom";
+import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
 const AttendancePage = ({
@@ -18,11 +18,14 @@ const AttendancePage = ({
   setFormError,
   loadData,
 }) => {
+  const navigate = useNavigate();
   const attendanceClassStorageKey = "ta_attendance_active_class";
   const [searchParams] = useSearchParams();
   const classId = searchParams.get("classId") || "";
   const classLabel = classOptions.find((option) => option.id === classId)?.label;
   const isClassLockedByQuery = Boolean(classId);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [deletingSessionId, setDeletingSessionId] = useState("");
   const [activeClassId, setActiveClassId] = useState(() => {
     if (classId) return classId;
     if (typeof window === "undefined") return "";
@@ -88,63 +91,77 @@ const AttendancePage = ({
   };
 
   const handleCreateSessionForDate = async (dateString) => {
+    if (isCreatingSession) return false;
+    setIsCreatingSession(true);
     setFormError("");
-    if (!effectiveClassId) {
-      setFormError("Select a class first.");
-      return;
-    }
-    if (!dateString) {
-      setFormError("Choose a date.");
-      return;
-    }
-    const exists = classSessions.some((session) => session.session_date === dateString);
-    if (exists) {
-      setFormError("A session already exists for that date.");
-      return;
-    }
-
-    const { data: sessionRow, error: sessionError } = await supabase
-      .from("attendance_sessions")
-      .insert({
-        session_date: dateString,
-        title: null,
-        class_id: effectiveClassId,
-      })
-      .select()
-      .single();
-    if (sessionError) {
-      setFormError(sessionError.message);
-      return;
-    }
-
-    if (classStudents.length > 0) {
-      const entryRows = classStudents.map((student) => ({
-        session_id: sessionRow.id,
-        student_id: student.id,
-        status: "Present",
-        note: null,
-      }));
-      const { error: entryError } = await supabase
-        .from("attendance_entries")
-        .insert(entryRows);
-      if (entryError) {
-        setFormError(entryError.message);
-        return;
+    try {
+      if (!effectiveClassId) {
+        setFormError("Select a class first.");
+        return false;
       }
-    }
+      if (!dateString) {
+        setFormError("Choose a date.");
+        return false;
+      }
+      const existingSession = classSessions.find((session) => session.session_date === dateString);
+      if (existingSession?.id) {
+        navigate(`/attendance/${existingSession.id}`);
+        return true;
+      }
 
-    await loadData();
+      const { data: sessionRow, error: sessionError } = await supabase
+        .from("attendance_sessions")
+        .insert({
+          session_date: dateString,
+          title: null,
+          class_id: effectiveClassId,
+        })
+        .select()
+        .single();
+      if (sessionError) {
+        setFormError(sessionError.message);
+        return false;
+      }
+
+      if (classStudents.length > 0) {
+        const entryRows = classStudents.map((student) => ({
+          session_id: sessionRow.id,
+          student_id: student.id,
+          status: "Present",
+          note: null,
+        }));
+        const { error: entryError } = await supabase
+          .from("attendance_entries")
+          .insert(entryRows);
+        if (entryError) {
+          setFormError(entryError.message);
+          return false;
+        }
+      }
+
+      await loadData();
+      navigate(`/attendance/${sessionRow.id}`);
+      return true;
+    } finally {
+      setIsCreatingSession(false);
+    }
   };
 
   const handleDeleteSession = async (sessionId) => {
+    if (!sessionId || deletingSessionId) return;
     if (!window.confirm("Delete this attendance session?")) return;
+    setDeletingSessionId(sessionId);
     setFormError("");
-    const { error } = await supabase.from("attendance_sessions").delete().eq("id", sessionId);
-    if (error) {
-      setFormError(error.message);
-      return;
+    try {
+      const { error } = await supabase.from("attendance_sessions").delete().eq("id", sessionId);
+      if (error) {
+        setFormError(error.message);
+        return;
+      }
+      await loadData();
+    } finally {
+      setDeletingSessionId("");
     }
-    await loadData();
   };
 
   return (
@@ -176,15 +193,19 @@ const AttendancePage = ({
                 setSelectedDate(format(new Date(), "yyyy-MM-dd"));
                 setShowDatePicker(true);
               }}
+              disabled={isCreatingSession}
             >
               By date
             </button>
-              <button
-                type="button"
-                onClick={() => handleCreateSessionForDate(format(new Date(), "yyyy-MM-dd"))}
-                disabled={!effectiveClassId}
-              >
-                Today
+            <button
+              type="button"
+              className={isCreatingSession ? "button-with-spinner" : ""}
+              onClick={() => handleCreateSessionForDate(format(new Date(), "yyyy-MM-dd"))}
+              disabled={!effectiveClassId || isCreatingSession}
+              aria-busy={isCreatingSession}
+            >
+              {isCreatingSession && <span className="inline-spinner" aria-hidden="true" />}
+              Today
             </button>
           </div>
         </div>
@@ -237,38 +258,44 @@ const AttendancePage = ({
                       </div>
                       <button
                         type="button"
-                        className="icon-button"
+                        className={`icon-button ${deletingSessionId === session.id ? "button-with-spinner" : ""}`}
                         onClick={(event) => {
                           event.preventDefault();
                           handleDeleteSession(session.id);
                         }}
                         aria-label="Delete session"
+                        disabled={Boolean(deletingSessionId)}
+                        aria-busy={deletingSessionId === session.id}
                       >
-                        ✕
+                        {deletingSessionId === session.id ? (
+                          <span className="inline-spinner" aria-hidden="true" />
+                        ) : (
+                          "✕"
+                        )}
                       </button>
                     </div>
 
                     <div className="attendance-card-stats">
-                      <div>
-                        <div className="muted">Present</div>
-                        <strong style={{ color: "#16a34a" }}>{stats.present}</strong>
+                      <div className="attendance-card-stat">
+                        <div className="attendance-card-stat-label">Present</div>
+                        <strong className="attendance-card-stat-value present">{stats.present}</strong>
                       </div>
-                      <div>
-                        <div className="muted">Didn't come</div>
-                        <strong style={{ color: "#ef4444" }}>{stats.absent}</strong>
+                      <div className="attendance-card-stat">
+                        <div className="attendance-card-stat-label">Didn't come</div>
+                        <strong className="attendance-card-stat-value absent">{stats.absent}</strong>
                       </div>
-                      <div>
-                        <div className="muted">Late</div>
-                        <strong style={{ color: "#f59e0b" }}>{stats.late}</strong>
+                      <div className="attendance-card-stat">
+                        <div className="attendance-card-stat-label">Late</div>
+                        <strong className="attendance-card-stat-value late">{stats.late}</strong>
                       </div>
-                      <div>
-                        <div className="muted">Left early</div>
-                        <strong style={{ color: "#eab308" }}>{stats.leftEarly}</strong>
+                      <div className="attendance-card-stat">
+                        <div className="attendance-card-stat-label">Left early</div>
+                        <strong className="attendance-card-stat-value early">{stats.leftEarly}</strong>
                       </div>
                     </div>
 
                     <div className="attendance-rate">
-                      <div className="muted">Attendance Rate</div>
+                      <div className="attendance-rate-label">Attendance Rate</div>
                       <div className="attendance-rate-bar">
                         <span
                           style={{
@@ -308,7 +335,7 @@ const AttendancePage = ({
             <div className="attendance-modal-date">
               Selected Date: {selectedDate}
             </div>
-            <div className="modal-actions">
+            <div className="modal-actions attendance-modal-actions">
               <button
                 type="button"
                 className="link"
@@ -318,12 +345,15 @@ const AttendancePage = ({
               </button>
               <button
                 type="button"
+                className={isCreatingSession ? "button-with-spinner" : ""}
                 onClick={async () => {
-                  await handleCreateSessionForDate(selectedDate);
-                  setShowDatePicker(false);
+                  const ok = await handleCreateSessionForDate(selectedDate);
+                  if (ok) setShowDatePicker(false);
                 }}
-                disabled={!selectedDate}
+                disabled={!selectedDate || isCreatingSession}
+                aria-busy={isCreatingSession}
               >
+                {isCreatingSession && <span className="inline-spinner" aria-hidden="true" />}
                 Create Session
               </button>
             </div>

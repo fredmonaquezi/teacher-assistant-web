@@ -12,7 +12,7 @@ const AssessmentEntryRow = ({ entry, student, handleUpdateAssessmentEntry, asses
 
   const scoreNumber = scoreValue === "" ? null : Number(scoreValue);
   const scorePercent = scoreToPercent(scoreNumber, assessmentMaxScore);
-  const scoreColor = scorePercent === null ? "#94a3b8" : performanceColor(scorePercent);
+  const scoreColor = scorePercent === null ? "#8b6f4c" : performanceColor(scorePercent);
 
   return (
     <div className="grade-entry-card">

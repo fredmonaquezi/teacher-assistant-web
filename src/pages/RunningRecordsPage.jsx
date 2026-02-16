@@ -527,7 +527,7 @@ function RunningRecordsPage({
                 <input
                   type="text"
                   value={runningRecordForm.recordDate}
-                  onClick={() => setShowCalendar((prev) => !prev)}
+                  onClick={() => setShowCalendar(true)}
                   onFocus={() => setShowCalendar(true)}
                   readOnly
                   placeholder="Click to choose"

@@ -342,7 +342,7 @@ function RandomPickerPage({ formError, classOptions, students }) {
 
         {showAddCategory && (
           <div className="modal-overlay">
-            <div className="modal-card">
+            <div className="modal-card random-modal">
               <h3>Add Custom Role</h3>
               <p className="muted">Create your own classroom role.</p>
               <label className="stack">
@@ -373,7 +373,7 @@ function RandomPickerPage({ formError, classOptions, students }) {
 
         {showDeleteCategory && (
           <div className="modal-overlay">
-            <div className="modal-card">
+            <div className="modal-card random-modal">
               <h3>Delete Custom Role?</h3>
               <p className="muted">
                 This will remove "{selectedCategory}" and its saved rotation history.
