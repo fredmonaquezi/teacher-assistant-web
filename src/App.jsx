@@ -4,6 +4,7 @@ import AuthForm from "./components/auth/AuthForm";
 import ReorderModeToggle from "./components/common/ReorderModeToggle";
 import Layout from "./components/layout/Layout";
 import TimerRuntimeOverlays from "./components/timer/TimerRuntimeOverlays";
+import { WorkspaceProvider } from "./context/WorkspaceContext";
 import useClassroomTimer from "./hooks/useClassroomTimer";
 import useTeacherWorkspaceData from "./hooks/useTeacherWorkspaceData";
 import { useHandleDrag } from "./hooks/useHandleDrag";
@@ -31,6 +32,7 @@ import "./App.css";
 import "react-day-picker/dist/style.css";
 
 function TeacherWorkspace({ user, onSignOut }) {
+  const workspace = useTeacherWorkspaceData();
   const {
     profilePreferences,
     setProfilePreferences,
@@ -105,19 +107,20 @@ function TeacherWorkspace({ user, onSignOut }) {
     handleAddConstraint,
     handleDeleteConstraint,
     handleGenerateGroups,
-  } = useTeacherWorkspaceData();
+  } = workspace;
 
   const timer = useClassroomTimer();
 
   return (
-    <BrowserRouter>
-      <Layout
-        user={user}
-        onSignOut={onSignOut}
-        preferences={profilePreferences}
-        calendarEvents={calendarEvents}
-      >
-        <Routes>
+    <WorkspaceProvider value={workspace}>
+      <BrowserRouter>
+        <Layout
+          user={user}
+          onSignOut={onSignOut}
+          preferences={profilePreferences}
+          calendarEvents={calendarEvents}
+        >
+          <Routes>
           <Route
             path="/"
             element={
@@ -381,10 +384,11 @@ function TeacherWorkspace({ user, onSignOut }) {
               />
             }
           />
-        </Routes>
-        <TimerRuntimeOverlays timer={timer} />
-      </Layout>
-    </BrowserRouter>
+          </Routes>
+          <TimerRuntimeOverlays timer={timer} />
+        </Layout>
+      </BrowserRouter>
+    </WorkspaceProvider>
   );
 }
 
