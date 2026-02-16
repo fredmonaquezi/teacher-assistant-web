@@ -1,0 +1,376 @@
+import {
+  addMonths,
+  addWeeks,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+
+const CALENDAR_SETUP_MESSAGE =
+  "Calendar tables are not set up yet. Run /Users/fred/Documents/teacher-assistant-web/supabase_calendar_tables.sql in Supabase SQL Editor, then refresh.";
+
+function createEmptyDiaryEntry() {
+  return {
+    classId: "",
+    subjectId: "",
+    unitId: "",
+    startTime: "",
+    endTime: "",
+    plan: "",
+    objectives: "",
+    materials: "",
+    notes: "",
+  };
+}
+
+function createEmptyEvent() {
+  return {
+    classId: "",
+    title: "",
+    details: "",
+    isAllDay: false,
+    startTime: "",
+    endTime: "",
+  };
+}
+
+function useCalendarPageController({
+  setFormError,
+  classOptions,
+  calendarDiaryEntries,
+  calendarEvents,
+  calendarTablesReady,
+  classes,
+  subjects,
+  units,
+  handleCreateCalendarDiaryEntry,
+  handleUpdateCalendarDiaryEntry,
+  handleDeleteCalendarDiaryEntry,
+  handleCreateCalendarEvent,
+  handleDeleteCalendarEvent,
+}) {
+  const [searchParams] = useSearchParams();
+  const classId = searchParams.get("classId") || "";
+  const [activeClassId, setActiveClassId] = useState("");
+  const effectiveClassId = classId || activeClassId;
+
+  const [viewMode, setViewMode] = useState("month");
+  const [anchorDate, setAnchorDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  const [showDayDetail, setShowDayDetail] = useState(false);
+  const [activeDiaryEntry, setActiveDiaryEntry] = useState(null);
+  const [showEditEntry, setShowEditEntry] = useState(false);
+  const [editingEntryId, setEditingEntryId] = useState("");
+  const [editEntryForm, setEditEntryForm] = useState(createEmptyDiaryEntry());
+
+  const [showNewEntry, setShowNewEntry] = useState(false);
+  const [showNewEvent, setShowNewEvent] = useState(false);
+  const [newEntry, setNewEntry] = useState(createEmptyDiaryEntry());
+  const [newEvent, setNewEvent] = useState(createEmptyEvent());
+
+  const activeClassLabel = classOptions.find((option) => option.id === effectiveClassId)?.label || "";
+
+  const filteredDiaryEntries = effectiveClassId
+    ? calendarDiaryEntries.filter((entry) => entry.class_id === effectiveClassId)
+    : calendarDiaryEntries;
+
+  const filteredEvents = effectiveClassId
+    ? calendarEvents.filter((item) => item.class_id === effectiveClassId)
+    : calendarEvents;
+
+  const subjectOptionsForEntryClass = subjects.filter(
+    (subject) => subject.class_id === (newEntry.classId || effectiveClassId || null)
+  );
+
+  const unitOptionsForEntrySubject = units.filter((unit) => unit.subject_id === newEntry.subjectId);
+
+  const subjectOptionsForEditClass = subjects.filter(
+    (subject) =>
+      subject.class_id === (editEntryForm.classId || activeDiaryEntry?.class_id || effectiveClassId || null)
+  );
+
+  const unitOptionsForEditSubject = units.filter((unit) => unit.subject_id === editEntryForm.subjectId);
+
+  const monthTitle = viewMode === "month" ? format(anchorDate, "LLLL yyyy") : format(anchorDate, "PPP");
+
+  const dayItems = filteredDiaryEntries
+    .filter((item) => item.entry_date === selectedDate)
+    .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""));
+
+  const dayEvents = filteredEvents
+    .filter((item) => item.event_date === selectedDate)
+    .sort((a, b) => {
+      if (!!a.is_all_day !== !!b.is_all_day) return a.is_all_day ? -1 : 1;
+      return (a.start_time || "").localeCompare(b.start_time || "");
+    });
+
+  const upcomingEvents = filteredEvents
+    .filter((item) => item.event_date >= format(new Date(), "yyyy-MM-dd"))
+    .sort((a, b) => a.event_date.localeCompare(b.event_date))
+    .slice(0, 5);
+
+  const intervalDays =
+    viewMode === "month"
+      ? eachDayOfInterval({
+          start: startOfWeek(startOfMonth(anchorDate)),
+          end: endOfWeek(endOfMonth(anchorDate)),
+        })
+      : eachDayOfInterval({
+          start: startOfWeek(anchorDate),
+          end: endOfWeek(anchorDate),
+        });
+
+  const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  const diaryForDay = (dateObj) =>
+    filteredDiaryEntries.filter((item) => item.entry_date === format(dateObj, "yyyy-MM-dd"));
+
+  const eventsForDay = (dateObj) =>
+    filteredEvents.filter((item) => item.event_date === format(dateObj, "yyyy-MM-dd"));
+
+  const mergeDateTime = (dateString, timeString) =>
+    timeString ? `${dateString}T${timeString}:00` : null;
+
+  const splitLines = (value) =>
+    String(value || "")
+      .split(/\n|;|,/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+  const navigatePeriod = (delta) => {
+    setAnchorDate((prev) => (viewMode === "month" ? addMonths(prev, delta) : addWeeks(prev, delta)));
+  };
+
+  const openDay = (dayKey) => {
+    setSelectedDate(dayKey);
+    setShowDayDetail(true);
+  };
+
+  const openNewEntryForm = () => {
+    if (!calendarTablesReady) {
+      setFormError(CALENDAR_SETUP_MESSAGE);
+      return;
+    }
+    setShowNewEntry(true);
+  };
+
+  const openNewEventForm = () => {
+    if (!calendarTablesReady) {
+      setFormError(CALENDAR_SETUP_MESSAGE);
+      return;
+    }
+    setShowNewEvent(true);
+  };
+
+  const handleCreateDiaryEntry = async (event) => {
+    event.preventDefault();
+    setFormError("");
+
+    if (!calendarTablesReady) {
+      setFormError(CALENDAR_SETUP_MESSAGE);
+      return;
+    }
+
+    const payload = {
+      entry_date: selectedDate,
+      class_id: newEntry.classId || effectiveClassId || null,
+      subject_id: newEntry.subjectId || null,
+      unit_id: newEntry.unitId || null,
+      start_time: mergeDateTime(selectedDate, newEntry.startTime),
+      end_time: mergeDateTime(selectedDate, newEntry.endTime),
+      plan: newEntry.plan.trim() || null,
+      objectives: newEntry.objectives.trim() || null,
+      materials: newEntry.materials.trim() || null,
+      notes: newEntry.notes.trim() || null,
+    };
+
+    if (!payload.class_id) {
+      setFormError("Select a class for the diary entry.");
+      return;
+    }
+
+    const created = await handleCreateCalendarDiaryEntry(payload);
+    if (!created) return;
+
+    setNewEntry(createEmptyDiaryEntry());
+    setShowNewEntry(false);
+  };
+
+  const handleDeleteDiaryEntry = async (entryId) => {
+    if (!entryId) return;
+    if (!window.confirm("Delete this diary entry?")) return;
+    await handleDeleteCalendarDiaryEntry(entryId);
+  };
+
+  const openEditDiaryEntry = (entry) => {
+    if (!entry) return;
+
+    setEditingEntryId(entry.id);
+    setEditEntryForm({
+      classId: entry.class_id || "",
+      subjectId: entry.subject_id || "",
+      unitId: entry.unit_id || "",
+      startTime: entry.start_time ? format(parseISO(entry.start_time), "HH:mm") : "",
+      endTime: entry.end_time ? format(parseISO(entry.end_time), "HH:mm") : "",
+      plan: entry.plan || "",
+      objectives: entry.objectives || "",
+      materials: entry.materials || "",
+      notes: entry.notes || "",
+    });
+    setShowEditEntry(true);
+  };
+
+  const closeActiveDiaryEntry = () => {
+    setActiveDiaryEntry(null);
+    setShowEditEntry(false);
+    setEditingEntryId("");
+  };
+
+  const closeEditEntry = () => {
+    setShowEditEntry(false);
+    setEditingEntryId("");
+  };
+
+  const handleUpdateDiaryEntry = async (event) => {
+    event.preventDefault();
+    setFormError("");
+
+    if (!calendarTablesReady) {
+      setFormError(CALENDAR_SETUP_MESSAGE);
+      return;
+    }
+    if (!editingEntryId) return;
+
+    const entryDate = activeDiaryEntry?.entry_date || selectedDate;
+    const payload = {
+      class_id: editEntryForm.classId || effectiveClassId || null,
+      subject_id: editEntryForm.subjectId || null,
+      unit_id: editEntryForm.unitId || null,
+      start_time: mergeDateTime(entryDate, editEntryForm.startTime),
+      end_time: mergeDateTime(entryDate, editEntryForm.endTime),
+      plan: editEntryForm.plan.trim() || null,
+      objectives: editEntryForm.objectives.trim() || null,
+      materials: editEntryForm.materials.trim() || null,
+      notes: editEntryForm.notes.trim() || null,
+    };
+
+    if (!payload.class_id) {
+      setFormError("Select a class for the diary entry.");
+      return;
+    }
+
+    const updated = await handleUpdateCalendarDiaryEntry(editingEntryId, payload);
+    if (!updated) return;
+
+    setShowEditEntry(false);
+    setEditingEntryId("");
+    setActiveDiaryEntry(null);
+  };
+
+  const handleCreateEvent = async (event) => {
+    event.preventDefault();
+    setFormError("");
+
+    if (!calendarTablesReady) {
+      setFormError(CALENDAR_SETUP_MESSAGE);
+      return;
+    }
+
+    const payload = {
+      event_date: selectedDate,
+      class_id: newEvent.classId || effectiveClassId || null,
+      title: newEvent.title.trim(),
+      details: newEvent.details.trim() || null,
+      is_all_day: !!newEvent.isAllDay,
+      start_time: newEvent.isAllDay ? null : mergeDateTime(selectedDate, newEvent.startTime),
+      end_time: newEvent.isAllDay ? null : mergeDateTime(selectedDate, newEvent.endTime),
+    };
+
+    if (!payload.title) {
+      setFormError("Event title is required.");
+      return;
+    }
+
+    const created = await handleCreateCalendarEvent(payload);
+    if (!created) return;
+
+    setNewEvent(createEmptyEvent());
+    setShowNewEvent(false);
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (!eventId) return;
+    if (!window.confirm("Delete this event?")) return;
+    await handleDeleteCalendarEvent(eventId);
+  };
+
+  return {
+    classId,
+    activeClassId,
+    setActiveClassId,
+    effectiveClassId,
+    viewMode,
+    setViewMode,
+    anchorDate,
+    setAnchorDate,
+    selectedDate,
+    setSelectedDate,
+    showDayDetail,
+    setShowDayDetail,
+    activeDiaryEntry,
+    setActiveDiaryEntry,
+    showEditEntry,
+    editingEntryId,
+    editEntryForm,
+    setEditEntryForm,
+    showNewEntry,
+    setShowNewEntry,
+    showNewEvent,
+    setShowNewEvent,
+    newEntry,
+    setNewEntry,
+    newEvent,
+    setNewEvent,
+    activeClassLabel,
+    subjectOptionsForEntryClass,
+    unitOptionsForEntrySubject,
+    subjectOptionsForEditClass,
+    unitOptionsForEditSubject,
+    monthTitle,
+    dayItems,
+    dayEvents,
+    upcomingEvents,
+    intervalDays,
+    weekdayLabels,
+    diaryForDay,
+    eventsForDay,
+    splitLines,
+    calendarSetupMessage: CALENDAR_SETUP_MESSAGE,
+    navigatePeriod,
+    openDay,
+    openNewEntryForm,
+    openNewEventForm,
+    handleCreateDiaryEntry,
+    handleDeleteDiaryEntry,
+    openEditDiaryEntry,
+    closeActiveDiaryEntry,
+    closeEditEntry,
+    handleUpdateDiaryEntry,
+    handleCreateEvent,
+    handleDeleteEvent,
+    classes,
+    subjects,
+    units,
+    classOptions,
+    calendarTablesReady,
+  };
+}
+
+export default useCalendarPageController;
