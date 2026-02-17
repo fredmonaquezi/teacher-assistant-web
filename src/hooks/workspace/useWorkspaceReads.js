@@ -9,14 +9,15 @@ import { loadCoreWorkspaceRows } from "./readers/coreLoader";
 import { loadGroupWorkspaceRows } from "./readers/groupLoader";
 import { loadRubricWorkspaceRows } from "./readers/rubricLoader";
 
-const ATTENDANCE_QUERY_KEY = ["workspace", "attendance"];
+const attendanceQueryKeyForUser = (userId) => ["workspace", "attendance", userId || "anonymous"];
 const EMPTY_ATTENDANCE_ROWS = {
   sessionRows: [],
   entryRows: [],
 };
 
-function useWorkspaceReads() {
+function useWorkspaceReads(userId) {
   const queryClient = useQueryClient();
+  const attendanceQueryKey = attendanceQueryKeyForUser(userId);
   const [profilePreferences, setProfilePreferences] = useState(() => {
     try {
       const raw = localStorage.getItem("ta_profile_preferences");
@@ -72,6 +73,10 @@ function useWorkspaceReads() {
   };
 
   const loadAttendanceRows = async () => {
+    if (!userId) {
+      return EMPTY_ATTENDANCE_ROWS;
+    }
+
     const attendanceResult = await loadAttendanceWorkspaceRows(supabase);
     const firstError = [attendanceResult.errors.sessionError, attendanceResult.errors.entryError].find(Boolean);
     if (firstError) {
@@ -81,7 +86,7 @@ function useWorkspaceReads() {
   };
 
   const { data: attendanceRows = EMPTY_ATTENDANCE_ROWS } = useQuery({
-    queryKey: ATTENDANCE_QUERY_KEY,
+    queryKey: attendanceQueryKey,
     queryFn: loadAttendanceRows,
     enabled: false,
     initialData: EMPTY_ATTENDANCE_ROWS,
@@ -92,7 +97,7 @@ function useWorkspaceReads() {
   const attendanceEntries = attendanceRows.entryRows;
 
   const setAttendanceEntries = (updater) => {
-    queryClient.setQueryData(ATTENDANCE_QUERY_KEY, (currentRows) => {
+    queryClient.setQueryData(attendanceQueryKey, (currentRows) => {
       const safeRows = currentRows || EMPTY_ATTENDANCE_ROWS;
       const nextEntryRows = typeof updater === "function" ? updater(safeRows.entryRows) : updater;
       return {
@@ -120,7 +125,7 @@ function useWorkspaceReads() {
   const refreshAttendanceData = async () => {
     try {
       await queryClient.fetchQuery({
-        queryKey: ATTENDANCE_QUERY_KEY,
+        queryKey: attendanceQueryKey,
         queryFn: loadAttendanceRows,
         staleTime: 0,
       });

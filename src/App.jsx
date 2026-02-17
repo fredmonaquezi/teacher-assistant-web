@@ -10,6 +10,7 @@ import useTeacherWorkspaceData from "./hooks/useTeacherWorkspaceData";
 import { useHandleDrag } from "./hooks/useHandleDrag";
 import { useReorderMode } from "./hooks/useReorderMode";
 import { STUDENT_GENDER_OPTIONS } from "./constants/options";
+import { queryClient } from "./lib/queryClient";
 import { supabase } from "./supabaseClient";
 import "./App.css";
 import "react-day-picker/dist/style.css";
@@ -41,7 +42,7 @@ function RouteFallback() {
 }
 
 function TeacherWorkspace({ user, onSignOut }) {
-  const workspace = useTeacherWorkspaceData();
+  const workspace = useTeacherWorkspaceData(user?.id || "");
   const {
     profilePreferences,
     setProfilePreferences,
@@ -448,6 +449,9 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        queryClient.clear();
+      }
       if (isMounted) setUser(session?.user ?? null);
     });
 
@@ -459,6 +463,7 @@ function App() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    queryClient.clear();
   };
 
   return (

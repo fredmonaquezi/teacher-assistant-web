@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import useWorkspaceActions from "./workspace/useWorkspaceActions";
 import useWorkspaceReads from "./workspace/useWorkspaceReads";
 
-function useTeacherWorkspaceData() {
+function useTeacherWorkspaceData(userId) {
   const {
     profilePreferences,
     setProfilePreferences,
@@ -41,7 +41,7 @@ function useTeacherWorkspaceData() {
     refreshRubricData,
     refreshGroupData,
     refreshCalendarData,
-  } = useWorkspaceReads();
+  } = useWorkspaceReads(userId);
 
   const [seedingRubrics, setSeedingRubrics] = useState(false);
   const [classForm, setClassForm] = useState({
