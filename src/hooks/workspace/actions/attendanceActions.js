@@ -4,18 +4,31 @@ import { DEFAULT_ATTENDANCE_STATUS } from "../../../constants/attendance";
 function createAttendanceActions({
   students,
   attendanceSessions,
+  setAttendanceEntries,
   setFormError,
   refreshAttendanceData,
 }) {
   const handleUpdateAttendanceEntry = async (entryId, updates) => {
-    if (!entryId) return;
+    if (!entryId) return false;
     setFormError("");
+
+    let previousEntries = null;
+    setAttendanceEntries((currentEntries) => {
+      previousEntries = currentEntries;
+      return currentEntries.map((entry) => (entry.id === entryId ? { ...entry, ...updates } : entry));
+    });
+
     const { error } = await supabase.from("attendance_entries").update(updates).eq("id", entryId);
     if (error) {
+      if (previousEntries) {
+        setAttendanceEntries(previousEntries);
+      }
       setFormError(error.message);
-      return;
+      return false;
     }
+
     await refreshAttendanceData();
+    return true;
   };
 
   const handleCreateAttendanceSessionForDate = async (classId, dateString) => {

@@ -2,6 +2,7 @@ import { supabase } from "../../../supabaseClient";
 
 function createAssessmentActions({
   students,
+  setAssessmentEntries,
   assessmentEntries,
   assessments,
   subjects,
@@ -10,14 +11,26 @@ function createAssessmentActions({
   refreshAssessmentData,
 }) {
   const handleUpdateAssessmentEntry = async (entryId, updates) => {
-    if (!entryId) return;
+    if (!entryId) return false;
     setFormError("");
+
+    let previousEntries = null;
+    setAssessmentEntries((currentEntries) => {
+      previousEntries = currentEntries;
+      return currentEntries.map((entry) => (entry.id === entryId ? { ...entry, ...updates } : entry));
+    });
+
     const { error } = await supabase.from("assessment_entries").update(updates).eq("id", entryId);
     if (error) {
+      if (previousEntries) {
+        setAssessmentEntries(previousEntries);
+      }
       setFormError(error.message);
-      return;
+      return false;
     }
+
     await refreshAssessmentData();
+    return true;
   };
 
   const handleCreateAssessmentForUnit = async (event, unitId, subjectId, classId, formValues = null) => {
