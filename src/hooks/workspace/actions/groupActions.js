@@ -4,6 +4,7 @@ import {
   buildConstraintSet,
   generateGroups,
 } from "../groupingEngine";
+import { runMutation } from "./mutationHelpers";
 
 function createGroupActions({
   students,
@@ -20,7 +21,6 @@ function createGroupActions({
 }) {
   const handleAddConstraint = async (event) => {
     if (event?.preventDefault) event.preventDefault();
-    setFormError("");
 
     const studentA = constraintForm.studentA;
     const studentB = constraintForm.studentB;
@@ -32,30 +32,33 @@ function createGroupActions({
 
     const [firstId, secondId] = studentA < studentB ? [studentA, studentB] : [studentB, studentA];
 
-    const { error } = await supabase.from("group_constraints").insert({
-      student_a: firstId,
-      student_b: secondId,
+    const didSave = await runMutation({
+      setFormError,
+      execute: () =>
+        supabase.from("group_constraints").insert({
+          student_a: firstId,
+          student_b: secondId,
+        }),
+      refresh: refreshGroupData,
+      fallbackErrorMessage: "Failed to add group constraint.",
     });
-
-    if (error) {
-      setFormError(error.message);
-      return;
+    if (!didSave) {
+      return false;
     }
 
     setConstraintForm({ studentA: "", studentB: "" });
-    await refreshGroupData();
+    return true;
   };
 
   const handleDeleteConstraint = async (constraintId) => {
     if (!constraintId) return;
     if (!window.confirm("Delete this separation rule?")) return;
-    setFormError("");
-    const { error } = await supabase.from("group_constraints").delete().eq("id", constraintId);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-    await refreshGroupData();
+    await runMutation({
+      setFormError,
+      execute: () => supabase.from("group_constraints").delete().eq("id", constraintId),
+      refresh: refreshGroupData,
+      fallbackErrorMessage: "Failed to delete group constraint.",
+    });
   };
 
   const handleGenerateGroups = async () => {

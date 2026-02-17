@@ -1,4 +1,5 @@
 import { supabase } from "../../../supabaseClient";
+import { runMutation } from "./mutationHelpers";
 
 function createCoreActions({
   classes,
@@ -46,7 +47,6 @@ function createCoreActions({
 
   const handleCreateClass = async (event) => {
     event.preventDefault();
-    setFormError("");
 
     const maxSortOrder = classes.reduce(
       (maxValue, item) => Math.max(maxValue, Number(item.sort_order ?? -1)),
@@ -66,14 +66,17 @@ function createCoreActions({
       return;
     }
 
-    const { error } = await supabase.from("classes").insert(payload);
-    if (error) {
-      setFormError(error.message);
+    const didCreate = await runMutation({
+      setFormError,
+      execute: () => supabase.from("classes").insert(payload),
+      refresh: refreshCoreData,
+      fallbackErrorMessage: "Failed to create class.",
+    });
+    if (!didCreate) {
       return;
     }
 
     setClassForm({ name: "", gradeLevel: "", schoolYear: "", sortOrder: "" });
-    await refreshCoreData();
   };
 
   const handleCreateStudent = async (event) => {
@@ -153,7 +156,6 @@ function createCoreActions({
 
   const handleUpdateStudent = async (studentId, updates) => {
     if (!studentId) return;
-    setFormError("");
 
     const payload = {
       gender: updates.gender?.trim() || "Prefer not to say",
@@ -167,35 +169,33 @@ function createCoreActions({
       payload.separation_list = updates.separationList.trim() || null;
     }
 
-    const { error } = await supabase.from("students").update(payload).eq("id", studentId);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-
-    await refreshCoreData();
+    await runMutation({
+      setFormError,
+      execute: () => supabase.from("students").update(payload).eq("id", studentId),
+      refresh: refreshCoreData,
+      fallbackErrorMessage: "Failed to update student.",
+    });
   };
 
   const handleDeleteClass = async (classId) => {
     if (!window.confirm("Delete this class and all related data?")) return;
-    setFormError("");
-    const { error } = await supabase.from("classes").delete().eq("id", classId);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-    await loadData();
+    await runMutation({
+      setFormError,
+      execute: () => supabase.from("classes").delete().eq("id", classId),
+      refresh: loadData,
+      fallbackErrorMessage: "Failed to delete class.",
+    });
   };
 
   const handleUpdateSortOrder = async (table, id, currentOrder, delta) => {
     if (!id) return;
     const nextOrder = Math.max(0, Number(currentOrder ?? 0) + delta);
-    const { error } = await supabase.from(table).update({ sort_order: nextOrder }).eq("id", id);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-    await refreshBySortTable(table);
+    await runMutation({
+      setFormError,
+      execute: () => supabase.from(table).update({ sort_order: nextOrder }).eq("id", id),
+      refresh: () => refreshBySortTable(table),
+      fallbackErrorMessage: "Failed to update sort order.",
+    });
   };
 
   const handleSwapSortOrder = async (table, items, draggedId, targetId) => {
@@ -309,13 +309,12 @@ function createCoreActions({
   const handleDeleteRunningRecord = async (recordId) => {
     if (!recordId) return;
     if (!window.confirm("Delete this running record?")) return;
-    setFormError("");
-    const { error } = await supabase.from("running_records").delete().eq("id", recordId);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-    await refreshAssessmentData();
+    await runMutation({
+      setFormError,
+      execute: () => supabase.from("running_records").delete().eq("id", recordId),
+      refresh: refreshAssessmentData,
+      fallbackErrorMessage: "Failed to delete running record.",
+    });
   };
 
   const handleCreateSubject = async (event, classIdOverride) => {
@@ -384,13 +383,12 @@ function createCoreActions({
 
   const handleDeleteUnit = async (unitId) => {
     if (!unitId) return;
-    setFormError("");
-    const { error } = await supabase.from("units").delete().eq("id", unitId);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-    await refreshAssessmentData();
+    await runMutation({
+      setFormError,
+      execute: () => supabase.from("units").delete().eq("id", unitId),
+      refresh: refreshAssessmentData,
+      fallbackErrorMessage: "Failed to delete unit.",
+    });
   };
 
   const handleCreateDevelopmentScoreEntry = async ({
@@ -449,7 +447,6 @@ function createCoreActions({
 
   const handleUpdateDevelopmentScore = async (scoreId, updates) => {
     if (!scoreId) return false;
-    setFormError("");
     const nextRating = Number(updates?.rating);
     if (!Number.isFinite(nextRating) || nextRating < 1 || nextRating > 5) {
       setFormError("Rating must be between 1 and 5.");
@@ -462,14 +459,12 @@ function createCoreActions({
       notes: updates?.notes?.trim() || null,
     };
 
-    const { error } = await supabase.from("development_scores").update(payload).eq("id", scoreId);
-    if (error) {
-      setFormError(error.message);
-      return false;
-    }
-
-    await refreshRubricData();
-    return true;
+    return runMutation({
+      setFormError,
+      execute: () => supabase.from("development_scores").update(payload).eq("id", scoreId),
+      refresh: refreshRubricData,
+      fallbackErrorMessage: "Failed to update development score.",
+    });
   };
 
   return {

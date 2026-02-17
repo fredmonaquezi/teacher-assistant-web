@@ -1,4 +1,9 @@
 import { supabase } from "../../../supabaseClient";
+import {
+  applyOptimisticState,
+  runMutation,
+  runOptimisticMutation,
+} from "./mutationHelpers";
 
 function createAssessmentActions({
   students,
@@ -12,25 +17,16 @@ function createAssessmentActions({
 }) {
   const handleUpdateAssessmentEntry = async (entryId, updates) => {
     if (!entryId) return false;
-    setFormError("");
-
-    let previousEntries = null;
-    setAssessmentEntries((currentEntries) => {
-      previousEntries = currentEntries;
-      return currentEntries.map((entry) => (entry.id === entryId ? { ...entry, ...updates } : entry));
+    return runOptimisticMutation({
+      setFormError,
+      applyOptimistic: () =>
+        applyOptimisticState(setAssessmentEntries, (currentEntries) =>
+          currentEntries.map((entry) => (entry.id === entryId ? { ...entry, ...updates } : entry))
+        ),
+      execute: () => supabase.from("assessment_entries").update(updates).eq("id", entryId),
+      refresh: refreshAssessmentData,
+      fallbackErrorMessage: "Failed to update assessment entry.",
     });
-
-    const { error } = await supabase.from("assessment_entries").update(updates).eq("id", entryId);
-    if (error) {
-      if (previousEntries) {
-        setAssessmentEntries(previousEntries);
-      }
-      setFormError(error.message);
-      return false;
-    }
-
-    await refreshAssessmentData();
-    return true;
   };
 
   const handleCreateAssessmentForUnit = async (event, unitId, subjectId, classId, formValues = null) => {
@@ -103,14 +99,13 @@ function createAssessmentActions({
   };
 
   const handleDeleteAssessment = async (assessmentId) => {
-    if (!assessmentId) return;
-    setFormError("");
-    const { error } = await supabase.from("assessments").delete().eq("id", assessmentId);
-    if (error) {
-      setFormError(error.message);
-      return;
-    }
-    await refreshAssessmentData();
+    if (!assessmentId) return false;
+    return runMutation({
+      setFormError,
+      execute: () => supabase.from("assessments").delete().eq("id", assessmentId),
+      refresh: refreshAssessmentData,
+      fallbackErrorMessage: "Failed to delete assessment.",
+    });
   };
 
   const handleCopyAssessmentsFromUnit = async (
@@ -239,18 +234,11 @@ function createAssessmentActions({
 
   const handleUpdateAssessmentNotes = async (assessmentId, notes) => {
     if (!assessmentId) return false;
-
-    const { error } = await supabase
-      .from("assessments")
-      .update({ notes })
-      .eq("id", assessmentId);
-
-    if (error) {
-      setFormError(error.message);
-      return false;
-    }
-
-    return true;
+    return runMutation({
+      setFormError,
+      execute: () => supabase.from("assessments").update({ notes }).eq("id", assessmentId),
+      fallbackErrorMessage: "Failed to update assessment notes.",
+    });
   };
 
   return {

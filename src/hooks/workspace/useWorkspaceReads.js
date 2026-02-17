@@ -9,14 +9,52 @@ import { loadCoreWorkspaceRows } from "./readers/coreLoader";
 import { loadGroupWorkspaceRows } from "./readers/groupLoader";
 import { loadRubricWorkspaceRows } from "./readers/rubricLoader";
 
-const ATTENDANCE_QUERY_KEY = ["workspace", "attendance"];
+const attendanceQueryKeyForUser = (userId) => ["workspace", "attendance", userId || "anonymous"];
+const assessmentQueryKeyForUser = (userId) => ["workspace", "assessment", userId || "anonymous"];
+const rubricQueryKeyForUser = (userId) => ["workspace", "rubric", userId || "anonymous"];
+const groupQueryKeyForUser = (userId) => ["workspace", "group", userId || "anonymous"];
+const calendarQueryKeyForUser = (userId) => ["workspace", "calendar", userId || "anonymous"];
+
 const EMPTY_ATTENDANCE_ROWS = {
   sessionRows: [],
   entryRows: [],
 };
 
-function useWorkspaceReads() {
+const EMPTY_ASSESSMENT_ROWS = {
+  assessmentRows: [],
+  assessmentEntryRows: [],
+  runningRecordRows: [],
+  subjectRows: [],
+  unitRows: [],
+};
+
+const EMPTY_RUBRIC_ROWS = {
+  rubricRows: [],
+  rubricCategoryRows: [],
+  rubricCriterionRows: [],
+  devScoreRows: [],
+};
+
+const EMPTY_GROUP_ROWS = {
+  groupRows: [],
+  groupMemberRows: [],
+  constraintRows: [],
+};
+
+const EMPTY_CALENDAR_ROWS = {
+  diaryRows: [],
+  eventRows: [],
+  tablesReady: true,
+};
+
+function useWorkspaceReads(userId) {
   const queryClient = useQueryClient();
+  const attendanceQueryKey = attendanceQueryKeyForUser(userId);
+  const assessmentQueryKey = assessmentQueryKeyForUser(userId);
+  const rubricQueryKey = rubricQueryKeyForUser(userId);
+  const groupQueryKey = groupQueryKeyForUser(userId);
+  const calendarQueryKey = calendarQueryKeyForUser(userId);
+
   const [profilePreferences, setProfilePreferences] = useState(() => {
     try {
       const raw = localStorage.getItem("ta_profile_preferences");
@@ -32,22 +70,6 @@ function useWorkspaceReads() {
   });
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
-  const [_lessonPlans, setLessonPlans] = useState([]);
-  const [calendarDiaryEntries, setCalendarDiaryEntries] = useState([]);
-  const [calendarEvents, setCalendarEvents] = useState([]);
-  const [calendarTablesReady, setCalendarTablesReady] = useState(true);
-  const [assessments, setAssessments] = useState([]);
-  const [assessmentEntries, setAssessmentEntries] = useState([]);
-  const [runningRecords, setRunningRecords] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [units, setUnits] = useState([]);
-  const [rubrics, setRubrics] = useState([]);
-  const [rubricCategories, setRubricCategories] = useState([]);
-  const [rubricCriteria, setRubricCriteria] = useState([]);
-  const [developmentScores, setDevelopmentScores] = useState([]);
-  const [groups, setGroups] = useState([]);
-  const [groupMembers, setGroupMembers] = useState([]);
-  const [groupConstraints, setGroupConstraints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formError, setFormError] = useState("");
 
@@ -72,6 +94,10 @@ function useWorkspaceReads() {
   };
 
   const loadAttendanceRows = async () => {
+    if (!userId) {
+      return EMPTY_ATTENDANCE_ROWS;
+    }
+
     const attendanceResult = await loadAttendanceWorkspaceRows(supabase);
     const firstError = [attendanceResult.errors.sessionError, attendanceResult.errors.entryError].find(Boolean);
     if (firstError) {
@@ -80,19 +106,156 @@ function useWorkspaceReads() {
     return attendanceResult.rows;
   };
 
+  const loadAssessmentRows = async () => {
+    if (!userId) {
+      return EMPTY_ASSESSMENT_ROWS;
+    }
+
+    const assessmentResult = await loadAssessmentWorkspaceRows(supabase);
+    const firstError = [
+      assessmentResult.errors.assessmentError,
+      assessmentResult.errors.assessmentEntryError,
+      assessmentResult.errors.runningRecordError,
+      assessmentResult.errors.subjectError,
+      assessmentResult.errors.unitError,
+    ].find(Boolean);
+
+    if (firstError) {
+      throw firstError;
+    }
+
+    return assessmentResult.rows;
+  };
+
+  const loadRubricRows = async () => {
+    if (!userId) {
+      return EMPTY_RUBRIC_ROWS;
+    }
+
+    const rubricResult = await loadRubricWorkspaceRows(supabase);
+    const firstError = [
+      rubricResult.errors.rubricError,
+      rubricResult.errors.rubricCategoryError,
+      rubricResult.errors.rubricCriterionError,
+      rubricResult.errors.devScoreError,
+    ].find(Boolean);
+
+    if (firstError) {
+      throw firstError;
+    }
+
+    return rubricResult.rows;
+  };
+
+  const loadGroupRows = async () => {
+    if (!userId) {
+      return EMPTY_GROUP_ROWS;
+    }
+
+    const groupResult = await loadGroupWorkspaceRows(supabase);
+    const firstError = [
+      groupResult.errors.groupError,
+      groupResult.errors.groupMemberError,
+      groupResult.errors.constraintError,
+    ].find(Boolean);
+
+    if (firstError) {
+      throw firstError;
+    }
+
+    return groupResult.rows;
+  };
+
+  const loadCalendarRows = async () => {
+    if (!userId) {
+      return EMPTY_CALENDAR_ROWS;
+    }
+
+    const calendarResult = await loadCalendarWorkspaceRows(supabase);
+    const firstError = [
+      calendarResult.errors.diaryError && !calendarResult.missing.diaryMissing
+        ? calendarResult.errors.diaryError
+        : null,
+      calendarResult.errors.eventError && !calendarResult.missing.eventMissing
+        ? calendarResult.errors.eventError
+        : null,
+    ].find(Boolean);
+
+    if (firstError) {
+      throw firstError;
+    }
+
+    return {
+      diaryRows: calendarResult.rows.diaryRows,
+      eventRows: calendarResult.rows.eventRows,
+      tablesReady: calendarResult.tablesReady,
+    };
+  };
+
   const { data: attendanceRows = EMPTY_ATTENDANCE_ROWS } = useQuery({
-    queryKey: ATTENDANCE_QUERY_KEY,
+    queryKey: attendanceQueryKey,
     queryFn: loadAttendanceRows,
     enabled: false,
     initialData: EMPTY_ATTENDANCE_ROWS,
     staleTime: 30_000,
   });
 
+  const { data: assessmentRows = EMPTY_ASSESSMENT_ROWS } = useQuery({
+    queryKey: assessmentQueryKey,
+    queryFn: loadAssessmentRows,
+    enabled: false,
+    initialData: EMPTY_ASSESSMENT_ROWS,
+    staleTime: 30_000,
+  });
+
+  const { data: rubricRows = EMPTY_RUBRIC_ROWS } = useQuery({
+    queryKey: rubricQueryKey,
+    queryFn: loadRubricRows,
+    enabled: false,
+    initialData: EMPTY_RUBRIC_ROWS,
+    staleTime: 30_000,
+  });
+
+  const { data: groupRows = EMPTY_GROUP_ROWS } = useQuery({
+    queryKey: groupQueryKey,
+    queryFn: loadGroupRows,
+    enabled: false,
+    initialData: EMPTY_GROUP_ROWS,
+    staleTime: 30_000,
+  });
+
+  const { data: calendarRows = EMPTY_CALENDAR_ROWS } = useQuery({
+    queryKey: calendarQueryKey,
+    queryFn: loadCalendarRows,
+    enabled: false,
+    initialData: EMPTY_CALENDAR_ROWS,
+    staleTime: 30_000,
+  });
+
   const attendanceSessions = attendanceRows.sessionRows;
   const attendanceEntries = attendanceRows.entryRows;
 
+  const assessments = assessmentRows.assessmentRows;
+  const assessmentEntries = assessmentRows.assessmentEntryRows;
+  const runningRecords = assessmentRows.runningRecordRows;
+  const subjects = assessmentRows.subjectRows;
+  const units = assessmentRows.unitRows;
+
+  const rubrics = rubricRows.rubricRows;
+  const rubricCategories = rubricRows.rubricCategoryRows;
+  const rubricCriteria = rubricRows.rubricCriterionRows;
+  const developmentScores = rubricRows.devScoreRows;
+
+  const groups = groupRows.groupRows;
+  const groupMembers = groupRows.groupMemberRows;
+  const groupConstraints = groupRows.constraintRows;
+
+  const calendarDiaryEntries = calendarRows.diaryRows;
+  const calendarEvents = calendarRows.eventRows;
+  const calendarTablesReady = calendarRows.tablesReady;
+
   const setAttendanceEntries = (updater) => {
-    queryClient.setQueryData(ATTENDANCE_QUERY_KEY, (currentRows) => {
+    queryClient.setQueryData(attendanceQueryKey, (currentRows) => {
       const safeRows = currentRows || EMPTY_ATTENDANCE_ROWS;
       const nextEntryRows = typeof updater === "function" ? updater(safeRows.entryRows) : updater;
       return {
@@ -102,25 +265,70 @@ function useWorkspaceReads() {
     });
   };
 
+  const setAssessments = (updater) => {
+    queryClient.setQueryData(assessmentQueryKey, (currentRows) => {
+      const safeRows = currentRows || EMPTY_ASSESSMENT_ROWS;
+      const nextAssessmentRows =
+        typeof updater === "function" ? updater(safeRows.assessmentRows) : updater;
+      return {
+        ...safeRows,
+        assessmentRows: Array.isArray(nextAssessmentRows)
+          ? nextAssessmentRows
+          : safeRows.assessmentRows,
+      };
+    });
+  };
+
+  const setAssessmentEntries = (updater) => {
+    queryClient.setQueryData(assessmentQueryKey, (currentRows) => {
+      const safeRows = currentRows || EMPTY_ASSESSMENT_ROWS;
+      const nextEntryRows =
+        typeof updater === "function" ? updater(safeRows.assessmentEntryRows) : updater;
+      return {
+        ...safeRows,
+        assessmentEntryRows: Array.isArray(nextEntryRows)
+          ? nextEntryRows
+          : safeRows.assessmentEntryRows,
+      };
+    });
+  };
+
+  const setCalendarDiaryEntries = (updater) => {
+    queryClient.setQueryData(calendarQueryKey, (currentRows) => {
+      const safeRows = currentRows || EMPTY_CALENDAR_ROWS;
+      const nextDiaryRows = typeof updater === "function" ? updater(safeRows.diaryRows) : updater;
+      return {
+        ...safeRows,
+        diaryRows: Array.isArray(nextDiaryRows) ? nextDiaryRows : safeRows.diaryRows,
+      };
+    });
+  };
+
+  const setCalendarEvents = (updater) => {
+    queryClient.setQueryData(calendarQueryKey, (currentRows) => {
+      const safeRows = currentRows || EMPTY_CALENDAR_ROWS;
+      const nextEventRows = typeof updater === "function" ? updater(safeRows.eventRows) : updater;
+      return {
+        ...safeRows,
+        eventRows: Array.isArray(nextEventRows) ? nextEventRows : safeRows.eventRows,
+      };
+    });
+  };
+
   const refreshCoreData = async () => {
     const coreResult = await loadCoreWorkspaceRows(supabase);
-    const hasError = setFirstErrorFromList([
-      coreResult.errors.classError,
-      coreResult.errors.studentError,
-      coreResult.errors.lessonError,
-    ]);
+    const hasError = setFirstErrorFromList([coreResult.errors.classError, coreResult.errors.studentError]);
     if (hasError) return false;
 
     setClasses(coreResult.rows.classRows);
     setStudents(coreResult.rows.studentRows);
-    setLessonPlans(coreResult.rows.lessonRows);
     return true;
   };
 
   const refreshAttendanceData = async () => {
     try {
       await queryClient.fetchQuery({
-        queryKey: ATTENDANCE_QUERY_KEY,
+        queryKey: attendanceQueryKey,
         queryFn: loadAttendanceRows,
         staleTime: 0,
       });
@@ -132,76 +340,59 @@ function useWorkspaceReads() {
   };
 
   const refreshAssessmentData = async () => {
-    const assessmentResult = await loadAssessmentWorkspaceRows(supabase);
-    const hasError = setFirstErrorFromList([
-      assessmentResult.errors.assessmentError,
-      assessmentResult.errors.assessmentEntryError,
-      assessmentResult.errors.runningRecordError,
-      assessmentResult.errors.subjectError,
-      assessmentResult.errors.unitError,
-    ]);
-    if (hasError) return false;
-
-    setAssessments(assessmentResult.rows.assessmentRows);
-    setAssessmentEntries(assessmentResult.rows.assessmentEntryRows);
-    setRunningRecords(assessmentResult.rows.runningRecordRows);
-    setSubjects(assessmentResult.rows.subjectRows);
-    setUnits(assessmentResult.rows.unitRows);
-    return true;
+    try {
+      await queryClient.fetchQuery({
+        queryKey: assessmentQueryKey,
+        queryFn: loadAssessmentRows,
+        staleTime: 0,
+      });
+      return true;
+    } catch (error) {
+      setFormError(error?.message || "Failed to load assessment data.");
+      return false;
+    }
   };
 
   const refreshRubricData = async () => {
-    const rubricResult = await loadRubricWorkspaceRows(supabase);
-    const hasError = setFirstErrorFromList([
-      rubricResult.errors.rubricError,
-      rubricResult.errors.rubricCategoryError,
-      rubricResult.errors.rubricCriterionError,
-      rubricResult.errors.devScoreError,
-    ]);
-    if (hasError) return false;
-
-    setRubrics(rubricResult.rows.rubricRows);
-    setRubricCategories(rubricResult.rows.rubricCategoryRows);
-    setRubricCriteria(rubricResult.rows.rubricCriterionRows);
-    setDevelopmentScores(rubricResult.rows.devScoreRows);
-    return true;
+    try {
+      await queryClient.fetchQuery({
+        queryKey: rubricQueryKey,
+        queryFn: loadRubricRows,
+        staleTime: 0,
+      });
+      return true;
+    } catch (error) {
+      setFormError(error?.message || "Failed to load rubric data.");
+      return false;
+    }
   };
 
   const refreshGroupData = async () => {
-    const groupResult = await loadGroupWorkspaceRows(supabase);
-    const hasError = setFirstErrorFromList([
-      groupResult.errors.groupError,
-      groupResult.errors.groupMemberError,
-      groupResult.errors.constraintError,
-    ]);
-    if (hasError) return false;
-
-    setGroups(groupResult.rows.groupRows);
-    setGroupMembers(groupResult.rows.groupMemberRows);
-    setGroupConstraints(groupResult.rows.constraintRows);
-    return true;
+    try {
+      await queryClient.fetchQuery({
+        queryKey: groupQueryKey,
+        queryFn: loadGroupRows,
+        staleTime: 0,
+      });
+      return true;
+    } catch (error) {
+      setFormError(error?.message || "Failed to load group data.");
+      return false;
+    }
   };
 
   const refreshCalendarData = async () => {
-    const calendarResult = await loadCalendarWorkspaceRows(supabase);
-    setCalendarTablesReady(calendarResult.tablesReady);
-
-    let hasError = false;
-    if (calendarResult.errors.diaryError && !calendarResult.missing.diaryMissing) {
-      setFormError(calendarResult.errors.diaryError.message);
-      hasError = true;
-    } else {
-      setCalendarDiaryEntries(calendarResult.rows.diaryRows);
+    try {
+      await queryClient.fetchQuery({
+        queryKey: calendarQueryKey,
+        queryFn: loadCalendarRows,
+        staleTime: 0,
+      });
+      return true;
+    } catch (error) {
+      setFormError(error?.message || "Failed to load calendar data.");
+      return false;
     }
-
-    if (calendarResult.errors.eventError && !calendarResult.missing.eventMissing) {
-      setFormError(calendarResult.errors.eventError.message);
-      hasError = true;
-    } else {
-      setCalendarEvents(calendarResult.rows.eventRows);
-    }
-
-    return !hasError;
   };
 
   const loadData = async () => {
