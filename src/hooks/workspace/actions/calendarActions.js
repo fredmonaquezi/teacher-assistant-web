@@ -1,4 +1,5 @@
 import { supabase } from "../../../supabaseClient";
+import { applyOptimisticState, runOptimisticMutation } from "./mutationHelpers";
 
 function createCalendarActions({
   setCalendarDiaryEntries,
@@ -9,128 +10,78 @@ function createCalendarActions({
   const createTempId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   const handleCreateCalendarDiaryEntry = async (payload) => {
-    setFormError("");
-
-    let previousEntries = null;
     const optimisticRow = {
       ...payload,
       id: createTempId("calendar-diary"),
     };
-    setCalendarDiaryEntries((currentEntries) => {
-      previousEntries = currentEntries;
-      return [...currentEntries, optimisticRow];
+    return runOptimisticMutation({
+      setFormError,
+      applyOptimistic: () =>
+        applyOptimisticState(setCalendarDiaryEntries, (currentEntries) => [
+          ...currentEntries,
+          optimisticRow,
+        ]),
+      execute: () => supabase.from("calendar_diary_entries").insert(payload),
+      refresh: refreshCalendarData,
+      fallbackErrorMessage: "Failed to create diary entry.",
     });
-
-    const { error } = await supabase.from("calendar_diary_entries").insert(payload);
-    if (error) {
-      if (previousEntries) {
-        setCalendarDiaryEntries(previousEntries);
-      }
-      setFormError(error.message);
-      return false;
-    }
-
-    await refreshCalendarData();
-    return true;
   };
 
   const handleUpdateCalendarDiaryEntry = async (entryId, payload) => {
     if (!entryId) return false;
-    setFormError("");
-
-    let previousEntries = null;
-    setCalendarDiaryEntries((currentEntries) => {
-      previousEntries = currentEntries;
-      return currentEntries.map((entry) => (entry.id === entryId ? { ...entry, ...payload } : entry));
+    return runOptimisticMutation({
+      setFormError,
+      applyOptimistic: () =>
+        applyOptimisticState(setCalendarDiaryEntries, (currentEntries) =>
+          currentEntries.map((entry) => (entry.id === entryId ? { ...entry, ...payload } : entry))
+        ),
+      execute: () => supabase.from("calendar_diary_entries").update(payload).eq("id", entryId),
+      refresh: refreshCalendarData,
+      fallbackErrorMessage: "Failed to update diary entry.",
     });
-
-    const { error } = await supabase
-      .from("calendar_diary_entries")
-      .update(payload)
-      .eq("id", entryId);
-
-    if (error) {
-      if (previousEntries) {
-        setCalendarDiaryEntries(previousEntries);
-      }
-      setFormError(error.message);
-      return false;
-    }
-
-    await refreshCalendarData();
-    return true;
   };
 
   const handleDeleteCalendarDiaryEntry = async (entryId) => {
     if (!entryId) return false;
-    setFormError("");
-
-    let previousEntries = null;
-    setCalendarDiaryEntries((currentEntries) => {
-      previousEntries = currentEntries;
-      return currentEntries.filter((entry) => entry.id !== entryId);
+    return runOptimisticMutation({
+      setFormError,
+      applyOptimistic: () =>
+        applyOptimisticState(setCalendarDiaryEntries, (currentEntries) =>
+          currentEntries.filter((entry) => entry.id !== entryId)
+        ),
+      execute: () => supabase.from("calendar_diary_entries").delete().eq("id", entryId),
+      refresh: refreshCalendarData,
+      fallbackErrorMessage: "Failed to delete diary entry.",
     });
-
-    const { error } = await supabase.from("calendar_diary_entries").delete().eq("id", entryId);
-    if (error) {
-      if (previousEntries) {
-        setCalendarDiaryEntries(previousEntries);
-      }
-      setFormError(error.message);
-      return false;
-    }
-
-    await refreshCalendarData();
-    return true;
   };
 
   const handleCreateCalendarEvent = async (payload) => {
-    setFormError("");
-
-    let previousEvents = null;
     const optimisticEvent = {
       ...payload,
       id: createTempId("calendar-event"),
     };
-    setCalendarEvents((currentEvents) => {
-      previousEvents = currentEvents;
-      return [...currentEvents, optimisticEvent];
+    return runOptimisticMutation({
+      setFormError,
+      applyOptimistic: () =>
+        applyOptimisticState(setCalendarEvents, (currentEvents) => [...currentEvents, optimisticEvent]),
+      execute: () => supabase.from("calendar_events").insert(payload),
+      refresh: refreshCalendarData,
+      fallbackErrorMessage: "Failed to create calendar event.",
     });
-
-    const { error } = await supabase.from("calendar_events").insert(payload);
-    if (error) {
-      if (previousEvents) {
-        setCalendarEvents(previousEvents);
-      }
-      setFormError(error.message);
-      return false;
-    }
-
-    await refreshCalendarData();
-    return true;
   };
 
   const handleDeleteCalendarEvent = async (eventId) => {
     if (!eventId) return false;
-    setFormError("");
-
-    let previousEvents = null;
-    setCalendarEvents((currentEvents) => {
-      previousEvents = currentEvents;
-      return currentEvents.filter((eventRow) => eventRow.id !== eventId);
+    return runOptimisticMutation({
+      setFormError,
+      applyOptimistic: () =>
+        applyOptimisticState(setCalendarEvents, (currentEvents) =>
+          currentEvents.filter((eventRow) => eventRow.id !== eventId)
+        ),
+      execute: () => supabase.from("calendar_events").delete().eq("id", eventId),
+      refresh: refreshCalendarData,
+      fallbackErrorMessage: "Failed to delete calendar event.",
     });
-
-    const { error } = await supabase.from("calendar_events").delete().eq("id", eventId);
-    if (error) {
-      if (previousEvents) {
-        setCalendarEvents(previousEvents);
-      }
-      setFormError(error.message);
-      return false;
-    }
-
-    await refreshCalendarData();
-    return true;
   };
 
   return {

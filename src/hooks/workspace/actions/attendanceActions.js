@@ -1,5 +1,10 @@
 import { supabase } from "../../../supabaseClient";
 import { DEFAULT_ATTENDANCE_STATUS } from "../../../constants/attendance";
+import {
+  applyOptimisticState,
+  runMutation,
+  runOptimisticMutation,
+} from "./mutationHelpers";
 
 function createAttendanceActions({
   students,
@@ -10,25 +15,16 @@ function createAttendanceActions({
 }) {
   const handleUpdateAttendanceEntry = async (entryId, updates) => {
     if (!entryId) return false;
-    setFormError("");
-
-    let previousEntries = null;
-    setAttendanceEntries((currentEntries) => {
-      previousEntries = currentEntries;
-      return currentEntries.map((entry) => (entry.id === entryId ? { ...entry, ...updates } : entry));
+    return runOptimisticMutation({
+      setFormError,
+      applyOptimistic: () =>
+        applyOptimisticState(setAttendanceEntries, (currentEntries) =>
+          currentEntries.map((entry) => (entry.id === entryId ? { ...entry, ...updates } : entry))
+        ),
+      execute: () => supabase.from("attendance_entries").update(updates).eq("id", entryId),
+      refresh: refreshAttendanceData,
+      fallbackErrorMessage: "Failed to update attendance entry.",
     });
-
-    const { error } = await supabase.from("attendance_entries").update(updates).eq("id", entryId);
-    if (error) {
-      if (previousEntries) {
-        setAttendanceEntries(previousEntries);
-      }
-      setFormError(error.message);
-      return false;
-    }
-
-    await refreshAttendanceData();
-    return true;
   };
 
   const handleCreateAttendanceSessionForDate = async (classId, dateString) => {
@@ -87,16 +83,12 @@ function createAttendanceActions({
 
   const handleDeleteAttendanceSession = async (sessionId) => {
     if (!sessionId) return false;
-    setFormError("");
-
-    const { error } = await supabase.from("attendance_sessions").delete().eq("id", sessionId);
-    if (error) {
-      setFormError(error.message);
-      return false;
-    }
-
-    await refreshAttendanceData();
-    return true;
+    return runMutation({
+      setFormError,
+      execute: () => supabase.from("attendance_sessions").delete().eq("id", sessionId),
+      refresh: refreshAttendanceData,
+      fallbackErrorMessage: "Failed to delete attendance session.",
+    });
   };
 
   return {
