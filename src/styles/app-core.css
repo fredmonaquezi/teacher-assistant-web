@@ -537,6 +537,23 @@ body {
   border-color: #b68f5e;
 }
 
+.auth-google-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.auth-google-button {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+}
+
+.auth-google-status {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
 .profile-page {
   display: grid;
   gap: 14px;

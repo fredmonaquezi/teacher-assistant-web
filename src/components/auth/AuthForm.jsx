@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { loadAuthEnv } from "../../config/env";
 import { supabase } from "../../supabaseClient";
 
-const { enableGoogleAuth, googleAuthRedirectTo } = loadAuthEnv();
+const { enableGoogleAuth, googleClientId } = loadAuthEnv();
+const GOOGLE_IDENTITY_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
+
+const getGoogleIdentityApi = () => globalThis.google?.accounts?.id;
 
 function AuthForm({ onSuccess }) {
   const [email, setEmail] = useState("");
@@ -10,6 +13,8 @@ function AuthForm({ onSuccess }) {
   const [mode, setMode] = useState("signin");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoaded, setGoogleLoaded] = useState(false);
+  const googleButtonRef = useRef(null);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -38,25 +43,93 @@ function AuthForm({ onSuccess }) {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setError("");
-    setLoading(true);
-
-    try {
-      const redirectTo = googleAuthRedirectTo || window.location.origin;
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo,
-        },
-      });
-      if (oauthError) throw oauthError;
-    } catch (err) {
-      setError(err.message || "Unable to start Google sign-in. Try again.");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (!enableGoogleAuth) return undefined;
+    if (!googleClientId) {
+      setError("Google auth is enabled, but VITE_GOOGLE_CLIENT_ID is missing.");
+      return undefined;
     }
-  };
+
+    let disposed = false;
+    const markLoaded = () => {
+      if (!disposed) setGoogleLoaded(true);
+    };
+    const markFailed = () => {
+      if (!disposed) setError("Failed to load Google sign-in. Refresh and try again.");
+    };
+
+    if (getGoogleIdentityApi()) {
+      markLoaded();
+      return () => {
+        disposed = true;
+      };
+    }
+
+    const existingScript = document.querySelector(`script[src="${GOOGLE_IDENTITY_SCRIPT_SRC}"]`);
+    const script = existingScript || document.createElement("script");
+
+    if (!existingScript) {
+      script.src = GOOGLE_IDENTITY_SCRIPT_SRC;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    script.addEventListener("load", markLoaded);
+    script.addEventListener("error", markFailed);
+
+    return () => {
+      disposed = true;
+      script.removeEventListener("load", markLoaded);
+      script.removeEventListener("error", markFailed);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!enableGoogleAuth || !googleLoaded || !googleClientId || !googleButtonRef.current) return undefined;
+
+    const googleIdentity = getGoogleIdentityApi();
+    if (!googleIdentity) return undefined;
+    const googleButtonElement = googleButtonRef.current;
+
+    const handleCredential = async (response) => {
+      setError("");
+      setLoading(true);
+      try {
+        const token = response?.credential;
+        if (!token) throw new Error("Google did not return a login credential.");
+        const { error: signInError } = await supabase.auth.signInWithIdToken({
+          provider: "google",
+          token,
+        });
+        if (signInError) throw signInError;
+      } catch (err) {
+        setError(err.message || "Google sign-in failed. Try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    googleIdentity.initialize({
+      client_id: googleClientId,
+      callback: handleCredential,
+      ux_mode: "popup",
+    });
+    googleIdentity.renderButton(googleButtonElement, {
+      type: "standard",
+      theme: "outline",
+      size: "large",
+      shape: "rectangular",
+      text: "signin_with",
+      logo_alignment: "left",
+      width: 360,
+    });
+
+    return () => {
+      googleButtonElement.replaceChildren();
+      googleIdentity.cancel();
+    };
+  }, [googleLoaded]);
 
   return (
     <div className="card auth-card">
@@ -97,9 +170,10 @@ function AuthForm({ onSuccess }) {
       </form>
 
       {enableGoogleAuth && (
-        <button type="button" className="auth-switch" onClick={handleGoogleSignIn} disabled={loading}>
-          {loading ? "Working..." : "Continue with Google"}
-        </button>
+        <div className="auth-google-wrap" aria-live="polite">
+          <div ref={googleButtonRef} className="auth-google-button" />
+          {loading && <p className="muted auth-google-status">Completing Google sign-in...</p>}
+        </div>
       )}
 
       <button

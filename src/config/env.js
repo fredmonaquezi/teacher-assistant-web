@@ -88,18 +88,10 @@ export function loadSupabaseClientEnv() {
 
 export function loadAuthEnv() {
   const enableGoogleAuth = readBooleanEnv("VITE_ENABLE_GOOGLE_AUTH", false);
-  const googleAuthRedirectTo = readEnv("VITE_GOOGLE_AUTH_REDIRECT_TO");
-
-  if (googleAuthRedirectTo) {
-    try {
-      new URL(googleAuthRedirectTo);
-    } catch {
-      throw new Error("VITE_GOOGLE_AUTH_REDIRECT_TO is invalid. Expected a full URL.");
-    }
-  }
+  const googleClientId = readEnv("VITE_GOOGLE_CLIENT_ID");
 
   return {
     enableGoogleAuth,
-    googleAuthRedirectTo,
+    googleClientId,
   };
 }
