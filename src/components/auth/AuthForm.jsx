@@ -115,21 +115,27 @@ function AuthForm({ onSuccess }) {
       callback: handleCredential,
       ux_mode: "popup",
     });
+
+    const buttonWidth = Math.max(
+      260,
+      Math.min(380, Math.floor(googleButtonElement.getBoundingClientRect().width || 360))
+    );
+
     googleIdentity.renderButton(googleButtonElement, {
       type: "standard",
       theme: "outline",
       size: "large",
-      shape: "rectangular",
-      text: "signin_with",
+      shape: "pill",
+      text: mode === "signup" ? "signup_with" : "signin_with",
       logo_alignment: "left",
-      width: 360,
+      width: buttonWidth,
     });
 
     return () => {
       googleButtonElement.replaceChildren();
       googleIdentity.cancel();
     };
-  }, [googleLoaded]);
+  }, [googleLoaded, mode]);
 
   return (
     <div className="card auth-card">
@@ -171,7 +177,15 @@ function AuthForm({ onSuccess }) {
 
       {enableGoogleAuth && (
         <div className="auth-google-wrap" aria-live="polite">
-          <div ref={googleButtonRef} className="auth-google-button" />
+          <div className="auth-divider" aria-hidden="true">
+            <span>or</span>
+          </div>
+          <div className="auth-google-panel">
+            <p className="auth-google-label">
+              {mode === "signup" ? "Create account with Google" : "Sign in with Google"}
+            </p>
+            <div ref={googleButtonRef} className="auth-google-button" />
+          </div>
           {loading && <p className="muted auth-google-status">Completing Google sign-in...</p>}
         </div>
       )}

@@ -540,18 +540,62 @@ body {
 .auth-google-wrap {
   display: grid;
   justify-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.auth-divider {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  color: #8d7353;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #c3a57a 100%);
+}
+
+.auth-divider::after {
+  background: linear-gradient(90deg, #c3a57a 0%, transparent 100%);
+}
+
+.auth-google-panel {
+  width: 100%;
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #cfb387;
+  background: linear-gradient(180deg, #fef7e7 0%, #faefd8 100%);
+}
+
+.auth-google-label {
+  margin: 0;
+  color: #6c5538;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .auth-google-button {
   width: 100%;
   display: grid;
   justify-items: center;
+  min-height: 44px;
 }
 
 .auth-google-status {
   margin: 0;
   font-size: 0.86rem;
+  color: #6c5538;
 }
 
 .profile-page {
