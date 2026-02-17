@@ -2,9 +2,9 @@ import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
 const DIST_ASSETS_DIR = process.env.BUNDLE_ASSETS_DIR || path.resolve("dist/assets");
-const MAX_MAIN_JS_BYTES = Number(process.env.BUNDLE_MAX_MAIN_JS_BYTES || 550000);
-const MAX_TOTAL_JS_BYTES = Number(process.env.BUNDLE_MAX_TOTAL_JS_BYTES || 900000);
-const MAX_CSS_BYTES = Number(process.env.BUNDLE_MAX_CSS_BYTES || 130000);
+const MAX_MAIN_JS_BYTES = Number(process.env.BUNDLE_MAX_MAIN_JS_BYTES || 530000);
+const MAX_TOTAL_JS_BYTES = Number(process.env.BUNDLE_MAX_TOTAL_JS_BYTES || 780000);
+const MAX_CSS_BYTES = Number(process.env.BUNDLE_MAX_CSS_BYTES || 120000);
 
 const formatKb = (value) => `${(value / 1024).toFixed(1)} KiB`;
 
