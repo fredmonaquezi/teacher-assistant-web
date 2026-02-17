@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DEFAULT_PROFILE_PREFERENCES } from "../../constants/options";
 import { supabase } from "../../supabaseClient";
 import { loadAssessmentWorkspaceRows } from "./readers/assessmentLoader";
@@ -8,7 +9,14 @@ import { loadCoreWorkspaceRows } from "./readers/coreLoader";
 import { loadGroupWorkspaceRows } from "./readers/groupLoader";
 import { loadRubricWorkspaceRows } from "./readers/rubricLoader";
 
+const ATTENDANCE_QUERY_KEY = ["workspace", "attendance"];
+const EMPTY_ATTENDANCE_ROWS = {
+  sessionRows: [],
+  entryRows: [],
+};
+
 function useWorkspaceReads() {
+  const queryClient = useQueryClient();
   const [profilePreferences, setProfilePreferences] = useState(() => {
     try {
       const raw = localStorage.getItem("ta_profile_preferences");
@@ -28,8 +36,6 @@ function useWorkspaceReads() {
   const [calendarDiaryEntries, setCalendarDiaryEntries] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [calendarTablesReady, setCalendarTablesReady] = useState(true);
-  const [attendanceSessions, setAttendanceSessions] = useState([]);
-  const [attendanceEntries, setAttendanceEntries] = useState([]);
   const [assessments, setAssessments] = useState([]);
   const [assessmentEntries, setAssessmentEntries] = useState([]);
   const [runningRecords, setRunningRecords] = useState([]);
@@ -65,6 +71,37 @@ function useWorkspaceReads() {
     return true;
   };
 
+  const loadAttendanceRows = async () => {
+    const attendanceResult = await loadAttendanceWorkspaceRows(supabase);
+    const firstError = [attendanceResult.errors.sessionError, attendanceResult.errors.entryError].find(Boolean);
+    if (firstError) {
+      throw firstError;
+    }
+    return attendanceResult.rows;
+  };
+
+  const { data: attendanceRows = EMPTY_ATTENDANCE_ROWS } = useQuery({
+    queryKey: ATTENDANCE_QUERY_KEY,
+    queryFn: loadAttendanceRows,
+    enabled: false,
+    initialData: EMPTY_ATTENDANCE_ROWS,
+    staleTime: 30_000,
+  });
+
+  const attendanceSessions = attendanceRows.sessionRows;
+  const attendanceEntries = attendanceRows.entryRows;
+
+  const setAttendanceEntries = (updater) => {
+    queryClient.setQueryData(ATTENDANCE_QUERY_KEY, (currentRows) => {
+      const safeRows = currentRows || EMPTY_ATTENDANCE_ROWS;
+      const nextEntryRows = typeof updater === "function" ? updater(safeRows.entryRows) : updater;
+      return {
+        ...safeRows,
+        entryRows: Array.isArray(nextEntryRows) ? nextEntryRows : safeRows.entryRows,
+      };
+    });
+  };
+
   const refreshCoreData = async () => {
     const coreResult = await loadCoreWorkspaceRows(supabase);
     const hasError = setFirstErrorFromList([
@@ -81,16 +118,17 @@ function useWorkspaceReads() {
   };
 
   const refreshAttendanceData = async () => {
-    const attendanceResult = await loadAttendanceWorkspaceRows(supabase);
-    const hasError = setFirstErrorFromList([
-      attendanceResult.errors.sessionError,
-      attendanceResult.errors.entryError,
-    ]);
-    if (hasError) return false;
-
-    setAttendanceSessions(attendanceResult.rows.sessionRows);
-    setAttendanceEntries(attendanceResult.rows.entryRows);
-    return true;
+    try {
+      await queryClient.fetchQuery({
+        queryKey: ATTENDANCE_QUERY_KEY,
+        queryFn: loadAttendanceRows,
+        staleTime: 0,
+      });
+      return true;
+    } catch (error) {
+      setFormError(error?.message || "Failed to load attendance data.");
+      return false;
+    }
   };
 
   const refreshAssessmentData = async () => {
