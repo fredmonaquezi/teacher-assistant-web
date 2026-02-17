@@ -10,6 +10,7 @@
     "test": "npm run test:unit && npm run test:ui",
     "test:unit": "node --experimental-specifier-resolution=node --test src/utils/*.test.js",
     "test:ui": "vitest run",
+    "check:bundle": "node scripts/check-bundle-size.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
