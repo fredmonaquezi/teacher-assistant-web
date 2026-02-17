@@ -58,81 +58,127 @@ function useWorkspaceReads() {
     [classes]
   );
 
+  const setFirstErrorFromList = (errors) => {
+    const firstError = errors.find(Boolean);
+    if (!firstError) return false;
+    setFormError(firstError.message);
+    return true;
+  };
+
+  const refreshCoreData = async () => {
+    const coreResult = await loadCoreWorkspaceRows(supabase);
+    const hasError = setFirstErrorFromList([
+      coreResult.errors.classError,
+      coreResult.errors.studentError,
+      coreResult.errors.lessonError,
+    ]);
+    if (hasError) return false;
+
+    setClasses(coreResult.rows.classRows);
+    setStudents(coreResult.rows.studentRows);
+    setLessonPlans(coreResult.rows.lessonRows);
+    return true;
+  };
+
+  const refreshAttendanceData = async () => {
+    const attendanceResult = await loadAttendanceWorkspaceRows(supabase);
+    const hasError = setFirstErrorFromList([
+      attendanceResult.errors.sessionError,
+      attendanceResult.errors.entryError,
+    ]);
+    if (hasError) return false;
+
+    setAttendanceSessions(attendanceResult.rows.sessionRows);
+    setAttendanceEntries(attendanceResult.rows.entryRows);
+    return true;
+  };
+
+  const refreshAssessmentData = async () => {
+    const assessmentResult = await loadAssessmentWorkspaceRows(supabase);
+    const hasError = setFirstErrorFromList([
+      assessmentResult.errors.assessmentError,
+      assessmentResult.errors.assessmentEntryError,
+      assessmentResult.errors.runningRecordError,
+      assessmentResult.errors.subjectError,
+      assessmentResult.errors.unitError,
+    ]);
+    if (hasError) return false;
+
+    setAssessments(assessmentResult.rows.assessmentRows);
+    setAssessmentEntries(assessmentResult.rows.assessmentEntryRows);
+    setRunningRecords(assessmentResult.rows.runningRecordRows);
+    setSubjects(assessmentResult.rows.subjectRows);
+    setUnits(assessmentResult.rows.unitRows);
+    return true;
+  };
+
+  const refreshRubricData = async () => {
+    const rubricResult = await loadRubricWorkspaceRows(supabase);
+    const hasError = setFirstErrorFromList([
+      rubricResult.errors.rubricError,
+      rubricResult.errors.rubricCategoryError,
+      rubricResult.errors.rubricCriterionError,
+      rubricResult.errors.devScoreError,
+    ]);
+    if (hasError) return false;
+
+    setRubrics(rubricResult.rows.rubricRows);
+    setRubricCategories(rubricResult.rows.rubricCategoryRows);
+    setRubricCriteria(rubricResult.rows.rubricCriterionRows);
+    setDevelopmentScores(rubricResult.rows.devScoreRows);
+    return true;
+  };
+
+  const refreshGroupData = async () => {
+    const groupResult = await loadGroupWorkspaceRows(supabase);
+    const hasError = setFirstErrorFromList([
+      groupResult.errors.groupError,
+      groupResult.errors.groupMemberError,
+      groupResult.errors.constraintError,
+    ]);
+    if (hasError) return false;
+
+    setGroups(groupResult.rows.groupRows);
+    setGroupMembers(groupResult.rows.groupMemberRows);
+    setGroupConstraints(groupResult.rows.constraintRows);
+    return true;
+  };
+
+  const refreshCalendarData = async () => {
+    const calendarResult = await loadCalendarWorkspaceRows(supabase);
+    setCalendarTablesReady(calendarResult.tablesReady);
+
+    let hasError = false;
+    if (calendarResult.errors.diaryError && !calendarResult.missing.diaryMissing) {
+      setFormError(calendarResult.errors.diaryError.message);
+      hasError = true;
+    } else {
+      setCalendarDiaryEntries(calendarResult.rows.diaryRows);
+    }
+
+    if (calendarResult.errors.eventError && !calendarResult.missing.eventMissing) {
+      setFormError(calendarResult.errors.eventError.message);
+      hasError = true;
+    } else {
+      setCalendarEvents(calendarResult.rows.eventRows);
+    }
+
+    return !hasError;
+  };
+
   const loadData = async () => {
     setLoading(true);
     setFormError("");
 
     try {
-      const [
-        coreResult,
-        attendanceResult,
-        assessmentResult,
-        rubricResult,
-        groupResult,
-      ] = await Promise.all([
-        loadCoreWorkspaceRows(supabase),
-        loadAttendanceWorkspaceRows(supabase),
-        loadAssessmentWorkspaceRows(supabase),
-        loadRubricWorkspaceRows(supabase),
-        loadGroupWorkspaceRows(supabase),
+      await Promise.all([
+        refreshCoreData(),
+        refreshAttendanceData(),
+        refreshAssessmentData(),
+        refreshRubricData(),
+        refreshGroupData(),
       ]);
-
-      const primaryError =
-        coreResult.errors.classError ||
-        coreResult.errors.studentError ||
-        coreResult.errors.lessonError ||
-        attendanceResult.errors.sessionError ||
-        attendanceResult.errors.entryError ||
-        assessmentResult.errors.assessmentError ||
-        assessmentResult.errors.assessmentEntryError ||
-        assessmentResult.errors.runningRecordError ||
-        assessmentResult.errors.subjectError ||
-        assessmentResult.errors.unitError ||
-        rubricResult.errors.rubricError ||
-        rubricResult.errors.rubricCategoryError ||
-        rubricResult.errors.rubricCriterionError ||
-        rubricResult.errors.devScoreError ||
-        groupResult.errors.groupError ||
-        groupResult.errors.groupMemberError ||
-        groupResult.errors.constraintError;
-
-      if (primaryError) {
-        setFormError(primaryError.message);
-        return;
-      }
-
-      setClasses(coreResult.rows.classRows);
-      setStudents(coreResult.rows.studentRows);
-      setLessonPlans(coreResult.rows.lessonRows);
-      setAttendanceSessions(attendanceResult.rows.sessionRows);
-      setAttendanceEntries(attendanceResult.rows.entryRows);
-      setAssessments(assessmentResult.rows.assessmentRows);
-      setAssessmentEntries(assessmentResult.rows.assessmentEntryRows);
-      setRunningRecords(assessmentResult.rows.runningRecordRows);
-      setSubjects(assessmentResult.rows.subjectRows);
-      setUnits(assessmentResult.rows.unitRows);
-      setRubrics(rubricResult.rows.rubricRows);
-      setRubricCategories(rubricResult.rows.rubricCategoryRows);
-      setRubricCriteria(rubricResult.rows.rubricCriterionRows);
-      setDevelopmentScores(rubricResult.rows.devScoreRows);
-      setGroups(groupResult.rows.groupRows);
-      setGroupMembers(groupResult.rows.groupMemberRows);
-      setGroupConstraints(groupResult.rows.constraintRows);
-
-      const calendarResult = await loadCalendarWorkspaceRows(supabase);
-      setCalendarTablesReady(calendarResult.tablesReady);
-
-      if (calendarResult.errors.diaryError && !calendarResult.missing.diaryMissing) {
-        setFormError(calendarResult.errors.diaryError.message);
-      } else {
-        setCalendarDiaryEntries(calendarResult.rows.diaryRows);
-      }
-
-      if (calendarResult.errors.eventError && !calendarResult.missing.eventMissing) {
-        setFormError(calendarResult.errors.eventError.message);
-      } else {
-        setCalendarEvents(calendarResult.rows.eventRows);
-      }
+      await refreshCalendarData();
     } finally {
       setLoading(false);
     }
@@ -143,6 +189,8 @@ function useWorkspaceReads() {
       loadData();
     }, 0);
     return () => window.clearTimeout(timer);
+    // Intentionally load once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {
@@ -173,6 +221,12 @@ function useWorkspaceReads() {
     setFormError,
     classOptions,
     loadData,
+    refreshCoreData,
+    refreshAttendanceData,
+    refreshAssessmentData,
+    refreshRubricData,
+    refreshGroupData,
+    refreshCalendarData,
   };
 }
 

@@ -7,7 +7,7 @@ function createRubricActions({
   rubricCriteria,
   setSeedingRubrics,
   setFormError,
-  loadData,
+  refreshRubricData,
 }) {
   const handleSeedDefaultRubrics = async () => {
     setFormError("");
@@ -64,7 +64,7 @@ function createRubricActions({
       return false;
     }
 
-    await loadData();
+    await refreshRubricData();
     setSeedingRubrics(false);
     return true;
   };
@@ -89,7 +89,7 @@ function createRubricActions({
       return false;
     }
 
-    await loadData();
+    await refreshRubricData();
     return true;
   };
 
@@ -103,7 +103,7 @@ function createRubricActions({
       return false;
     }
 
-    await loadData();
+    await refreshRubricData();
     return true;
   };
 
@@ -117,7 +117,7 @@ function createRubricActions({
       return false;
     }
 
-    await loadData();
+    await refreshRubricData();
     return true;
   };
 
@@ -146,7 +146,7 @@ function createRubricActions({
       return false;
     }
 
-    await loadData();
+    await refreshRubricData();
     return true;
   };
 
@@ -160,7 +160,7 @@ function createRubricActions({
       return false;
     }
 
-    await loadData();
+    await refreshRubricData();
     return true;
   };
 
@@ -191,7 +191,7 @@ function createRubricActions({
       return false;
     }
 
-    await loadData();
+    await refreshRubricData();
     return true;
   };
 
@@ -205,7 +205,7 @@ function createRubricActions({
       return false;
     }
 
-    await loadData();
+    await refreshRubricData();
     return true;
   };
 
@@ -224,7 +224,7 @@ function createRubricActions({
       return false;
     }
 
-    await loadData();
+    await refreshRubricData();
     return true;
   };
 

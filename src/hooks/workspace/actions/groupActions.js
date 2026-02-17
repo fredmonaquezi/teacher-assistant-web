@@ -16,7 +16,7 @@ function createGroupActions({
   isGeneratingGroups,
   setIsGeneratingGroups,
   setFormError,
-  loadData,
+  refreshGroupData,
 }) {
   const handleAddConstraint = async (event) => {
     if (event?.preventDefault) event.preventDefault();
@@ -43,7 +43,7 @@ function createGroupActions({
     }
 
     setConstraintForm({ studentA: "", studentB: "" });
-    await loadData();
+    await refreshGroupData();
   };
 
   const handleDeleteConstraint = async (constraintId) => {
@@ -55,7 +55,7 @@ function createGroupActions({
       setFormError(error.message);
       return;
     }
-    await loadData();
+    await refreshGroupData();
   };
 
   const handleGenerateGroups = async () => {
@@ -172,7 +172,7 @@ function createGroupActions({
         return;
       }
 
-      await loadData();
+      await refreshGroupData();
     } finally {
       setIsGeneratingGroups(false);
     }

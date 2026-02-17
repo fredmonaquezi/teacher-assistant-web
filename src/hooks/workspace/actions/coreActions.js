@@ -18,7 +18,32 @@ function createCoreActions({
   setDevelopmentScoreForm,
   setFormError,
   loadData,
+  refreshCoreData,
+  refreshAssessmentData,
+  refreshRubricData,
+  refreshGroupData,
 }) {
+  const refreshBySortTable = async (table) => {
+    const tableRefreshers = {
+      classes: refreshCoreData,
+      students: refreshCoreData,
+      subjects: refreshAssessmentData,
+      units: refreshAssessmentData,
+      assessments: refreshAssessmentData,
+      rubrics: refreshRubricData,
+      rubric_categories: refreshRubricData,
+      rubric_criteria: refreshRubricData,
+      groups: refreshGroupData,
+      group_constraints: refreshGroupData,
+    };
+    const refreshFn = tableRefreshers[table];
+    if (refreshFn) {
+      await refreshFn();
+      return;
+    }
+    await loadData();
+  };
+
   const handleCreateClass = async (event) => {
     event.preventDefault();
     setFormError("");
@@ -48,7 +73,7 @@ function createCoreActions({
     }
 
     setClassForm({ name: "", gradeLevel: "", schoolYear: "", sortOrder: "" });
-    await loadData();
+    await refreshCoreData();
   };
 
   const handleCreateStudent = async (event) => {
@@ -122,7 +147,7 @@ function createCoreActions({
       separationList: "",
       sortOrder: "",
     });
-    await loadData();
+    await Promise.all([refreshCoreData(), refreshAssessmentData()]);
     return true;
   };
 
@@ -148,7 +173,7 @@ function createCoreActions({
       return;
     }
 
-    await loadData();
+    await refreshCoreData();
   };
 
   const handleDeleteClass = async (classId) => {
@@ -170,7 +195,7 @@ function createCoreActions({
       setFormError(error.message);
       return;
     }
-    await loadData();
+    await refreshBySortTable(table);
   };
 
   const handleSwapSortOrder = async (table, items, draggedId, targetId) => {
@@ -208,7 +233,7 @@ function createCoreActions({
       return;
     }
 
-    await loadData();
+    await refreshBySortTable(table);
   };
 
   const handleCreateRunningRecord = async (event) => {
@@ -277,7 +302,7 @@ function createCoreActions({
       selfCorrections: "",
       notes: "",
     });
-    await loadData();
+    await refreshAssessmentData();
     return true;
   };
 
@@ -290,7 +315,7 @@ function createCoreActions({
       setFormError(error.message);
       return;
     }
-    await loadData();
+    await refreshAssessmentData();
   };
 
   const handleCreateSubject = async (event, classIdOverride) => {
@@ -322,7 +347,7 @@ function createCoreActions({
     }
 
     setSubjectForm({ classId: "", name: "", description: "", sortOrder: "" });
-    await loadData();
+    await refreshAssessmentData();
   };
 
   const handleCreateUnit = async (event, subjectIdOverride) => {
@@ -354,7 +379,7 @@ function createCoreActions({
     }
 
     setUnitForm({ subjectId: "", name: "", description: "", sortOrder: "" });
-    await loadData();
+    await refreshAssessmentData();
   };
 
   const handleDeleteUnit = async (unitId) => {
@@ -365,7 +390,7 @@ function createCoreActions({
       setFormError(error.message);
       return;
     }
-    await loadData();
+    await refreshAssessmentData();
   };
 
   const handleCreateDevelopmentScoreEntry = async ({
@@ -407,7 +432,7 @@ function createCoreActions({
       date: "",
       notes: "",
     });
-    await loadData();
+    await refreshRubricData();
     return true;
   };
 
@@ -443,7 +468,7 @@ function createCoreActions({
       return false;
     }
 
-    await loadData();
+    await refreshRubricData();
     return true;
   };
 

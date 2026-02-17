@@ -31,6 +31,12 @@ function useTeacherWorkspaceData() {
     setFormError,
     classOptions,
     loadData,
+    refreshCoreData,
+    refreshAttendanceData,
+    refreshAssessmentData,
+    refreshRubricData,
+    refreshGroupData,
+    refreshCalendarData,
   } = useWorkspaceReads();
 
   const [seedingRubrics, setSeedingRubrics] = useState(false);
@@ -172,6 +178,12 @@ function useTeacherWorkspaceData() {
     setSeedingRubrics,
     setFormError,
     loadData,
+    refreshCoreData,
+    refreshAttendanceData,
+    refreshAssessmentData,
+    refreshRubricData,
+    refreshGroupData,
+    refreshCalendarData,
   });
 
   return {
@@ -225,6 +237,12 @@ function useTeacherWorkspaceData() {
     groupsScrollTopRef,
     classOptions,
     loadData,
+    refreshCoreData,
+    refreshAttendanceData,
+    refreshAssessmentData,
+    refreshRubricData,
+    refreshGroupData,
+    refreshCalendarData,
     handleCreateClass,
     handleCreateStudent,
     handleUpdateStudent,

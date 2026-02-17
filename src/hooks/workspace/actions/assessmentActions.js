@@ -7,7 +7,7 @@ function createAssessmentActions({
   subjects,
   units,
   setFormError,
-  loadData,
+  refreshAssessmentData,
 }) {
   const handleUpdateAssessmentEntry = async (entryId, updates) => {
     if (!entryId) return;
@@ -17,7 +17,7 @@ function createAssessmentActions({
       setFormError(error.message);
       return;
     }
-    await loadData();
+    await refreshAssessmentData();
   };
 
   const handleCreateAssessmentForUnit = async (event, unitId, subjectId, classId, formValues = null) => {
@@ -85,7 +85,7 @@ function createAssessmentActions({
     }
 
     form.reset();
-    await loadData();
+    await refreshAssessmentData();
     return true;
   };
 
@@ -97,7 +97,7 @@ function createAssessmentActions({
       setFormError(error.message);
       return;
     }
-    await loadData();
+    await refreshAssessmentData();
   };
 
   const handleCopyAssessmentsFromUnit = async (
@@ -181,7 +181,7 @@ function createAssessmentActions({
       }
     }
 
-    await loadData();
+    await refreshAssessmentData();
   };
 
   const handleEnsureAssessmentEntries = async (assessmentId) => {
@@ -220,7 +220,7 @@ function createAssessmentActions({
       return false;
     }
 
-    await loadData();
+    await refreshAssessmentData();
     return true;
   };
 

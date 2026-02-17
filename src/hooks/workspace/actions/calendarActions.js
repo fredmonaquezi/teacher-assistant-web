@@ -1,6 +1,6 @@
 import { supabase } from "../../../supabaseClient";
 
-function createCalendarActions({ setFormError, loadData }) {
+function createCalendarActions({ setFormError, refreshCalendarData }) {
   const handleCreateCalendarDiaryEntry = async (payload) => {
     setFormError("");
 
@@ -10,7 +10,7 @@ function createCalendarActions({ setFormError, loadData }) {
       return false;
     }
 
-    await loadData();
+    await refreshCalendarData();
     return true;
   };
 
@@ -28,7 +28,7 @@ function createCalendarActions({ setFormError, loadData }) {
       return false;
     }
 
-    await loadData();
+    await refreshCalendarData();
     return true;
   };
 
@@ -42,7 +42,7 @@ function createCalendarActions({ setFormError, loadData }) {
       return false;
     }
 
-    await loadData();
+    await refreshCalendarData();
     return true;
   };
 
@@ -55,7 +55,7 @@ function createCalendarActions({ setFormError, loadData }) {
       return false;
     }
 
-    await loadData();
+    await refreshCalendarData();
     return true;
   };
 
@@ -69,7 +69,7 @@ function createCalendarActions({ setFormError, loadData }) {
       return false;
     }
 
-    await loadData();
+    await refreshCalendarData();
     return true;
   };
 

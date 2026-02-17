@@ -5,7 +5,7 @@ function createAttendanceActions({
   students,
   attendanceSessions,
   setFormError,
-  loadData,
+  refreshAttendanceData,
 }) {
   const handleUpdateAttendanceEntry = async (entryId, updates) => {
     if (!entryId) return;
@@ -15,7 +15,7 @@ function createAttendanceActions({
       setFormError(error.message);
       return;
     }
-    await loadData();
+    await refreshAttendanceData();
   };
 
   const handleCreateAttendanceSessionForDate = async (classId, dateString) => {
@@ -68,7 +68,7 @@ function createAttendanceActions({
       }
     }
 
-    await loadData();
+    await refreshAttendanceData();
     return { ok: true, sessionId: sessionRow.id, existed: false };
   };
 
@@ -82,7 +82,7 @@ function createAttendanceActions({
       return false;
     }
 
-    await loadData();
+    await refreshAttendanceData();
     return true;
   };
 
