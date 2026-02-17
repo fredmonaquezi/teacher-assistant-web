@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AuthForm from "./components/auth/AuthForm";
 import ReorderModeToggle from "./components/common/ReorderModeToggle";
@@ -9,27 +9,36 @@ import useClassroomTimer from "./hooks/useClassroomTimer";
 import useTeacherWorkspaceData from "./hooks/useTeacherWorkspaceData";
 import { useHandleDrag } from "./hooks/useHandleDrag";
 import { useReorderMode } from "./hooks/useReorderMode";
-import AssessmentDetailPage from "./pages/AssessmentDetailPage";
-import AssessmentsPage from "./pages/AssessmentsPage";
-import AttendancePage from "./pages/AttendancePage";
-import AttendanceSessionDetailPage from "./pages/AttendanceSessionDetailPage";
-import CalendarPage from "./pages/CalendarPage";
-import ClassDetailPage from "./pages/ClassDetailPage";
-import ClassesPage from "./pages/ClassesPage";
-import DashboardPage from "./pages/DashboardPage";
-import GroupsPage from "./pages/GroupsPage";
-import ProfilePage from "./pages/ProfilePage";
-import RandomPickerPage from "./pages/RandomPickerPage";
-import RunningRecordsPage from "./pages/RunningRecordsPage";
-import RubricsPage from "./pages/RubricsPage";
-import StudentDetailPage from "./pages/StudentDetailPage";
-import SubjectDetailPage from "./pages/SubjectDetailPage";
-import TimerPage from "./pages/TimerPage";
-import UnitDetailPage from "./pages/UnitDetailPage";
 import { STUDENT_GENDER_OPTIONS } from "./constants/options";
 import { supabase } from "./supabaseClient";
 import "./App.css";
 import "react-day-picker/dist/style.css";
+
+const AssessmentDetailPage = lazy(() => import("./pages/AssessmentDetailPage"));
+const AssessmentsPage = lazy(() => import("./pages/AssessmentsPage"));
+const AttendancePage = lazy(() => import("./pages/AttendancePage"));
+const AttendanceSessionDetailPage = lazy(() => import("./pages/AttendanceSessionDetailPage"));
+const CalendarPage = lazy(() => import("./pages/CalendarPage"));
+const ClassDetailPage = lazy(() => import("./pages/ClassDetailPage"));
+const ClassesPage = lazy(() => import("./pages/ClassesPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const GroupsPage = lazy(() => import("./pages/GroupsPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const RandomPickerPage = lazy(() => import("./pages/RandomPickerPage"));
+const RunningRecordsPage = lazy(() => import("./pages/RunningRecordsPage"));
+const RubricsPage = lazy(() => import("./pages/RubricsPage"));
+const StudentDetailPage = lazy(() => import("./pages/StudentDetailPage"));
+const SubjectDetailPage = lazy(() => import("./pages/SubjectDetailPage"));
+const TimerPage = lazy(() => import("./pages/TimerPage"));
+const UnitDetailPage = lazy(() => import("./pages/UnitDetailPage"));
+
+function RouteFallback() {
+  return (
+    <section className="panel">
+      <p className="muted">Loading page...</p>
+    </section>
+  );
+}
 
 function TeacherWorkspace({ user, onSignOut }) {
   const workspace = useTeacherWorkspaceData();
@@ -136,7 +145,8 @@ function TeacherWorkspace({ user, onSignOut }) {
           preferences={profilePreferences}
           calendarEvents={calendarEvents}
         >
-          <Routes>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
           <Route
             path="/"
             element={
@@ -412,7 +422,8 @@ function TeacherWorkspace({ user, onSignOut }) {
               />
             }
           />
-          </Routes>
+            </Routes>
+          </Suspense>
           <TimerRuntimeOverlays timer={timer} />
         </Layout>
       </BrowserRouter>
