@@ -41,6 +41,12 @@ function readEnv(name) {
   return String(import.meta.env[name] || "").trim();
 }
 
+function readBooleanEnv(name, defaultValue = false) {
+  const raw = readEnv(name);
+  if (!raw) return defaultValue;
+  return ["1", "true", "yes", "on"].includes(raw.toLowerCase());
+}
+
 export function loadSupabaseClientEnv() {
   const supabaseUrl = readEnv("VITE_SUPABASE_URL");
   const supabaseAnonKey = readEnv("VITE_SUPABASE_ANON_KEY");
@@ -77,5 +83,23 @@ export function loadSupabaseClientEnv() {
   return {
     supabaseUrl,
     supabaseAnonKey,
+  };
+}
+
+export function loadAuthEnv() {
+  const enableGoogleAuth = readBooleanEnv("VITE_ENABLE_GOOGLE_AUTH", false);
+  const googleAuthRedirectTo = readEnv("VITE_GOOGLE_AUTH_REDIRECT_TO");
+
+  if (googleAuthRedirectTo) {
+    try {
+      new URL(googleAuthRedirectTo);
+    } catch {
+      throw new Error("VITE_GOOGLE_AUTH_REDIRECT_TO is invalid. Expected a full URL.");
+    }
+  }
+
+  return {
+    enableGoogleAuth,
+    googleAuthRedirectTo,
   };
 }

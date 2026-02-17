@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { loadAuthEnv } from "../../config/env";
 import { supabase } from "../../supabaseClient";
+
+const { enableGoogleAuth, googleAuthRedirectTo } = loadAuthEnv();
 
 function AuthForm({ onSuccess }) {
   const [email, setEmail] = useState("");
@@ -30,6 +33,26 @@ function AuthForm({ onSuccess }) {
       }
     } catch (err) {
       setError(err.message || "Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const redirectTo = googleAuthRedirectTo || window.location.origin;
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+        },
+      });
+      if (oauthError) throw oauthError;
+    } catch (err) {
+      setError(err.message || "Unable to start Google sign-in. Try again.");
     } finally {
       setLoading(false);
     }
@@ -73,9 +96,16 @@ function AuthForm({ onSuccess }) {
         </button>
       </form>
 
+      {enableGoogleAuth && (
+        <button type="button" className="auth-switch" onClick={handleGoogleSignIn} disabled={loading}>
+          {loading ? "Working..." : "Continue with Google"}
+        </button>
+      )}
+
       <button
         type="button"
         className="auth-switch"
+        disabled={loading}
         onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
       >
         {mode === "signup"
@@ -87,4 +117,3 @@ function AuthForm({ onSuccess }) {
 }
 
 export default AuthForm;
-
