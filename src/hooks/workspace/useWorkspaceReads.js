@@ -33,7 +33,6 @@ function useWorkspaceReads(userId) {
   });
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
-  const [_lessonPlans, setLessonPlans] = useState([]);
   const [calendarDiaryEntries, setCalendarDiaryEntries] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [calendarTablesReady, setCalendarTablesReady] = useState(true);
@@ -109,16 +108,11 @@ function useWorkspaceReads(userId) {
 
   const refreshCoreData = async () => {
     const coreResult = await loadCoreWorkspaceRows(supabase);
-    const hasError = setFirstErrorFromList([
-      coreResult.errors.classError,
-      coreResult.errors.studentError,
-      coreResult.errors.lessonError,
-    ]);
+    const hasError = setFirstErrorFromList([coreResult.errors.classError, coreResult.errors.studentError]);
     if (hasError) return false;
 
     setClasses(coreResult.rows.classRows);
     setStudents(coreResult.rows.studentRows);
-    setLessonPlans(coreResult.rows.lessonRows);
     return true;
   };
 
