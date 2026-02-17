@@ -7,6 +7,11 @@ import {
   parseISO,
 } from "date-fns";
 import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  getAttendanceRate,
+  getAttendanceRateColor,
+  summarizeAttendanceEntries,
+} from "../utils/attendanceMetrics";
 
 const AttendancePage = ({
   classOptions,
@@ -53,11 +58,9 @@ const AttendancePage = ({
   const sessionIds = new Set(classSessions.map((session) => session.id));
   const classEntries = attendanceEntries.filter((entry) => sessionIds.has(entry.session_id));
 
-  const presentCount = classEntries.filter((entry) => entry.status === "Present").length;
-  const totalEntries = classEntries.length;
-  const attendanceRate = totalEntries ? Math.round((presentCount / totalEntries) * 100) : 0;
-  const attendanceRateColor =
-    attendanceRate >= 90 ? "#16a34a" : attendanceRate >= 75 ? "#f59e0b" : "#ef4444";
+  const classSummary = summarizeAttendanceEntries(classEntries);
+  const attendanceRate = getAttendanceRate(classSummary);
+  const attendanceRateColor = getAttendanceRateColor(attendanceRate);
 
   const formatSessionDate = (dateString) => {
     if (!dateString) return "";
@@ -80,14 +83,10 @@ const AttendancePage = ({
 
   const getSessionStats = (sessionId) => {
     const entries = attendanceEntries.filter((entry) => entry.session_id === sessionId);
-    const present = entries.filter((entry) => entry.status === "Present").length;
-    const absent = entries.filter((entry) => entry.status === "Didn't come").length;
-    const late = entries.filter((entry) => entry.status === "Arrived late").length;
-    const leftEarly = entries.filter((entry) => entry.status === "Left early").length;
-    const total = entries.length;
-    const rate = total ? Math.round((present / total) * 100) : 0;
-    const color = rate >= 90 ? "#16a34a" : rate >= 75 ? "#f59e0b" : "#ef4444";
-    return { present, absent, late, leftEarly, rate, color };
+    const summary = summarizeAttendanceEntries(entries);
+    const rate = getAttendanceRate(summary);
+    const color = getAttendanceRateColor(rate);
+    return { ...summary, rate, color };
   };
 
   const handleCreateSessionForDate = async (dateString) => {

@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { useParams } from "react-router-dom";
-
-const STATUS_BUTTONS = [
-  { value: "Present", shortLabel: "Present", kind: "present", color: "#16a34a" },
-  { value: "Arrived late", shortLabel: "Late", kind: "late", color: "#f59e0b" },
-  { value: "Left early", shortLabel: "Left early", kind: "left-early", color: "#eab308" },
-  { value: "Didn't come", shortLabel: "Absent", kind: "absent", color: "#ef4444" },
-];
+import {
+  ATTENDANCE_STATUSES,
+  ATTENDANCE_STATUS_BY_KEY,
+} from "../constants/attendance";
+import {
+  getAttendanceRate,
+  getAttendanceRateColor,
+  getAttendanceStatusMeta,
+  summarizeAttendanceEntries,
+} from "../utils/attendanceMetrics";
 
 function StatusIcon({ kind }) {
   if (kind === "present") {
@@ -44,8 +47,8 @@ function StatusIcon({ kind }) {
 
 function AttendanceEntryRow({ entry, student, handleUpdateAttendanceEntry }) {
   const [noteValue, setNoteValue] = useState(entry.note || "");
-  const statusColor =
-    STATUS_BUTTONS.find((item) => item.value === entry.status)?.color || "#94a3b8";
+  const statusMeta = getAttendanceStatusMeta(entry.status);
+  const statusColor = statusMeta.color;
 
   return (
     <div className="attendance-student-card">
@@ -64,19 +67,11 @@ function AttendanceEntryRow({ entry, student, handleUpdateAttendanceEntry }) {
           </div>
         </div>
         <div className="attendance-status-buttons">
-          {STATUS_BUTTONS.map((status) => (
+          {ATTENDANCE_STATUSES.map((status) => (
             <button
               key={status.value}
               type="button"
-              className={`status-btn ${
-                status.value === "Present"
-                  ? "present"
-                  : status.value === "Arrived late"
-                    ? "late"
-                    : status.value === "Left early"
-                      ? "left-early"
-                      : "absent"
-              } ${entry.status === status.value ? "selected" : ""}`}
+              className={`status-btn ${status.cssClass} ${entry.status === status.value ? "selected" : ""}`}
               style={
                 entry.status === status.value
                   ? { background: status.color, color: "#fff" }
@@ -95,7 +90,7 @@ function AttendanceEntryRow({ entry, student, handleUpdateAttendanceEntry }) {
         </div>
       </div>
 
-      {entry.status !== "Present" && (
+      {entry.status !== ATTENDANCE_STATUS_BY_KEY.present.value && (
         <div className="attendance-note">
           <span className="muted">Notes</span>
           <input
@@ -135,19 +130,9 @@ function AttendanceSessionDetailPage({
     entry: entryMap.get(student.id),
   }));
 
-  const counts = {
-    present: sessionEntries.filter((entry) => entry.status === "Present").length,
-    absent: sessionEntries.filter((entry) => entry.status === "Didn't come").length,
-    late: sessionEntries.filter((entry) => entry.status === "Arrived late").length,
-    leftEarly: sessionEntries.filter((entry) => entry.status === "Left early").length,
-  };
-
-  const summaryRate = sessionEntries.length
-    ? Math.round((counts.present / sessionEntries.length) * 100)
-    : 0;
-
-  const summaryColor =
-    summaryRate >= 90 ? "#16a34a" : summaryRate >= 75 ? "#f59e0b" : "#ef4444";
+  const counts = summarizeAttendanceEntries(sessionEntries);
+  const summaryRate = getAttendanceRate(counts);
+  const summaryColor = getAttendanceRateColor(summaryRate);
 
   if (!session) {
     return (

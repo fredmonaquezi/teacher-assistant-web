@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, useParams } from "react-router-dom";
 import { averageFromPercents, entryToPercent, performanceColor } from "../utils/assessmentMetrics";
+import { ATTENDANCE_STATUS_BY_KEY } from "../constants/attendance";
 
 function studentToneFromGender(gender) {
   const value = (gender || "").trim().toLowerCase();
@@ -138,7 +139,9 @@ function ClassDetailPage({
       .map((session) => session.id)
   );
   const classAttendanceResults = attendanceEntries.filter((entry) => classSessionIdSet.has(entry.session_id));
-  const presentCount = classAttendanceResults.filter((entry) => entry.status === "Present").length;
+  const presentCount = classAttendanceResults.filter(
+    (entry) => entry.status === ATTENDANCE_STATUS_BY_KEY.present.value
+  ).length;
   const attendanceRate = classAttendanceResults.length > 0 ? (presentCount / classAttendanceResults.length) * 100 : 0;
   const classDevelopmentScores = developmentScores.filter((item) => classStudentIdSet.has(item.student_id));
   const developmentAverage =
@@ -159,7 +162,9 @@ function ClassDetailPage({
     .filter((row) => row.average < 50)
     .map((row) => {
       const studentRows = classAttendanceResults.filter((entry) => entry.student_id === row.student.id);
-      const absentCount = studentRows.filter((entry) => entry.status === "Didn't come").length;
+      const absentCount = studentRows.filter(
+        (entry) => entry.status === ATTENDANCE_STATUS_BY_KEY.absent.value
+      ).length;
       const flags = [];
       if (row.student.needs_help) flags.push("Needs help");
       if (row.student.missing_homework) flags.push("Missing homework");

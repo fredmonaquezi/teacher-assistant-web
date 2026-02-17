@@ -1,4 +1,5 @@
 import { supabase } from "../../../supabaseClient";
+import { DEFAULT_ATTENDANCE_STATUS } from "../../../constants/attendance";
 
 function createAttendanceActions({
   students,
@@ -56,7 +57,7 @@ function createAttendanceActions({
       const entryRows = classStudents.map((student) => ({
         session_id: sessionRow.id,
         student_id: student.id,
-        status: "Present",
+        status: DEFAULT_ATTENDANCE_STATUS,
         note: null,
       }));
 

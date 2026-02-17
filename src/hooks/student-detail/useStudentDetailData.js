@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { averageFromPercents, entryToPercent, performanceColor } from "../../utils/assessmentMetrics";
+import { getAttendanceTotal, summarizeAttendanceEntries } from "../../utils/attendanceMetrics";
 
 function normalizedLevel(value) {
   const level = (value || "").toLowerCase();
@@ -114,18 +115,8 @@ function useStudentDetailData({
     [attendanceEntries, studentId]
   );
 
-  const attendanceSummary = {
-    present: attendanceForStudent.filter((entry) => entry.status === "Present").length,
-    absent: attendanceForStudent.filter((entry) => entry.status === "Didn't come").length,
-    late: attendanceForStudent.filter((entry) => entry.status === "Arrived late").length,
-    leftEarly: attendanceForStudent.filter((entry) => entry.status === "Left early").length,
-  };
-
-  const attendanceTotal =
-    attendanceSummary.present +
-    attendanceSummary.absent +
-    attendanceSummary.late +
-    attendanceSummary.leftEarly;
+  const attendanceSummary = summarizeAttendanceEntries(attendanceForStudent);
+  const attendanceTotal = getAttendanceTotal(attendanceSummary);
 
   const subjectsForClass = useMemo(
     () =>
