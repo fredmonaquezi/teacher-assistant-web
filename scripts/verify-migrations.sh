@@ -32,7 +32,7 @@ for file in "${migration_files[@]}"; do
   fi
 
   prefix="${name%%_*}"
-  if printf '%s\n' "$seen_prefixes" | rg -qx "$prefix"; then
+  if printf '%s\n' "$seen_prefixes" | grep -Fxq "$prefix"; then
     echo "Duplicate migration timestamp prefix found: $prefix"
     exit 1
   fi
@@ -44,12 +44,12 @@ for file in "${migration_files[@]}"; do
   fi
   prev_name="$name"
 
-  if ! rg -qi '^\s*begin\s*;' "$file"; then
+  if ! grep -Eqi '^[[:space:]]*begin[[:space:]]*;' "$file"; then
     echo "Migration must start a transaction (missing BEGIN;): $name"
     exit 1
   fi
 
-  if ! rg -qi '^\s*commit\s*;' "$file"; then
+  if ! grep -Eqi '^[[:space:]]*commit[[:space:]]*;' "$file"; then
     echo "Migration must end a transaction (missing COMMIT;): $name"
     exit 1
   fi
