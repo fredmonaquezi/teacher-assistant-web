@@ -32,7 +32,6 @@ function RandomPickerPage({ formError, classOptions, students }) {
   const [pickedStudent, setPickedStudent] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [isRotationMode, setIsRotationMode] = useState(false);
-  const [rotationRevision, setRotationRevision] = useState(0);
   const [rotationFeedback, setRotationFeedback] = useState("");
 
   const handleClassChange = (nextClassId) => {
@@ -71,7 +70,6 @@ function RandomPickerPage({ formError, classOptions, students }) {
 
     const setRotationData = (value) => {
       localStorage.setItem(rotationKeyForCategory(selectedCategory), value);
-      setRotationRevision((prev) => prev + 1);
     };
 
     const usedStudentIds = new Set(getRotationData().split(",").filter(Boolean));

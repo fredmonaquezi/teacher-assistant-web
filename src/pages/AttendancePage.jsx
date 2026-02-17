@@ -7,7 +7,11 @@ import {
   parseISO,
 } from "date-fns";
 import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+import {
+  getAttendanceRate,
+  getAttendanceRateColor,
+  summarizeAttendanceEntries,
+} from "../utils/attendanceMetrics";
 
 const AttendancePage = ({
   classOptions,
@@ -16,7 +20,8 @@ const AttendancePage = ({
   attendanceEntries,
   formError,
   setFormError,
-  loadData,
+  handleCreateAttendanceSessionForDate,
+  handleDeleteAttendanceSession,
 }) => {
   const navigate = useNavigate();
   const attendanceClassStorageKey = "ta_attendance_active_class";
@@ -53,11 +58,9 @@ const AttendancePage = ({
   const sessionIds = new Set(classSessions.map((session) => session.id));
   const classEntries = attendanceEntries.filter((entry) => sessionIds.has(entry.session_id));
 
-  const presentCount = classEntries.filter((entry) => entry.status === "Present").length;
-  const totalEntries = classEntries.length;
-  const attendanceRate = totalEntries ? Math.round((presentCount / totalEntries) * 100) : 0;
-  const attendanceRateColor =
-    attendanceRate >= 90 ? "#16a34a" : attendanceRate >= 75 ? "#f59e0b" : "#ef4444";
+  const classSummary = summarizeAttendanceEntries(classEntries);
+  const attendanceRate = getAttendanceRate(classSummary);
+  const attendanceRateColor = getAttendanceRateColor(attendanceRate);
 
   const formatSessionDate = (dateString) => {
     if (!dateString) return "";
@@ -80,14 +83,10 @@ const AttendancePage = ({
 
   const getSessionStats = (sessionId) => {
     const entries = attendanceEntries.filter((entry) => entry.session_id === sessionId);
-    const present = entries.filter((entry) => entry.status === "Present").length;
-    const absent = entries.filter((entry) => entry.status === "Didn't come").length;
-    const late = entries.filter((entry) => entry.status === "Arrived late").length;
-    const leftEarly = entries.filter((entry) => entry.status === "Left early").length;
-    const total = entries.length;
-    const rate = total ? Math.round((present / total) * 100) : 0;
-    const color = rate >= 90 ? "#16a34a" : rate >= 75 ? "#f59e0b" : "#ef4444";
-    return { present, absent, late, leftEarly, rate, color };
+    const summary = summarizeAttendanceEntries(entries);
+    const rate = getAttendanceRate(summary);
+    const color = getAttendanceRateColor(rate);
+    return { ...summary, rate, color };
   };
 
   const handleCreateSessionForDate = async (dateString) => {
@@ -95,52 +94,9 @@ const AttendancePage = ({
     setIsCreatingSession(true);
     setFormError("");
     try {
-      if (!effectiveClassId) {
-        setFormError("Select a class first.");
-        return false;
-      }
-      if (!dateString) {
-        setFormError("Choose a date.");
-        return false;
-      }
-      const existingSession = classSessions.find((session) => session.session_date === dateString);
-      if (existingSession?.id) {
-        navigate(`/attendance/${existingSession.id}`);
-        return true;
-      }
-
-      const { data: sessionRow, error: sessionError } = await supabase
-        .from("attendance_sessions")
-        .insert({
-          session_date: dateString,
-          title: null,
-          class_id: effectiveClassId,
-        })
-        .select()
-        .single();
-      if (sessionError) {
-        setFormError(sessionError.message);
-        return false;
-      }
-
-      if (classStudents.length > 0) {
-        const entryRows = classStudents.map((student) => ({
-          session_id: sessionRow.id,
-          student_id: student.id,
-          status: "Present",
-          note: null,
-        }));
-        const { error: entryError } = await supabase
-          .from("attendance_entries")
-          .insert(entryRows);
-        if (entryError) {
-          setFormError(entryError.message);
-          return false;
-        }
-      }
-
-      await loadData();
-      navigate(`/attendance/${sessionRow.id}`);
+      const result = await handleCreateAttendanceSessionForDate(effectiveClassId, dateString);
+      if (!result?.ok || !result.sessionId) return false;
+      navigate(`/attendance/${result.sessionId}`);
       return true;
     } finally {
       setIsCreatingSession(false);
@@ -153,12 +109,7 @@ const AttendancePage = ({
     setDeletingSessionId(sessionId);
     setFormError("");
     try {
-      const { error } = await supabase.from("attendance_sessions").delete().eq("id", sessionId);
-      if (error) {
-        setFormError(error.message);
-        return;
-      }
-      await loadData();
+      await handleDeleteAttendanceSession(sessionId);
     } finally {
       setDeletingSessionId("");
     }

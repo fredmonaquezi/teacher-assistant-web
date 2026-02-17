@@ -1,0 +1,445 @@
+/* Notebook-wide polish pass */
+.notebook-content .panel {
+  background: linear-gradient(180deg, rgba(247, 238, 218, 0.88) 0%, rgba(239, 226, 195, 0.88) 100%);
+  border: 1px solid rgba(194, 166, 123, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 10px 16px rgba(78, 58, 33, 0.12);
+  padding: 14px 16px;
+  gap: 10px;
+}
+
+.notebook-content .panel > h2 {
+  margin: 0;
+  font-family: "Open Sans", "Segoe UI", sans-serif;
+  font-size: 2rem;
+  line-height: 0.98;
+  color: #31261c;
+}
+
+.notebook-content .panel > h3 {
+  margin: 0;
+  font-family: "Open Sans", "Segoe UI", sans-serif;
+  color: #3d2f21;
+  font-size: 1.26rem;
+}
+
+.notebook-content :is(
+  .profile-page,
+  .attendance-page,
+  .groups-page,
+  .running-records-panel,
+  .calendar-page
+) {
+  gap: 12px;
+}
+
+.notebook-content :is(
+  .profile-hero,
+  .profile-section,
+  .profile-preview,
+  .attendance-stat-card,
+  .attendance-empty,
+  .attendance-card,
+  .attendance-modal,
+  .attendance-session-summary,
+  .attendance-student-card,
+  .attendance-student-row,
+  .groups-header-card,
+  .groups-controls-card,
+  .groups-advanced-card,
+  .groups-size-row,
+  .groups-info-row,
+  .groups-empty,
+  .group-card,
+  .group-student,
+  .rr-stat,
+  .rr-level-summary span,
+  .rr-date-chip,
+  .rr-card,
+  .running-records-modal,
+  .running-records-detail-modal,
+  .calendar-header-card,
+  .calendar-day,
+  .calendar-grid.week .calendar-day-list span,
+  .calendar-upcoming,
+  .calendar-upcoming-list li,
+  .calendar-day-modal,
+  .calendar-entry-modal,
+  .calendar-event-modal,
+  .calendar-day-section,
+  .calendar-entry-card,
+  .calendar-event-card,
+  .calendar-sheet-block,
+  .subject-unit-card,
+  .subject-empty,
+  .subject-unit-preview,
+  .student-card-link,
+  .attendance-summary-grid article,
+  .student-running-stats article,
+  .student-subject-grid article
+) {
+  background: linear-gradient(180deg, rgba(250, 243, 227, 0.95) 0%, rgba(243, 232, 206, 0.95) 100%);
+  border-color: #ccb289;
+  box-shadow: 0 8px 14px rgba(86, 63, 35, 0.1);
+}
+
+.notebook-content :is(
+  .attendance-page-title h2,
+  .running-records-title h2,
+  .calendar-header h2,
+  .subject-detail-header h2,
+  .profile-hero h2
+) {
+  margin: 0;
+  font-family: "Open Sans", "Segoe UI", sans-serif;
+  color: #31261c;
+}
+
+.notebook-content :is(
+  .attendance-card-date,
+  .subject-card-name,
+  .student-card-content strong,
+  .calendar-day-number,
+  .calendar-entry-summary-btn strong,
+  .running-records-title h2
+) {
+  color: #3b2d1f;
+}
+
+.notebook-content :is(
+  .attendance-date-chip,
+  .calendar-entry-date-chip,
+  .reminder-date,
+  .group-card-count
+) {
+  background: #f6e7c7;
+  border-color: #c7a678;
+  color: #664624;
+}
+
+.notebook-content :is(
+  .calendar-mode,
+  .calendar-day-list .entry,
+  .calendar-day-list .event
+) {
+  border-color: #ccb289;
+}
+
+.notebook-content .calendar-mode {
+  background: #f4e7cd;
+}
+
+.notebook-content .calendar-mode button {
+  color: #5f4b32;
+}
+
+.notebook-content .calendar-mode button.active {
+  background: #fcf5e6;
+  color: #3f2f1f;
+  box-shadow: inset 0 0 0 1px #c8ad81;
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 12px;
+  }
+
+  .app-shell {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .sidebar {
+    gap: 10px;
+    padding: 16px 14px 14px;
+  }
+
+  .sidebar-brand {
+    padding: 8px 8px 10px;
+  }
+
+  .nav-links {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .nav-links a {
+    text-align: left;
+    font-size: 0.97rem;
+    padding: 10px 12px 10px 30px;
+  }
+
+  .sidebar-account-link {
+    font-size: 0.97rem;
+    padding: 10px 12px 10px 30px;
+  }
+
+  .dashboard-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metric-card strong {
+    font-size: 1.55rem;
+  }
+
+  .tile-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+  }
+
+  .tile {
+    min-height: 206px;
+    padding: 8px 8px 10px;
+  }
+
+  .tile-circle {
+    width: 114px;
+    height: 114px;
+  }
+
+  .tile-circle::before,
+  .tile-circle::after {
+    border-width: 3px;
+  }
+
+  .tile-icon {
+    width: 58px;
+    height: 58px;
+  }
+
+  .tile-label {
+    font-size: 1.08rem;
+  }
+
+  .reminders-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .reminder-card {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .calendar-grid.month,
+  .calendar-grid.week {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-weekdays {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-entry-form {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-entry-form .calendar-time-grid {
+    grid-column: 1 / -1;
+  }
+
+  .calendar-event-form {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-event-time-grid {
+    grid-column: 1 / -1;
+  }
+
+  .calendar-time-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-sheet-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .unit-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .unit-assessment-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .subject-units-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .attendance-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .class-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .class-overview-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .class-students-header .students-add-btn {
+    display: none;
+  }
+
+  .students-add-btn.mobile-only {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+  }
+
+  .student-running-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .student-mini-list li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .student-view-all-btn {
+    min-height: 32px;
+    padding: 0 11px;
+  }
+
+  .student-profile-hero {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .student-profile-header {
+    align-items: flex-start;
+  }
+
+  .running-records-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .rr-mini-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rr-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 0;
+  }
+
+  .postit {
+    transform: none;
+    min-height: 0;
+    padding: 16px 14px 14px;
+  }
+
+  .postit-tape {
+    width: 74px;
+    height: 20px;
+    top: -9px;
+    background-size: 980px auto;
+    background-position: -40px -116px;
+  }
+
+  .postit-tape::before {
+    content: none;
+  }
+
+  .postit-tape-top-left {
+    left: -18px;
+  }
+
+  .postit-tape-top-right {
+    right: -18px;
+  }
+
+  .postit-events-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .notebook-board {
+    margin-top: 14px;
+    padding: 34px 14px 14px;
+    box-shadow:
+      6px 8px 0 rgba(18, 14, 10, 0.9),
+      0 14px 20px rgba(39, 30, 21, 0.22);
+  }
+
+  .classes-header,
+  .panel-heading-row,
+  .subject-units-title,
+  .unit-assessment-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .classes-header-copy h2 {
+    font-size: 2.1rem;
+  }
+
+  .classes-header-copy p {
+    font-size: 0.9rem;
+  }
+
+  .classes-add-btn {
+    min-height: 44px;
+    font-size: 1.02rem;
+    padding: 0 18px;
+  }
+
+  .class-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .class-card {
+    min-height: 122px;
+    padding: 10px 9px 8px;
+  }
+
+  .class-card-title {
+    font-size: 0.86rem;
+  }
+
+  .class-card-subtitle {
+    font-size: 0.74rem;
+  }
+
+  .class-card-actions {
+    gap: 5px;
+  }
+
+  .class-card .drag-handle {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+  }
+
+  .class-card .icon-button {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 1.15rem;
+  }
+
+  .class-card-stat strong {
+    font-size: 0.94rem;
+  }
+
+  .class-card-stat span {
+    font-size: 0.6rem;
+  }
+
+  .gradebook-launcher-grid,
+  .gradebook-matrix-stats {
+    grid-template-columns: 1fr;
+  }
+}
