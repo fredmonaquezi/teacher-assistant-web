@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { DEFAULT_PROFILE_PREFERENCES } from "../../constants/options";
 import { supabase } from "../../supabaseClient";
+import { loadAssessmentWorkspaceRows } from "./readers/assessmentLoader";
+import { loadAttendanceWorkspaceRows } from "./readers/attendanceLoader";
+import { loadCalendarWorkspaceRows } from "./readers/calendarLoader";
+import { loadCoreWorkspaceRows } from "./readers/coreLoader";
+import { loadGroupWorkspaceRows } from "./readers/groupLoader";
+import { loadRubricWorkspaceRows } from "./readers/rubricLoader";
 
 function useWorkspaceReads() {
   const [profilePreferences, setProfilePreferences] = useState(() => {
@@ -56,161 +62,80 @@ function useWorkspaceReads() {
     setLoading(true);
     setFormError("");
 
-    const [
-      { data: classRows, error: classError },
-      { data: studentRows, error: studentError },
-      { data: lessonRows, error: lessonError },
-      { data: sessionRows, error: sessionError },
-      { data: entryRows, error: entryError },
-      { data: assessmentRows, error: assessmentError },
-      { data: assessmentEntryRows, error: assessmentEntryError },
-      { data: runningRecordRows, error: runningRecordError },
-      { data: subjectRows, error: subjectError },
-      { data: unitRows, error: unitError },
-      { data: rubricRows, error: rubricError },
-      { data: rubricCategoryRows, error: rubricCategoryError },
-      { data: rubricCriterionRows, error: rubricCriterionError },
-      { data: devScoreRows, error: devScoreError },
-      { data: groupRows, error: groupError },
-      { data: groupMemberRows, error: groupMemberError },
-      { data: constraintRows, error: constraintError },
-    ] = await Promise.all([
-      supabase
-        .from("classes")
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("students")
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false }),
-      supabase.from("lesson_plans").select("*").order("created_at", { ascending: false }),
-      supabase.from("attendance_sessions").select("*").order("session_date", { ascending: false }),
-      supabase.from("attendance_entries").select("*").order("created_at", { ascending: false }),
-      supabase
-        .from("assessments")
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("assessment_date", { ascending: false }),
-      supabase.from("assessment_entries").select("*").order("created_at", { ascending: false }),
-      supabase.from("running_records").select("*").order("record_date", { ascending: false }),
-      supabase
-        .from("subjects")
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("units")
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("rubrics")
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("rubric_categories")
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("rubric_criteria")
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false }),
-      supabase.from("development_scores").select("*").order("created_at", { ascending: false }),
-      supabase.from("groups").select("*").order("created_at", { ascending: false }),
-      supabase.from("group_members").select("*").order("created_at", { ascending: false }),
-      supabase.from("group_constraints").select("*").order("created_at", { ascending: false }),
-    ]);
+    try {
+      const [
+        coreResult,
+        attendanceResult,
+        assessmentResult,
+        rubricResult,
+        groupResult,
+      ] = await Promise.all([
+        loadCoreWorkspaceRows(supabase),
+        loadAttendanceWorkspaceRows(supabase),
+        loadAssessmentWorkspaceRows(supabase),
+        loadRubricWorkspaceRows(supabase),
+        loadGroupWorkspaceRows(supabase),
+      ]);
 
-    if (
-      classError ||
-      studentError ||
-      lessonError ||
-      sessionError ||
-      entryError ||
-      assessmentError ||
-      assessmentEntryError ||
-      runningRecordError ||
-      subjectError ||
-      unitError ||
-      rubricError ||
-      rubricCategoryError ||
-      rubricCriterionError ||
-      devScoreError ||
-      groupError ||
-      groupMemberError ||
-      constraintError
-    ) {
-      setFormError(
-        classError?.message ||
-          studentError?.message ||
-          lessonError?.message ||
-          sessionError?.message ||
-          entryError?.message ||
-          assessmentError?.message ||
-          assessmentEntryError?.message ||
-          runningRecordError?.message ||
-          subjectError?.message ||
-          unitError?.message ||
-          rubricError?.message ||
-          rubricCategoryError?.message ||
-          rubricCriterionError?.message ||
-          devScoreError?.message ||
-          groupError?.message ||
-          groupMemberError?.message ||
-          constraintError?.message
-      );
-    } else {
-      setClasses(classRows ?? []);
-      setStudents(studentRows ?? []);
-      setLessonPlans(lessonRows ?? []);
-      setAttendanceSessions(sessionRows ?? []);
-      setAttendanceEntries(entryRows ?? []);
-      setAssessments(assessmentRows ?? []);
-      setAssessmentEntries(assessmentEntryRows ?? []);
-      setRunningRecords(runningRecordRows ?? []);
-      setSubjects(subjectRows ?? []);
-      setUnits(unitRows ?? []);
-      setRubrics(rubricRows ?? []);
-      setRubricCategories(rubricCategoryRows ?? []);
-      setRubricCriteria(rubricCriterionRows ?? []);
-      setDevelopmentScores(devScoreRows ?? []);
-      setGroups(groupRows ?? []);
-      setGroupMembers(groupMemberRows ?? []);
-      setGroupConstraints(constraintRows ?? []);
+      const primaryError =
+        coreResult.errors.classError ||
+        coreResult.errors.studentError ||
+        coreResult.errors.lessonError ||
+        attendanceResult.errors.sessionError ||
+        attendanceResult.errors.entryError ||
+        assessmentResult.errors.assessmentError ||
+        assessmentResult.errors.assessmentEntryError ||
+        assessmentResult.errors.runningRecordError ||
+        assessmentResult.errors.subjectError ||
+        assessmentResult.errors.unitError ||
+        rubricResult.errors.rubricError ||
+        rubricResult.errors.rubricCategoryError ||
+        rubricResult.errors.rubricCriterionError ||
+        rubricResult.errors.devScoreError ||
+        groupResult.errors.groupError ||
+        groupResult.errors.groupMemberError ||
+        groupResult.errors.constraintError;
 
-      const isMissingTableError = (error) =>
-        !!error &&
-        (error.code === "42P01" ||
-          /does not exist|Could not find the table|schema cache/i.test(error.message || ""));
-
-      const [{ data: diaryRows, error: diaryError }, { data: eventRows, error: eventError }] =
-        await Promise.all([
-          supabase.from("calendar_diary_entries").select("*").order("entry_date", { ascending: false }),
-          supabase.from("calendar_events").select("*").order("event_date", { ascending: false }),
-        ]);
-      const diaryMissing = isMissingTableError(diaryError);
-      const eventMissing = isMissingTableError(eventError);
-      setCalendarTablesReady(!diaryMissing && !eventMissing);
-
-      if (diaryError && !diaryMissing) {
-        setFormError(diaryError.message);
-      } else {
-        setCalendarDiaryEntries(diaryRows ?? []);
+      if (primaryError) {
+        setFormError(primaryError.message);
+        return;
       }
 
-      if (eventError && !eventMissing) {
-        setFormError(eventError.message);
+      setClasses(coreResult.rows.classRows);
+      setStudents(coreResult.rows.studentRows);
+      setLessonPlans(coreResult.rows.lessonRows);
+      setAttendanceSessions(attendanceResult.rows.sessionRows);
+      setAttendanceEntries(attendanceResult.rows.entryRows);
+      setAssessments(assessmentResult.rows.assessmentRows);
+      setAssessmentEntries(assessmentResult.rows.assessmentEntryRows);
+      setRunningRecords(assessmentResult.rows.runningRecordRows);
+      setSubjects(assessmentResult.rows.subjectRows);
+      setUnits(assessmentResult.rows.unitRows);
+      setRubrics(rubricResult.rows.rubricRows);
+      setRubricCategories(rubricResult.rows.rubricCategoryRows);
+      setRubricCriteria(rubricResult.rows.rubricCriterionRows);
+      setDevelopmentScores(rubricResult.rows.devScoreRows);
+      setGroups(groupResult.rows.groupRows);
+      setGroupMembers(groupResult.rows.groupMemberRows);
+      setGroupConstraints(groupResult.rows.constraintRows);
+
+      const calendarResult = await loadCalendarWorkspaceRows(supabase);
+      setCalendarTablesReady(calendarResult.tablesReady);
+
+      if (calendarResult.errors.diaryError && !calendarResult.missing.diaryMissing) {
+        setFormError(calendarResult.errors.diaryError.message);
       } else {
-        setCalendarEvents(eventRows ?? []);
+        setCalendarDiaryEntries(calendarResult.rows.diaryRows);
       }
+
+      if (calendarResult.errors.eventError && !calendarResult.missing.eventMissing) {
+        setFormError(calendarResult.errors.eventError.message);
+      } else {
+        setCalendarEvents(calendarResult.rows.eventRows);
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   useEffect(() => {
