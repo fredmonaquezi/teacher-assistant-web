@@ -1,4 +1,4 @@
-import { ATTENDANCE_STATUSES, ATTENDANCE_STATUS_BY_VALUE } from "../constants/attendance";
+import { ATTENDANCE_STATUSES, ATTENDANCE_STATUS_BY_VALUE } from "../constants/attendance.js";
 
 export function createEmptyAttendanceSummary() {
   return ATTENDANCE_STATUSES.reduce((acc, status) => {
