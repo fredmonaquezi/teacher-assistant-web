@@ -75,6 +75,21 @@ Notes:
 
 Security headers are defined in `vercel.json` and `netlify.toml`.
 
+## Production security header + OAuth verification checklist
+Run this every time `vercel.json` or `netlify.toml` changes.
+
+1. Redeploy your hosting project so new headers go live.
+2. Verify headers on production URL:
+```bash
+curl -sI https://<your-production-domain> | rg -i "content-security-policy|strict-transport-security|x-content-type-options|referrer-policy|permissions-policy|cross-origin-resource-policy"
+```
+3. Confirm email/password auth works on production (sign in + sign out).
+4. If Google auth is enabled, click the Google button on production and complete login.
+5. Open browser devtools console on production and confirm there are no CSP violations.
+6. If you changed production domain, update both:
+- Google Cloud OAuth -> Authorized JavaScript origins
+- Supabase Auth -> Site URL and Redirect URLs
+
 ## Google OAuth setup (Supabase + Google Cloud)
 ### In Google Cloud (OAuth client type: Web)
 - Authorized JavaScript origins:
