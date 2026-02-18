@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   addDays,
   endOfDay,
@@ -13,6 +13,11 @@ import { formatDisplayName } from "../../utils/formatDisplayName";
 function Layout({ user, onSignOut, preferences, calendarEvents = [], children }) {
   const userEmail = user?.email || "";
   const displayName = formatDisplayName(user);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 720px)").matches;
+  });
   const sidebarIdentity =
     user?.user_metadata?.display_name ||
     user?.user_metadata?.full_name ||
@@ -56,10 +61,69 @@ function Layout({ user, onSignOut, preferences, calendarEvents = [], children })
     { label: "Random Picker", path: "/random" },
     { label: "Running Records", path: "/running-records" },
   ];
+  const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const mediaQuery = window.matchMedia("(max-width: 720px)");
+    const handleViewportChange = (event) => {
+      setIsMobileViewport(event.matches);
+      if (!event.matches) setIsMobileSidebarOpen(false);
+    };
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleViewportChange);
+      return () => mediaQuery.removeEventListener("change", handleViewportChange);
+    }
+
+    mediaQuery.addListener(handleViewportChange);
+    return () => mediaQuery.removeListener(handleViewportChange);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileViewport || !isMobileSidebarOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setIsMobileSidebarOpen(false);
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileViewport, isMobileSidebarOpen]);
+
+  useEffect(() => {
+    if (!isMobileViewport) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = isMobileSidebarOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileViewport, isMobileSidebarOpen]);
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
+    <div className={`app-shell${isMobileSidebarOpen ? " mobile-sidebar-open" : ""}`}>
+      <button
+        type="button"
+        className="mobile-nav-toggle"
+        aria-controls="app-sidebar"
+        aria-expanded={isMobileSidebarOpen}
+        aria-label={isMobileSidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+        onClick={() => setIsMobileSidebarOpen((open) => !open)}
+      >
+        {isMobileSidebarOpen ? "Close menu" : "Menu"}
+      </button>
+      <button
+        type="button"
+        className="mobile-nav-backdrop"
+        aria-label="Close navigation menu"
+        aria-hidden={!isMobileSidebarOpen}
+        tabIndex={isMobileSidebarOpen ? 0 : -1}
+        onClick={closeMobileSidebar}
+      />
+      <aside id="app-sidebar" className="sidebar">
         <div className="sidebar-brand">
           <p className="sidebar-kicker">Teacher Assistant</p>
           <h1 className="sidebar-title">Classroom Hub</h1>
@@ -67,13 +131,18 @@ function Layout({ user, onSignOut, preferences, calendarEvents = [], children })
         </div>
         <nav className="nav-links">
           {navLinks.map((link) => (
-            <NavLink key={link.path} to={link.path} end={link.path === "/"}>
+            <NavLink
+              key={link.path}
+              to={link.path}
+              end={link.path === "/"}
+              onClick={closeMobileSidebar}
+            >
               {link.label}
             </NavLink>
           ))}
         </nav>
         <div className="sidebar-account">
-          <NavLink to="/profile" className="sidebar-account-link">
+          <NavLink to="/profile" className="sidebar-account-link" onClick={closeMobileSidebar}>
             Profile
           </NavLink>
           <button type="button" className="secondary sidebar-signout" onClick={onSignOut}>

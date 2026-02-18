@@ -156,6 +156,11 @@ body {
   padding: 2px 8px 0;
 }
 
+.mobile-nav-toggle,
+.mobile-nav-backdrop {
+  display: none;
+}
+
 .postit {
   position: relative;
   border-radius: 3px;
