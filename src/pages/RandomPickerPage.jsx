@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 
 function RandomPickerPage({ formError, classOptions, students }) {
+  const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const classId = searchParams.get("classId") || "";
   const classLabel = classOptions.find((option) => option.id === classId)?.label;
@@ -33,6 +35,21 @@ function RandomPickerPage({ formError, classOptions, students }) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [isRotationMode, setIsRotationMode] = useState(false);
   const [rotationFeedback, setRotationFeedback] = useState("");
+
+  const categoryDisplayLabel = (category) => {
+    if (category === "Helper") return t("random.categories.helper");
+    if (category === "Guardian") return t("random.categories.guardian");
+    if (category === "Line Leader") return t("random.categories.lineLeader");
+    if (category === "Messenger") return t("random.categories.messenger");
+    return category;
+  };
+
+  const categoryRotationLabel = (category) => {
+    if (i18n.language === "pt-BR" && category === "Helper") {
+      return t("random.categories.helperRotation");
+    }
+    return categoryDisplayLabel(category);
+  };
 
   const handleClassChange = (nextClassId) => {
     if (nextClassId) {
@@ -113,8 +130,11 @@ function RandomPickerPage({ formError, classOptions, students }) {
       setRotationData("");
       setRotationFeedback(
         clearedCount > 0
-          ? `${clearedCount} student${clearedCount === 1 ? "" : "s"} reset for ${selectedCategory}.`
-          : `${selectedCategory} rotation is already clear.`
+          ? t("random.feedback.resetCount", {
+              count: clearedCount,
+              role: categoryDisplayLabel(selectedCategory),
+            })
+          : t("random.feedback.alreadyClear", { role: categoryDisplayLabel(selectedCategory) })
       );
     };
 
@@ -156,18 +176,17 @@ function RandomPickerPage({ formError, classOptions, students }) {
         <section className="panel random-page">
           <div className="random-page-header">
             <div className="random-page-heading">
-              <span className="random-page-kicker">Random Picker</span>
-              <h2>Pick a student quickly</h2>
-              <p className="muted">Simple, fair picks for classroom roles.</p>
+              <span className="random-page-kicker">{t("random.kicker")}</span>
+              <h2>{t("random.title")}</h2>
             </div>
             <span className="random-scope-chip">
-              {classId ? classLabel || "Selected class" : "All classes"}
+              {classId ? classLabel || t("random.selectedClass") : t("random.allClasses")}
             </span>
           </div>
           <label className="stack">
-            <span>Class</span>
+            <span>{t("random.class")}</span>
             <select value={classId} onChange={(event) => handleClassChange(event.target.value)}>
-              <option value="">All classes</option>
+              <option value="">{t("random.allClasses")}</option>
               {classOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.label}
@@ -177,7 +196,7 @@ function RandomPickerPage({ formError, classOptions, students }) {
           </label>
           {!classId && (
             <div className="muted">
-              Rotation is currently tracked across all classes.
+              {t("random.rotationTrackedAllClasses")}
             </div>
           )}
 
@@ -189,24 +208,27 @@ function RandomPickerPage({ formError, classOptions, students }) {
           >
             <div className="random-quick-icon">🎲</div>
             <div className="random-quick-copy">
-              <div className="random-quick-title">Quick Random Pick</div>
-              <div className="random-quick-subtitle">Tap to spin and choose instantly</div>
-              <div className="random-quick-note">Any student, no rotation tracking</div>
+              <div className="random-quick-title">{t("random.quick.title")}</div>
+              <div className="random-quick-subtitle">{t("random.quick.subtitle")}</div>
+              <div className="random-quick-note">{t("random.quick.note")}</div>
             </div>
-            <span className="random-quick-cta">Pick Now</span>
           </button>
 
           <div className="random-section">
             <div className="random-section-header">
-              <h3>Role Rotation</h3>
+              <h3>{t("random.rotation.title")}</h3>
               <div className="random-section-actions">
                 {isSelectedCategoryCustom && (
                   <button type="button" className="link danger" onClick={() => setShowDeleteCategory(true)}>
-                    Delete Custom
+                    {t("random.rotation.deleteCustom")}
                   </button>
                 )}
-                <button type="button" className="link" onClick={() => setShowAddCategory(true)}>
-                  + Add Custom
+                <button
+                  type="button"
+                  className="secondary random-add-custom-btn"
+                  onClick={() => setShowAddCategory(true)}
+                >
+                  {t("random.rotation.addCustom")}
                 </button>
               </div>
             </div>
@@ -225,16 +247,16 @@ function RandomPickerPage({ formError, classOptions, students }) {
                       onClick={() => setSelectedCategory(category)}
                     >
                       <span className="random-chip-icon">{icon}</span>
-                      <span>{category}</span>
+                      <span>{categoryDisplayLabel(category)}</span>
                       {isSelected && (
-                        <span className="muted">{availableStudents.length} left</span>
+                        <span className="muted">{t("random.rotation.leftCount", { count: availableStudents.length })}</span>
                       )}
                     </button>
                     {isCustom && (
                       <button
                         type="button"
                         className="random-chip-delete"
-                        aria-label={`Delete ${category}`}
+                        aria-label={t("random.rotation.deleteRoleAria", { role: categoryDisplayLabel(category) })}
                         onClick={() => requestDeleteCategory(category)}
                       >
                         🗑
@@ -251,13 +273,12 @@ function RandomPickerPage({ formError, classOptions, students }) {
               <div className="random-rotation-headline">
                 <div className="random-rotation-header">
                   <span className="random-rotation-icon">{categoryIcon}</span>
-                  <strong>{selectedCategory} Rotation</strong>
+                  <strong>{t("random.rotation.roleRotation", { role: categoryRotationLabel(selectedCategory) })}</strong>
                 </div>
-                <div className="random-rotation-subtitle">Fair rotation, everyone gets a turn.</div>
               </div>
               {usedStudents.length > 0 && (
                 <button type="button" className="random-clear" onClick={clearUsed}>
-                  Clear used students
+                  {t("random.rotation.clearUsed")}
                 </button>
               )}
             </div>
@@ -266,15 +287,15 @@ function RandomPickerPage({ formError, classOptions, students }) {
             <div className="random-stats">
               <div className="stat-card green">
                 <div className="stat-value">{availableStudents.length}</div>
-                <div className="stat-label">Available</div>
+                <div className="stat-label">{t("random.stats.available")}</div>
               </div>
               <div className="stat-card orange">
                 <div className="stat-value">{usedStudents.length}</div>
-                <div className="stat-label">Used</div>
+                <div className="stat-label">{t("random.stats.used")}</div>
               </div>
               <div className="stat-card purple">
                 <div className="stat-value">{filteredStudents.length}</div>
-                <div className="stat-label">Total</div>
+                <div className="stat-label">{t("random.stats.total")}</div>
               </div>
             </div>
 
@@ -287,10 +308,10 @@ function RandomPickerPage({ formError, classOptions, students }) {
             {availableStudents.length === 0 && filteredStudents.length > 0 ? (
               <div className="random-reset">
                 <div className="random-reset-title">
-                  Everyone has been the {selectedCategory.toLowerCase()}!
+                  {t("random.rotation.everyoneUsed", { role: categoryDisplayLabel(selectedCategory).toLowerCase() })}
                 </div>
                 <button type="button" onClick={clearUsed} style={{ background: categoryColor }}>
-                  Reset & Start Over
+                  {t("random.rotation.resetStartOver")}
                 </button>
               </div>
             ) : (
@@ -301,7 +322,7 @@ function RandomPickerPage({ formError, classOptions, students }) {
                 disabled={isSpinning || !filteredStudents.length}
                 style={{ background: categoryColor }}
               >
-                ✨ Pick Next {selectedCategory}
+                {t("random.rotation.pickNext", { role: categoryDisplayLabel(selectedCategory) })}
               </button>
             )}
 
@@ -310,7 +331,7 @@ function RandomPickerPage({ formError, classOptions, students }) {
                 {availableStudents.length > 0 && (
                   <div>
                     <div className="random-list-title">
-                      Available ({availableStudents.length})
+                      {t("random.lists.availableCount", { count: availableStudents.length })}
                     </div>
                     <div className="random-pill-row">
                       {availableStudents.map((student) => (
@@ -323,7 +344,7 @@ function RandomPickerPage({ formError, classOptions, students }) {
                 )}
                 {usedStudents.length > 0 && (
                   <div>
-                    <div className="random-list-title">Already Used ({usedStudents.length})</div>
+                    <div className="random-list-title">{t("random.lists.alreadyUsedCount", { count: usedStudents.length })}</div>
                     <div className="random-pill-row">
                       {usedStudents.map((student) => (
                         <span key={student.id} className="random-pill gray">
@@ -341,14 +362,14 @@ function RandomPickerPage({ formError, classOptions, students }) {
         {showAddCategory && (
           <div className="modal-overlay">
             <div className="modal-card random-modal">
-              <h3>Add Custom Role</h3>
-              <p className="muted">Create your own classroom role.</p>
+              <h3>{t("random.custom.addTitle")}</h3>
+              <p className="muted">{t("random.custom.addSubtitle")}</p>
               <label className="stack">
-                <span>Role Name</span>
+                <span>{t("random.custom.roleName")}</span>
                 <input
                   value={newCategoryName}
                   onChange={(event) => setNewCategoryName(event.target.value)}
-                  placeholder="e.g., Door Holder"
+                  placeholder={t("random.custom.roleNamePlaceholder")}
                 />
               </label>
               {newCategoryName.trim() && (
@@ -359,10 +380,10 @@ function RandomPickerPage({ formError, classOptions, students }) {
               )}
               <div className="modal-actions">
                 <button type="button" className="link" onClick={() => setShowAddCategory(false)}>
-                  Cancel
+                  {t("common.actions.cancel")}
                 </button>
                 <button type="button" onClick={addCustomCategory} disabled={!newCategoryName.trim()}>
-                  Add
+                  {t("common.actions.create")}
                 </button>
               </div>
             </div>
@@ -372,16 +393,16 @@ function RandomPickerPage({ formError, classOptions, students }) {
         {showDeleteCategory && (
           <div className="modal-overlay">
             <div className="modal-card random-modal">
-              <h3>Delete Custom Role?</h3>
+              <h3>{t("random.custom.deleteTitle")}</h3>
               <p className="muted">
-                This will remove "{selectedCategory}" and its saved rotation history.
+                {t("random.custom.deleteDescription", { role: categoryDisplayLabel(selectedCategory) })}
               </p>
               <div className="modal-actions">
                 <button type="button" className="link" onClick={() => setShowDeleteCategory(false)}>
-                  Cancel
+                  {t("common.actions.cancel")}
                 </button>
                 <button type="button" className="danger" onClick={deleteCustomCategory}>
-                  Delete
+                  {t("common.actions.delete")}
                 </button>
               </div>
             </div>
@@ -395,7 +416,9 @@ function RandomPickerPage({ formError, classOptions, students }) {
                 <div className="random-result-icon">{isRotationMode ? categoryIcon : "🔀"}</div>
               </div>
               <div className="random-result-kicker">
-                {isRotationMode ? `Today's ${selectedCategory}` : "Random Pick"}
+                {isRotationMode
+                  ? t("random.result.todaysRole", { role: categoryDisplayLabel(selectedCategory) })
+                  : t("random.result.randomPick")}
               </div>
               <h2 className="random-result-name">
                 {pickedStudent.first_name} {pickedStudent.last_name}
@@ -405,15 +428,15 @@ function RandomPickerPage({ formError, classOptions, students }) {
                 {isRotationMode ? (
                   <>
                     <button type="button" onClick={markUsed} style={{ background: categoryColor }}>
-                      Mark as Used
+                      {t("random.result.markUsed")}
                     </button>
                     <button type="button" className="link" onClick={() => setPickedStudent(null)}>
-                      Skip (Student Absent)
+                      {t("random.result.skipAbsent")}
                     </button>
                   </>
                 ) : (
                   <button type="button" onClick={() => setPickedStudent(null)}>
-                    Done
+                    {t("common.actions.done")}
                   </button>
                 )}
               </div>

@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import {
   differenceInCalendarDays,
   format,
+  isValid,
   isToday,
   isYesterday,
   parseISO,
 } from "date-fns";
+import { enUS, ptBR } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import {
   getAttendanceRate,
@@ -23,7 +26,9 @@ const AttendancePage = ({
   handleCreateAttendanceSessionForDate,
   handleDeleteAttendanceSession,
 }) => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const locale = i18n.language === "pt-BR" ? ptBR : enUS;
   const attendanceClassStorageKey = "ta_attendance_active_class";
   const [searchParams] = useSearchParams();
   const classId = searchParams.get("classId") || "";
@@ -65,7 +70,9 @@ const AttendancePage = ({
   const formatSessionDate = (dateString) => {
     if (!dateString) return "";
     try {
-      return format(parseISO(dateString), "MMM d, yyyy");
+      const parsedDate = parseISO(dateString);
+      if (!isValid(parsedDate)) return dateString;
+      return format(parsedDate, "PP", { locale });
     } catch {
       return dateString;
     }
@@ -74,11 +81,12 @@ const AttendancePage = ({
   const relativeDate = (dateString) => {
     if (!dateString) return "";
     const date = parseISO(dateString);
-    if (isToday(date)) return "Today";
-    if (isYesterday(date)) return "Yesterday";
+    if (!isValid(date)) return dateString;
+    if (isToday(date)) return t("attendance.relative.today");
+    if (isYesterday(date)) return t("attendance.relative.yesterday");
     const diff = differenceInCalendarDays(new Date(), date);
-    if (diff > 0 && diff <= 7) return `${diff} days ago`;
-    return format(date, "EEEE");
+    if (diff > 0 && diff <= 7) return t("attendance.relative.daysAgo", { count: diff });
+    return format(date, "EEEE", { locale });
   };
 
   const getSessionStats = (sessionId) => {
@@ -105,7 +113,7 @@ const AttendancePage = ({
 
   const handleDeleteSession = async (sessionId) => {
     if (!sessionId || deletingSessionId) return;
-    if (!window.confirm("Delete this attendance session?")) return;
+    if (!window.confirm(t("attendance.confirm.deleteSession"))) return;
     setDeletingSessionId(sessionId);
     setFormError("");
     try {
@@ -121,8 +129,8 @@ const AttendancePage = ({
       <section className="panel attendance-page">
         <div className="attendance-header">
           <div className="attendance-page-title">
-            <h2>Attendance</h2>
-            {classLabel && <div className="muted">Class: {classLabel}</div>}
+            <h2>{t("attendance.title")}</h2>
+            {classLabel && <div className="muted">{t("attendance.classLabel", { classLabel })}</div>}
           </div>
           <div className="attendance-actions">
             {!isClassLockedByQuery && (
@@ -130,7 +138,7 @@ const AttendancePage = ({
                 value={activeClassId}
                 onChange={(event) => setActiveClassId(event.target.value)}
               >
-                <option value="">Select class</option>
+                <option value="">{t("attendance.actions.selectClass")}</option>
                 {classOptions.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
@@ -146,7 +154,7 @@ const AttendancePage = ({
               }}
               disabled={isCreatingSession}
             >
-              By date
+              {t("attendance.actions.byDate")}
             </button>
             <button
               type="button"
@@ -156,7 +164,7 @@ const AttendancePage = ({
               aria-busy={isCreatingSession}
             >
               {isCreatingSession && <span className="inline-spinner" aria-hidden="true" />}
-              Today
+              {t("attendance.actions.today")}
             </button>
           </div>
         </div>
@@ -165,29 +173,29 @@ const AttendancePage = ({
           <div className="attendance-stats">
             <div className="stat-card attendance-stat-card">
               <div className="stat-value">{classSessions.length}</div>
-              <div className="stat-label">Total Sessions</div>
+              <div className="stat-label">{t("attendance.stats.totalSessions")}</div>
             </div>
             <div className="stat-card attendance-stat-card">
               <div className="stat-value">{classStudents.length}</div>
-              <div className="stat-label">Students</div>
+              <div className="stat-label">{t("attendance.stats.students")}</div>
             </div>
             <div className="stat-card attendance-stat-card">
               <div className="stat-value" style={{ color: attendanceRateColor }}>
                 {attendanceRate}%
               </div>
-              <div className="stat-label">Attendance Rate</div>
+              <div className="stat-label">{t("attendance.stats.attendanceRate")}</div>
             </div>
           </div>
         )}
 
         <div className="attendance-section">
-          <h3>Attendance Sessions</h3>
+          <h3>{t("attendance.sessions.title")}</h3>
           {classSessions.length === 0 ? (
             <div className="attendance-empty">
               <div className="attendance-empty-icon">📅</div>
-              <div className="attendance-empty-title">No attendance sessions yet</div>
+              <div className="attendance-empty-title">{t("attendance.sessions.emptyTitle")}</div>
               <div className="muted">
-                Create your first session to start tracking attendance.
+                {t("attendance.sessions.emptyDescription")}
               </div>
             </div>
           ) : (
@@ -214,7 +222,7 @@ const AttendancePage = ({
                           event.preventDefault();
                           handleDeleteSession(session.id);
                         }}
-                        aria-label="Delete session"
+                        aria-label={t("attendance.aria.deleteSession")}
                         disabled={Boolean(deletingSessionId)}
                         aria-busy={deletingSessionId === session.id}
                       >
@@ -228,25 +236,25 @@ const AttendancePage = ({
 
                     <div className="attendance-card-stats">
                       <div className="attendance-card-stat">
-                        <div className="attendance-card-stat-label">Present</div>
+                        <div className="attendance-card-stat-label">{t("attendance.status.present.short")}</div>
                         <strong className="attendance-card-stat-value present">{stats.present}</strong>
                       </div>
                       <div className="attendance-card-stat">
-                        <div className="attendance-card-stat-label">Didn't come</div>
+                        <div className="attendance-card-stat-label">{t("attendance.status.absent.label")}</div>
                         <strong className="attendance-card-stat-value absent">{stats.absent}</strong>
                       </div>
                       <div className="attendance-card-stat">
-                        <div className="attendance-card-stat-label">Late</div>
+                        <div className="attendance-card-stat-label">{t("attendance.status.late.short")}</div>
                         <strong className="attendance-card-stat-value late">{stats.late}</strong>
                       </div>
                       <div className="attendance-card-stat">
-                        <div className="attendance-card-stat-label">Left early</div>
+                        <div className="attendance-card-stat-label">{t("attendance.status.leftEarly.short")}</div>
                         <strong className="attendance-card-stat-value early">{stats.leftEarly}</strong>
                       </div>
                     </div>
 
                     <div className="attendance-rate">
-                      <div className="attendance-rate-label">Attendance Rate</div>
+                      <div className="attendance-rate-label">{t("attendance.stats.attendanceRate")}</div>
                       <div className="attendance-rate-bar">
                         <span
                           style={{
@@ -272,11 +280,11 @@ const AttendancePage = ({
           <div className="modal-card attendance-modal">
             <div className="attendance-modal-header">
               <div className="attendance-modal-icon">📅</div>
-              <h3>Add Attendance Session</h3>
-              <div className="muted">Choose a date to record attendance.</div>
+              <h3>{t("attendance.modal.title")}</h3>
+              <div className="muted">{t("attendance.modal.description")}</div>
             </div>
             <label className="stack">
-              <span>Select date</span>
+              <span>{t("attendance.modal.selectDate")}</span>
               <input
                 type="date"
                 value={selectedDate}
@@ -284,7 +292,7 @@ const AttendancePage = ({
               />
             </label>
             <div className="attendance-modal-date">
-              Selected Date: {selectedDate}
+              {t("attendance.modal.selectedDate", { date: selectedDate })}
             </div>
             <div className="modal-actions attendance-modal-actions">
               <button
@@ -292,7 +300,7 @@ const AttendancePage = ({
                 className="link"
                 onClick={() => setShowDatePicker(false)}
               >
-                Cancel
+                {t("common.actions.cancel")}
               </button>
               <button
                 type="button"
@@ -305,7 +313,7 @@ const AttendancePage = ({
                 aria-busy={isCreatingSession}
               >
                 {isCreatingSession && <span className="inline-spinner" aria-hidden="true" />}
-                Create Session
+                {t("attendance.modal.createSession")}
               </button>
             </div>
           </div>

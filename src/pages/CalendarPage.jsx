@@ -3,6 +3,7 @@ import CalendarDiaryEntryModal from "../components/calendar/CalendarDiaryEntryMo
 import CalendarEntryDetailModal from "../components/calendar/CalendarEntryDetailModal";
 import CalendarEventModal from "../components/calendar/CalendarEventModal";
 import CalendarMainPanel from "../components/calendar/CalendarMainPanel";
+import { useTranslation } from "react-i18next";
 import useCalendarPageController from "../hooks/calendar/useCalendarPageController";
 
 const CalendarPage = ({
@@ -21,6 +22,7 @@ const CalendarPage = ({
   handleCreateCalendarEvent,
   handleDeleteCalendarEvent,
 }) => {
+  const { t } = useTranslation();
   const {
     classId,
     activeClassId,
@@ -138,7 +140,7 @@ const CalendarPage = ({
 
       <CalendarDiaryEntryModal
         show={showNewEntry}
-        title="New Diary Entry"
+        title={t("calendar.modals.newDiaryEntryTitle")}
         selectedDate={selectedDate}
         onSubmit={handleCreateDiaryEntry}
         onCancel={() => setShowNewEntry(false)}
@@ -148,7 +150,7 @@ const CalendarPage = ({
         classOptions={classOptions}
         subjectOptions={subjectOptionsForEntryClass}
         unitOptions={unitOptionsForEntrySubject}
-        submitLabel="Save"
+        submitLabel={t("calendar.actions.save")}
         calendarTablesReady={calendarTablesReady}
         resetSubjectOnClassChange={false}
       />
@@ -178,7 +180,7 @@ const CalendarPage = ({
 
       <CalendarDiaryEntryModal
         show={showEditEntry}
-        title="Edit Diary Entry"
+        title={t("calendar.modals.editDiaryEntryTitle")}
         selectedDate={activeDiaryEntry?.entry_date || selectedDate}
         onSubmit={handleUpdateDiaryEntry}
         onCancel={closeEditEntry}
@@ -188,7 +190,7 @@ const CalendarPage = ({
         classOptions={classOptions}
         subjectOptions={subjectOptionsForEditClass}
         unitOptions={unitOptionsForEditSubject}
-        submitLabel="Save changes"
+        submitLabel={t("calendar.actions.saveChanges")}
         calendarTablesReady={calendarTablesReady}
         resetSubjectOnClassChange={true}
       />

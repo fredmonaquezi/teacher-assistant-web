@@ -100,23 +100,6 @@
   font-weight: 600;
 }
 
-.random-quick-cta {
-  margin-top: 2px;
-  width: fit-content;
-  min-width: 110px;
-  height: 36px;
-  border-radius: 999px;
-  border: 1px solid #b87443;
-  background: linear-gradient(180deg, #fdf0d5 0%, #f4e2bc 100%);
-  color: #9b5a2c;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 0.86rem;
-  letter-spacing: 0.01em;
-}
-
 .random-section-header {
   display: flex;
   align-items: center;
@@ -128,6 +111,15 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.random-add-custom-btn {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .link.danger {
@@ -525,6 +517,25 @@
   border: 1px solid #c6a87a;
   background: linear-gradient(180deg, #fdf0d5 0%, #f6e8c7 100%);
   box-shadow: 0 24px 46px rgba(74, 53, 29, 0.24);
+  gap: 10px;
+}
+
+.random-modal h3 {
+  margin: 0;
+  line-height: 1.12;
+}
+
+.random-modal > .muted {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.random-modal .stack {
+  gap: 6px;
+}
+
+.random-modal .modal-actions {
+  margin-top: 4px;
 }
 
 .random-modal .stack input,
@@ -1750,6 +1761,45 @@
   align-items: center;
 }
 
+.rubrics-danger-zone {
+  margin-top: 8px;
+  border: 1px solid #d2a69e;
+  background: linear-gradient(180deg, #fbebe6 0%, #f6dfd9 100%);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rubrics-danger-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.rubrics-danger-copy h4 {
+  margin: 0;
+  color: #7d2f24;
+}
+
+.rubrics-danger-copy .muted {
+  margin: 0;
+  color: #8a4a40;
+}
+
+.rubrics-danger-modal {
+  border-color: #cd8e84;
+  background: linear-gradient(180deg, #fbe9e4 0%, #f4d8d2 100%);
+}
+
+.rubrics-delete-warning {
+  margin: 0;
+  color: #7d2f24;
+  font-weight: 700;
+}
+
 @media (max-width: 720px) {
   .rubrics-header-card {
     align-items: flex-start;
@@ -1763,4 +1813,3 @@
     width: 100%;
   }
 }
-

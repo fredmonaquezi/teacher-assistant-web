@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { loadAuthEnv } from "../../config/env";
+import "../../i18n";
 import { supabase } from "../../supabaseClient";
 
 const { enableGoogleAuth, googleClientId } = loadAuthEnv();
@@ -8,6 +10,7 @@ const GOOGLE_IDENTITY_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 const getGoogleIdentityApi = () => globalThis.google?.accounts?.id;
 
 function AuthForm({ onSuccess }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState("signin");
@@ -28,7 +31,7 @@ function AuthForm({ onSuccess }) {
           password,
         });
         if (signUpError) throw signUpError;
-        onSuccess("Check your email to confirm your account, then sign in.");
+        onSuccess(t("auth.success.checkEmail"));
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -37,7 +40,7 @@ function AuthForm({ onSuccess }) {
         if (signInError) throw signInError;
       }
     } catch (err) {
-      setError(err.message || "Something went wrong. Try again.");
+      setError(err.message || t("auth.errors.generic"));
     } finally {
       setLoading(false);
     }
@@ -46,7 +49,7 @@ function AuthForm({ onSuccess }) {
   useEffect(() => {
     if (!enableGoogleAuth) return undefined;
     if (!googleClientId) {
-      setError("Google auth is enabled, but VITE_GOOGLE_CLIENT_ID is missing.");
+      setError(t("auth.errors.googleMissingClientId"));
       return undefined;
     }
 
@@ -55,7 +58,7 @@ function AuthForm({ onSuccess }) {
       if (!disposed) setGoogleLoaded(true);
     };
     const markFailed = () => {
-      if (!disposed) setError("Failed to load Google sign-in. Refresh and try again.");
+      if (!disposed) setError(t("auth.errors.googleLoadFailed"));
     };
 
     if (getGoogleIdentityApi()) {
@@ -83,7 +86,7 @@ function AuthForm({ onSuccess }) {
       script.removeEventListener("load", markLoaded);
       script.removeEventListener("error", markFailed);
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!enableGoogleAuth || !googleLoaded || !googleClientId || !googleButtonRef.current) return undefined;
@@ -97,14 +100,14 @@ function AuthForm({ onSuccess }) {
       setLoading(true);
       try {
         const token = response?.credential;
-        if (!token) throw new Error("Google did not return a login credential.");
+        if (!token) throw new Error(t("auth.errors.googleMissingCredential"));
         const { error: signInError } = await supabase.auth.signInWithIdToken({
           provider: "google",
           token,
         });
         if (signInError) throw signInError;
       } catch (err) {
-        setError(err.message || "Google sign-in failed. Try again.");
+        setError(err.message || t("auth.errors.googleSignInFailed"));
       } finally {
         setLoading(false);
       }
@@ -135,19 +138,19 @@ function AuthForm({ onSuccess }) {
       googleButtonElement.replaceChildren();
       googleIdentity.cancel();
     };
-  }, [googleLoaded, mode]);
+  }, [googleLoaded, mode, t]);
 
   return (
     <div className="card auth-card">
       <div className="auth-head">
         <div className="auth-badge" aria-hidden="true">🎓</div>
-        <h1>Teacher Assistant</h1>
-        <p className="muted">Sign in to sync your data across devices.</p>
+        <h1>{t("auth.title")}</h1>
+        <p className="muted">{t("auth.subtitle")}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="stack auth-form">
         <label className="stack">
-          <span>Email</span>
+          <span>{t("auth.email")}</span>
           <input
             className="auth-input"
             type="email"
@@ -158,7 +161,7 @@ function AuthForm({ onSuccess }) {
         </label>
 
         <label className="stack">
-          <span>Password</span>
+          <span>{t("auth.password")}</span>
           <input
             className="auth-input"
             type="password"
@@ -171,22 +174,22 @@ function AuthForm({ onSuccess }) {
         {error && <div className="error">{error}</div>}
 
         <button type="submit" className="auth-submit" disabled={loading}>
-          {loading ? "Working..." : mode === "signup" ? "Create account" : "Sign in"}
+          {loading ? t("auth.working") : mode === "signup" ? t("auth.createAccount") : t("auth.signIn")}
         </button>
       </form>
 
       {enableGoogleAuth && (
         <div className="auth-google-wrap" aria-live="polite">
           <div className="auth-divider" aria-hidden="true">
-            <span>or</span>
+            <span>{t("auth.or")}</span>
           </div>
           <div className="auth-google-panel">
             <p className="auth-google-label">
-              {mode === "signup" ? "Create account with Google" : "Sign in with Google"}
+              {mode === "signup" ? t("auth.createWithGoogle") : t("auth.signInWithGoogle")}
             </p>
             <div ref={googleButtonRef} className="auth-google-button" />
           </div>
-          {loading && <p className="muted auth-google-status">Completing Google sign-in...</p>}
+          {loading && <p className="muted auth-google-status">{t("auth.completingGoogleSignIn")}</p>}
         </div>
       )}
 
@@ -197,8 +200,8 @@ function AuthForm({ onSuccess }) {
         onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
       >
         {mode === "signup"
-          ? "Already have an account? Sign in"
-          : "New here? Create an account"}
+          ? t("auth.alreadyHaveAccount")
+          : t("auth.newHere")}
       </button>
     </div>
   );

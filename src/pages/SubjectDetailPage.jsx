@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import ReorderModeToggle from "../components/common/ReorderModeToggle";
 import { useHandleDrag } from "../hooks/useHandleDrag";
@@ -17,6 +18,7 @@ function SubjectDetailPage({
   handleSwapSortOrder,
   handleDeleteUnit,
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { subjectId } = useParams();
   const subject = subjects.find((item) => item.id === subjectId);
@@ -59,8 +61,8 @@ function SubjectDetailPage({
   if (!subject) {
     return (
       <section className="panel">
-        <h2>Subject not found</h2>
-        <p className="muted">Select a subject from a class.</p>
+        <h2>{t("subjectDetail.notFoundTitle")}</h2>
+        <p className="muted">{t("subjectDetail.notFoundDescription")}</p>
       </section>
     );
   }
@@ -70,27 +72,27 @@ function SubjectDetailPage({
       {formError && <div className="error">{formError}</div>}
       <section className="panel subject-detail-header">
         <h2>{subject.name}</h2>
-        <p className="muted">{subject.description || "No description"}</p>
+        <p className="muted">{subject.description || t("subjectDetail.noDescription")}</p>
       </section>
 
       <section className="subject-stat-row">
         <article className="panel subject-stat-card">
-          <p className="muted">Subject Average</p>
+          <p className="muted">{t("subjectDetail.stats.subjectAverage")}</p>
           <p style={{ color: averageColor }}>{subjectAverage.toFixed(1)}%</p>
         </article>
         <article className="panel subject-stat-card">
-          <p className="muted">Total Units</p>
+          <p className="muted">{t("subjectDetail.stats.totalUnits")}</p>
           <p style={{ color: "#2563eb" }}>{subjectUnits.length}</p>
         </article>
         <article className="panel subject-stat-card">
-          <p className="muted">Total Assessments</p>
+          <p className="muted">{t("subjectDetail.stats.totalAssessments")}</p>
           <p style={{ color: "#7c3aed" }}>{subjectAssessments.length}</p>
         </article>
       </section>
 
       <section className="panel">
         <div className="subject-units-title">
-          <h3>Units</h3>
+          <h3>{t("subjectDetail.unitsTitle")}</h3>
           <div className="subject-units-actions">
             {isMobileLayout && subjectUnits.length > 1 && (
               <ReorderModeToggle isReorderMode={isReorderMode} setIsReorderMode={setIsReorderMode} />
@@ -102,15 +104,14 @@ function SubjectDetailPage({
                 setShowAddUnitDialog(true);
               }}
             >
-              + Add Unit
+              {t("subjectDetail.addUnit")}
             </button>
           </div>
         </div>
-        <div className="unit-reorder-tip">Drag ⠿ to reorder units. On mobile, use Reorder Mode arrows.</div>
         {subjectUnits.length === 0 ? (
           <div className="subject-empty">
-            <h4>No units yet</h4>
-            <p className="muted">Create your first unit to start adding assessments.</p>
+            <h4>{t("subjectDetail.emptyTitle")}</h4>
+            <p className="muted">{t("subjectDetail.emptyDescription")}</p>
             <button
               type="button"
               onClick={() => {
@@ -118,7 +119,7 @@ function SubjectDetailPage({
                 setShowAddUnitDialog(true);
               }}
             >
-              Create First Unit
+              {t("subjectDetail.createFirstUnit")}
             </button>
           </div>
         ) : (
@@ -162,9 +163,9 @@ function SubjectDetailPage({
                 onDrop={() => handleSwapSortOrder("units", subjectUnits, draggedUnitId, unit.id)}
               >
                 <div className="subject-unit-main">
-                  <p className="subject-unit-kicker">Unit</p>
+                  <p className="subject-unit-kicker">{t("subjectDetail.unitKicker")}</p>
                   <div className="subject-unit-name">{unit.name}</div>
-                  <p className="muted">{unit.description || "No description"}</p>
+                  <p className="muted">{unit.description || t("subjectDetail.noDescription")}</p>
                 </div>
                 <div className="subject-unit-actions">
                   {isMobileReorderActive && (
@@ -172,7 +173,7 @@ function SubjectDetailPage({
                       <button
                         type="button"
                         className="reorder-mobile-btn"
-                        aria-label={`Move ${unit.name} up`}
+                        aria-label={t("subjectDetail.aria.moveUp", { name: unit.name })}
                         disabled={!previousUnit}
                         onClick={(event) => {
                           event.stopPropagation();
@@ -185,7 +186,7 @@ function SubjectDetailPage({
                       <button
                         type="button"
                         className="reorder-mobile-btn"
-                        aria-label={`Move ${unit.name} down`}
+                        aria-label={t("subjectDetail.aria.moveDown", { name: unit.name })}
                         disabled={!nextUnit}
                         onClick={(event) => {
                           event.stopPropagation();
@@ -201,7 +202,7 @@ function SubjectDetailPage({
                     <button
                       type="button"
                       className={unitHandleClassName}
-                      aria-label={`Drag ${unit.name}`}
+                      aria-label={t("subjectDetail.aria.drag", { name: unit.name })}
                       onClick={(event) => event.stopPropagation()}
                       onPointerDown={(event) => onUnitHandlePointerDown(unit.id, event)}
                       onPointerMove={onUnitHandlePointerMove}
@@ -214,7 +215,7 @@ function SubjectDetailPage({
                   <button
                     type="button"
                     className="icon-button"
-                    aria-label="Delete unit"
+                    aria-label={t("subjectDetail.aria.deleteUnit")}
                     onClick={(event) => {
                       event.stopPropagation();
                       setUnitToDelete(unit);
@@ -235,9 +236,9 @@ function SubjectDetailPage({
         <div className="modal-overlay">
           <div className="modal-card unit-add-modal">
             <div className="unit-add-header">
-              <p className="unit-add-kicker">Units</p>
-              <h3>Add New Unit</h3>
-              <p className="muted">Create a clear unit name so teachers can find it quickly.</p>
+              <p className="unit-add-kicker">{t("subjectDetail.unitsTitle")}</p>
+              <h3>{t("subjectDetail.modal.addTitle")}</h3>
+              <p className="muted">{t("subjectDetail.modal.addDescription")}</p>
             </div>
             <form
               className="unit-add-form"
@@ -247,33 +248,33 @@ function SubjectDetailPage({
               }}
             >
               <label className="stack">
-                <span>Unit name</span>
+                <span>{t("subjectDetail.modal.unitName")}</span>
                 <input
                   value={unitForm.name}
                   onChange={(event) => setUnitForm((prev) => ({ ...prev, name: event.target.value }))}
-                  placeholder="e.g. Unit 1, Fractions, Ancient Rome"
+                  placeholder={t("subjectDetail.modal.unitNamePlaceholder")}
                   required
                 />
               </label>
               <label className="stack">
-                <span>Description</span>
+                <span>{t("subjectDetail.modal.description")}</span>
                 <input
                   value={unitForm.description}
                   onChange={(event) => setUnitForm((prev) => ({ ...prev, description: event.target.value }))}
-                  placeholder="Optional notes"
+                  placeholder={t("subjectDetail.modal.descriptionPlaceholder")}
                 />
               </label>
               {!!unitForm.name.trim() && (
                 <div className="subject-unit-preview">
-                  <strong>Preview</strong>
+                  <strong>{t("subjectDetail.modal.preview")}</strong>
                   <p>{unitForm.name}</p>
                 </div>
               )}
               <div className="modal-actions unit-add-actions">
                 <button type="button" className="secondary" onClick={() => setShowAddUnitDialog(false)}>
-                  Cancel
+                  {t("common.actions.cancel")}
                 </button>
-                <button type="submit">Add</button>
+                <button type="submit">{t("common.actions.add")}</button>
               </div>
             </form>
           </div>
@@ -283,10 +284,10 @@ function SubjectDetailPage({
       {showDeleteUnitAlert && (
         <div className="modal-overlay">
           <div className="modal-card">
-            <h3>Delete Unit?</h3>
+            <h3>{t("subjectDetail.delete.title")}</h3>
             <p className="muted">
               {unitToDelete
-                ? `Are you sure you want to delete "${unitToDelete.name}"? All assessments and grades inside this unit will be lost.`
+                ? t("subjectDetail.delete.description", { name: unitToDelete.name })
                 : ""}
             </p>
             <div className="modal-actions">
@@ -298,7 +299,7 @@ function SubjectDetailPage({
                   setUnitToDelete(null);
                 }}
               >
-                Cancel
+                {t("common.actions.cancel")}
               </button>
               <button
                 type="button"
@@ -311,7 +312,7 @@ function SubjectDetailPage({
                   setUnitToDelete(null);
                 }}
               >
-                Delete
+                {t("common.actions.delete")}
               </button>
             </div>
           </div>

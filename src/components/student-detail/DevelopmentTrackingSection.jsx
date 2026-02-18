@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 function DevelopmentTrackingSection({
   groupedDevelopment,
@@ -34,17 +35,18 @@ function DevelopmentTrackingSection({
   groupedCriterionOptions,
   selectedCriterionMeta,
 }) {
+  const { t } = useTranslation();
   return (
     <>
       <section className="panel">
         <div className="student-section-title">
-          <h3>Development Tracking</h3>
+          <h3>{t("development.title")}</h3>
           <button type="button" onClick={() => setShowDevelopmentForm(true)}>
-            Update
+            {t("development.update")}
           </button>
         </div>
         {Object.keys(groupedDevelopment).length === 0 ? (
-          <p className="muted">No development tracking yet.</p>
+          <p className="muted">{t("development.empty")}</p>
         ) : (
           <div className="student-development-groups">
             {Object.entries(groupedDevelopment)
@@ -67,12 +69,12 @@ function DevelopmentTrackingSection({
                           >
                             <span className="student-dev-criterion">
                               <span className="student-dev-criterion-title">
-                                {criterion?.label || "Criterion"}
+                                {criterion?.label || t("development.criterion")}
                               </span>
                               {score.notes ? (
                                 <span className="student-dev-criterion-note">{score.notes}</span>
                               ) : (
-                                <span className="student-dev-criterion-note subtle">No notes added</span>
+                                <span className="student-dev-criterion-note subtle">{t("development.noNotesAdded")}</span>
                               )}
                             </span>
                             <span className="student-dev-rating">
@@ -98,7 +100,7 @@ function DevelopmentTrackingSection({
           <div className="modal-card development-history-modal">
             <div className="development-history-header">
               <div>
-                <h3>{activeDevelopmentCriterion.label || "Criterion History"}</h3>
+                <h3>{activeDevelopmentCriterion.label || t("development.criterionHistory")}</h3>
                 <p className="muted">{activeDevelopmentCategoryName}</p>
                 {activeDevelopmentCriterion.description ? (
                   <p className="development-history-description">{activeDevelopmentCriterion.description}</p>
@@ -109,13 +111,13 @@ function DevelopmentTrackingSection({
                   type="button"
                   onClick={() => setShowAddDevelopmentHistoryForm((prev) => !prev)}
                 >
-                  {showAddDevelopmentHistoryForm ? "Cancel new rating" : "+ Add New Rating"}
+                  {showAddDevelopmentHistoryForm ? t("development.cancelNewRating") : t("development.addNewRating")}
                 </button>
                 <button
                   type="button"
                   className="icon-button"
                   onClick={() => selectDevelopmentCriterion("")}
-                  aria-label="Close history"
+                  aria-label={t("development.closeHistory")}
                 >
                   ×
                 </button>
@@ -123,23 +125,26 @@ function DevelopmentTrackingSection({
             </div>
 
             {activeDevelopmentHistory.length === 0 ? (
-              <p className="muted">No history yet for this criterion.</p>
+              <p className="muted">{t("development.noHistory")}</p>
             ) : (
               <>
                 {sparklineData && (
                   <section
                     className={`development-sparkline-card ${sparklineData.total <= 2 ? "compact" : ""}`}
-                    aria-label="Progress trend"
+                    aria-label={t("development.progressTrend")}
                   >
                     <div className="development-sparkline-meta">
-                      <strong>Trend</strong>
-                      <span>{sparklineData.total} entries</span>
+                      <strong>{t("development.trend")}</strong>
+                      <span>{t("development.entriesCount", { count: sparklineData.total })}</span>
                     </div>
                     <svg
                       className="development-sparkline"
                       viewBox={`0 0 ${sparklineData.width} ${sparklineData.height}`}
                       role="img"
-                      aria-label={`Ratings moved from ${sparklineData.first} to ${sparklineData.last}`}
+                      aria-label={t("development.ratingsMoved", {
+                        first: sparklineData.first,
+                        last: sparklineData.last,
+                      })}
                     >
                       <polyline
                         className="development-sparkline-line"
@@ -150,11 +155,11 @@ function DevelopmentTrackingSection({
                       ))}
                     </svg>
                     <div className="development-sparkline-labels">
-                      <span>Earlier: {sparklineData.first}/5</span>
-                      <span>Latest: {sparklineData.last}/5</span>
+                      <span>{t("development.earlier")}: {sparklineData.first}/5</span>
+                      <span>{t("development.latest")}: {sparklineData.last}/5</span>
                     </div>
                     {sparklineData.total === 1 && (
-                      <p className="development-sparkline-hint">Add one more rating to start visual trend tracking.</p>
+                      <p className="development-sparkline-hint">{t("development.sparklineHint")}</p>
                     )}
                   </section>
                 )}
@@ -178,24 +183,24 @@ function DevelopmentTrackingSection({
                         notes: "",
                       });
                     }}
-                  >
-                    <label className="stack">
-                      <span>Rating</span>
-                      <select
+                    >
+                      <label className="stack">
+                        <span>{t("development.rating")}</span>
+                        <select
                         value={newDevelopmentHistoryForm.rating}
                         onChange={(event) =>
                           setNewDevelopmentHistoryForm((prev) => ({ ...prev, rating: event.target.value }))
                         }
                       >
-                        <option value="1">1 - Needs Significant Support</option>
-                        <option value="2">2 - Beginning to Develop</option>
-                        <option value="3">3 - Developing</option>
-                        <option value="4">4 - Proficient</option>
-                        <option value="5">5 - Mastering / Exceeding</option>
+                        <option value="1">{t("development.ratingOptions.1")}</option>
+                        <option value="2">{t("development.ratingOptions.2")}</option>
+                        <option value="3">{t("development.ratingOptions.3")}</option>
+                        <option value="4">{t("development.ratingOptions.4")}</option>
+                        <option value="5">{t("development.ratingOptions.5")}</option>
                       </select>
                     </label>
                     <label className="stack">
-                      <span>Date</span>
+                      <span>{t("development.date")}</span>
                       <input
                         type="date"
                         value={newDevelopmentHistoryForm.date}
@@ -205,18 +210,18 @@ function DevelopmentTrackingSection({
                       />
                     </label>
                     <label className="stack">
-                      <span>Notes</span>
+                      <span>{t("development.notes")}</span>
                       <textarea
                         rows="2"
                         value={newDevelopmentHistoryForm.notes}
                         onChange={(event) =>
                           setNewDevelopmentHistoryForm((prev) => ({ ...prev, notes: event.target.value }))
                         }
-                        placeholder="Optional notes"
+                        placeholder={t("development.optionalNotes")}
                       />
                     </label>
                     <div className="modal-actions">
-                      <button type="submit">Save new rating</button>
+                      <button type="submit">{t("development.saveNewRating")}</button>
                     </div>
                   </form>
                 )}
@@ -227,7 +232,15 @@ function DevelopmentTrackingSection({
                     const scoreValue = Math.max(0, Number(score.rating || 0));
                     const trendClass =
                       trend === "Improved" ? "improved" : trend === "Needs Support" ? "declined" : "steady";
-                    const dateLabel = score.score_date || score.created_at?.slice(0, 10) || "No date";
+                    const trendText =
+                      trend === "Improved"
+                        ? t("development.trendImproved")
+                        : trend === "Needs Support"
+                          ? t("development.trendNeedsSupport")
+                          : trend === "Baseline"
+                            ? t("development.trendBaseline")
+                            : t("development.trendSteady");
+                    const dateLabel = score.score_date || score.created_at?.slice(0, 10) || t("runningRecords.noDate");
                     return (
                       <li key={score.id}>
                         <div className="development-history-item-head">
@@ -238,7 +251,7 @@ function DevelopmentTrackingSection({
                             </span>
                             <span>{ratingLabel(scoreValue)}</span>
                           </div>
-                          <div className={`development-trend ${trendClass}`}>{trend}</div>
+                          <div className={`development-trend ${trendClass}`}>{trendText}</div>
                         </div>
                         <p className="development-history-date">{dateLabel}</p>
                         {editingDevelopmentScoreId === score.id ? (
@@ -256,7 +269,7 @@ function DevelopmentTrackingSection({
                             }}
                           >
                             <label className="stack">
-                              <span>Rating</span>
+                              <span>{t("development.rating")}</span>
                               <select
                                 value={developmentHistoryEditForm.rating}
                                 onChange={(event) =>
@@ -266,15 +279,15 @@ function DevelopmentTrackingSection({
                                   }))
                                 }
                               >
-                                <option value="1">1 - Needs Significant Support</option>
-                                <option value="2">2 - Beginning to Develop</option>
-                                <option value="3">3 - Developing</option>
-                                <option value="4">4 - Proficient</option>
-                                <option value="5">5 - Mastering / Exceeding</option>
+                                <option value="1">{t("development.ratingOptions.1")}</option>
+                                <option value="2">{t("development.ratingOptions.2")}</option>
+                                <option value="3">{t("development.ratingOptions.3")}</option>
+                                <option value="4">{t("development.ratingOptions.4")}</option>
+                                <option value="5">{t("development.ratingOptions.5")}</option>
                               </select>
                             </label>
                             <label className="stack">
-                              <span>Date</span>
+                              <span>{t("development.date")}</span>
                               <input
                                 type="date"
                                 value={developmentHistoryEditForm.date}
@@ -287,7 +300,7 @@ function DevelopmentTrackingSection({
                               />
                             </label>
                             <label className="stack">
-                              <span>Notes</span>
+                              <span>{t("development.notes")}</span>
                               <textarea
                                 rows="2"
                                 value={developmentHistoryEditForm.notes}
@@ -297,7 +310,7 @@ function DevelopmentTrackingSection({
                                     notes: event.target.value,
                                   }))
                                 }
-                                placeholder="Optional notes"
+                                placeholder={t("development.optionalNotes")}
                               />
                             </label>
                             <div className="modal-actions">
@@ -306,9 +319,9 @@ function DevelopmentTrackingSection({
                                 className="secondary"
                                 onClick={() => setEditingDevelopmentScoreId("")}
                               >
-                                Cancel
+                                {t("common.actions.cancel")}
                               </button>
-                              <button type="submit">Save changes</button>
+                              <button type="submit">{t("calendar.actions.saveChanges")}</button>
                             </div>
                           </form>
                         ) : (
@@ -316,11 +329,11 @@ function DevelopmentTrackingSection({
                             {score.notes ? (
                               <p className="development-history-note">{score.notes}</p>
                             ) : (
-                              <p className="development-history-note muted">No notes for this record.</p>
+                              <p className="development-history-note muted">{t("development.noNotesForRecord")}</p>
                             )}
                             <div className="development-history-actions">
                               <button type="button" className="secondary" onClick={() => startEditingDevelopmentHistory(score)}>
-                                Edit
+                                {t("calendar.actions.edit")}
                               </button>
                             </div>
                           </>
@@ -339,8 +352,8 @@ function DevelopmentTrackingSection({
         <div className="modal-overlay">
           <div className="modal-card development-modal">
             <div className="development-modal-header">
-              <h3>Update Development Tracking</h3>
-              <p className="muted">Choose the year range first, then pick the criterion with context.</p>
+              <h3>{t("development.updateTitle")}</h3>
+              <p className="muted">{t("development.updateDescription")}</p>
             </div>
             <form
               onSubmit={async (event) => {
@@ -350,12 +363,12 @@ function DevelopmentTrackingSection({
               className="development-modal-form"
             >
               <label className="stack">
-                <span>Year Range</span>
+                <span>{t("development.yearRange")}</span>
                 <select
                   value={developmentYearFilter}
                   onChange={(event) => setDevelopmentYearFilter(event.target.value)}
                 >
-                  <option value="all">All year ranges</option>
+                  <option value="all">{t("development.allYearRanges")}</option>
                   {rubricYearOptions.map((yearRange) => (
                     <option key={yearRange} value={yearRange}>
                       {yearRange}
@@ -364,7 +377,7 @@ function DevelopmentTrackingSection({
                 </select>
               </label>
               <label className="stack">
-                <span>Criterion</span>
+                <span>{t("development.criteriaLabel")}</span>
                 <select
                   value={developmentScoreForm.criterionId}
                   onChange={(event) =>
@@ -372,12 +385,12 @@ function DevelopmentTrackingSection({
                   }
                   required
                 >
-                  <option value="">Select criterion</option>
+                  <option value="">{t("development.selectCriterion")}</option>
                   {groupedCriterionOptions.map(([groupLabel, criteria]) => (
                     <optgroup key={groupLabel} label={groupLabel}>
                       {criteria.map((criterion) => (
                         <option key={criterion.id} value={criterion.id}>
-                          {criterion.label || criterion.description || "Criterion"}
+                          {criterion.label || criterion.description || t("development.criterion")}
                         </option>
                       ))}
                     </optgroup>
@@ -387,9 +400,9 @@ function DevelopmentTrackingSection({
               <div className="development-criterion-preview">
                 {selectedCriterionMeta ? (
                   <>
-                    <strong>{selectedCriterionMeta.label || "Selected criterion"}</strong>
+                    <strong>{selectedCriterionMeta.label || t("development.selectedCriterion")}</strong>
                     <p className="muted">
-                      {selectedCriterionMeta.description || "No extra description for this criterion yet."}
+                      {selectedCriterionMeta.description || t("development.noExtraDescription")}
                     </p>
                     <div className="development-criterion-meta">
                       <span>{selectedCriterionMeta.gradeBand}</span>
@@ -398,27 +411,27 @@ function DevelopmentTrackingSection({
                   </>
                 ) : (
                   <p className="muted">
-                    Select a criterion to see what it measures before saving.
+                    {t("development.selectCriterionHelp")}
                   </p>
                 )}
               </div>
               <label className="stack">
-                <span>Rating (1-5)</span>
+                <span>{t("development.rating15")}</span>
                 <select
                   value={developmentScoreForm.rating}
                   onChange={(event) =>
                     setDevelopmentScoreForm((prev) => ({ ...prev, rating: event.target.value }))
                   }
                 >
-                  <option value="1">1 - Needs Significant Support</option>
-                  <option value="2">2 - Beginning to Develop</option>
-                  <option value="3">3 - Developing</option>
-                  <option value="4">4 - Proficient</option>
-                  <option value="5">5 - Mastering / Exceeding</option>
+                  <option value="1">{t("development.ratingOptions.1")}</option>
+                  <option value="2">{t("development.ratingOptions.2")}</option>
+                  <option value="3">{t("development.ratingOptions.3")}</option>
+                  <option value="4">{t("development.ratingOptions.4")}</option>
+                  <option value="5">{t("development.ratingOptions.5")}</option>
                 </select>
               </label>
               <label className="stack">
-                <span>Date</span>
+                <span>{t("development.date")}</span>
                 <input
                   type="date"
                   value={developmentScoreForm.date}
@@ -428,20 +441,20 @@ function DevelopmentTrackingSection({
                 />
               </label>
               <label className="stack">
-                <span>Notes</span>
+                <span>{t("development.notes")}</span>
                 <input
                   value={developmentScoreForm.notes}
                   onChange={(event) =>
                     setDevelopmentScoreForm((prev) => ({ ...prev, notes: event.target.value }))
                   }
-                  placeholder="Optional"
+                  placeholder={t("development.optional")}
                 />
               </label>
               <div className="modal-actions development-modal-actions">
                 <button type="button" className="secondary" onClick={() => setShowDevelopmentForm(false)}>
-                  Cancel
+                  {t("common.actions.cancel")}
                 </button>
-                <button type="submit">Save</button>
+                <button type="submit">{t("common.actions.save")}</button>
               </div>
             </form>
           </div>

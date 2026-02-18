@@ -30,6 +30,7 @@ test("keeps add-category modal open when category mutation fails", async () => {
       handleCreateRubricTemplate={vi.fn()}
       handleUpdateRubricTemplate={vi.fn()}
       handleDeleteRubricTemplate={vi.fn()}
+      handleDeleteAllRubrics={vi.fn()}
       handleCreateRubricCategory={handleCreateRubricCategory}
       handleDeleteRubricCategory={vi.fn()}
       handleCreateRubricCriterion={vi.fn()}
@@ -39,11 +40,11 @@ test("keeps add-category modal open when category mutation fails", async () => {
   );
 
   fireEvent.click(screen.getByText("Writing Rubric"));
-  fireEvent.click(screen.getByRole("button", { name: "Add Category" }));
-  fireEvent.change(screen.getByPlaceholderText("Critical Thinking"), {
+  fireEvent.click(screen.getByRole("button", { name: "rubrics.addCategory" }));
+  fireEvent.change(screen.getByPlaceholderText("rubrics.modal.categoryNamePlaceholder"), {
     target: { value: "Analysis" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Add" }));
+  fireEvent.click(screen.getByRole("button", { name: "common.actions.add" }));
 
   await waitFor(() =>
     expect(handleCreateRubricCategory).toHaveBeenCalledWith({
@@ -52,5 +53,5 @@ test("keeps add-category modal open when category mutation fails", async () => {
       sortOrder: 0,
     })
   );
-  expect(screen.getByRole("heading", { name: "New Category" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "rubrics.modal.newCategoryTitle" })).toBeTruthy();
 });

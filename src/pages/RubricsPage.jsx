@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 function RubricsPage({
   formError,
@@ -11,17 +12,23 @@ function RubricsPage({
   handleCreateRubricTemplate,
   handleUpdateRubricTemplate,
   handleDeleteRubricTemplate,
+  handleDeleteAllRubrics,
   handleCreateRubricCategory,
   handleDeleteRubricCategory,
   handleCreateRubricCriterion,
   handleDeleteRubricCriterion,
   handleUpdateRubricCriterion,
 }) {
+  const { t, i18n } = useTranslation();
+  const deleteAllKeyword = "DELETE";
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showCreateTemplate, setShowCreateTemplate] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddCriterion, setShowAddCriterion] = useState(null);
   const [editingCriterion, setEditingCriterion] = useState(null);
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [deleteAllConfirmText, setDeleteAllConfirmText] = useState("");
+  const [deletingAllRubrics, setDeletingAllRubrics] = useState(false);
   const [newTemplateForm, setNewTemplateForm] = useState({
     title: "",
     gradeBand: "",
@@ -155,10 +162,24 @@ function RubricsPage({
   };
 
   const handleDeleteTemplate = async (rubricId) => {
-    if (!window.confirm("Delete this template?")) return;
+    if (!window.confirm(t("rubrics.confirm.deleteTemplate"))) return;
     const deleted = await handleDeleteRubricTemplate(rubricId);
     if (!deleted) return;
     if (selectedTemplate?.id === rubricId) setSelectedTemplate(null);
+  };
+
+  const handleDeleteAll = async () => {
+    const normalizedInput = deleteAllConfirmText.trim().toUpperCase();
+    if (normalizedInput !== deleteAllKeyword) return;
+
+    setDeletingAllRubrics(true);
+    const deleted = await handleDeleteAllRubrics();
+    setDeletingAllRubrics(false);
+    if (!deleted) return;
+
+    setSelectedTemplate(null);
+    setShowDeleteAllModal(false);
+    setDeleteAllConfirmText("");
   };
 
   const handleCreateCategory = async () => {
@@ -176,7 +197,7 @@ function RubricsPage({
   };
 
   const handleDeleteCategory = async (categoryId) => {
-    if (!window.confirm("Delete this category and its criteria?")) return;
+    if (!window.confirm(t("rubrics.confirm.deleteCategory"))) return;
     await handleDeleteRubricCategory(categoryId);
   };
 
@@ -197,7 +218,7 @@ function RubricsPage({
   };
 
   const handleDeleteCriterion = async (criterionId) => {
-    if (!window.confirm("Delete this criterion?")) return;
+    if (!window.confirm(t("rubrics.confirm.deleteCriterion"))) return;
     await handleDeleteRubricCriterion(criterionId);
   };
 
@@ -222,29 +243,34 @@ function RubricsPage({
         <div className="rubrics-header-card">
           <div className="rubrics-header-icon" aria-hidden="true">{renderRubricIcon("header")}</div>
           <div className="rubrics-header-copy">
-            <h2>Rubric Template Library</h2>
+            <h2>{t("rubrics.title")}</h2>
             <p className="muted">
-              Browse, customize, and create development tracking templates.
+              {t("rubrics.subtitle")}
             </p>
           </div>
         </div>
 
         <div className="rubrics-actions">
           <button type="button" onClick={() => setShowCreateTemplate(true)}>
-            Create New
+            {t("rubrics.createNew")}
           </button>
-          <button type="button" className="secondary" onClick={handleSeedDefaultRubrics} disabled={seedingRubrics}>
-            {seedingRubrics ? "Seeding default rubrics..." : "Create default rubrics"}
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => handleSeedDefaultRubrics(i18n?.language || "en")}
+            disabled={seedingRubrics}
+          >
+            {seedingRubrics ? t("rubrics.seedingDefault") : t("rubrics.createDefault")}
           </button>
         </div>
         {seedingRubrics ? (
           <p className="rubrics-seeding-message" role="status" aria-live="polite">
-            Creating default rubrics. This can take a few seconds...
+            {t("rubrics.creatingDefaultMessage")}
           </p>
         ) : null}
 
         {loading ? (
-          <p className="muted">Loading rubrics...</p>
+          <p className="muted">{t("rubrics.loading")}</p>
         ) : (
           gradeLevels.map((level) => {
             const templates = templatesForLevel(level);
@@ -284,18 +310,18 @@ function RubricsPage({
                             event.stopPropagation();
                             handleDeleteTemplate(template.id);
                           }}
-                          aria-label="Delete template"
+                          aria-label={t("rubrics.aria.deleteTemplate")}
                         >
                           ✕
                         </button>
                       </div>
                       <div className="rubric-card-subject" style={{ color: subjectColor(template.subject) }}>
-                        {template.subject || "Subject"}
+                        {template.subject || t("rubrics.subject")}
                       </div>
                       <div className="rubric-card-title">{template.title}</div>
                       <div className="rubric-card-stats">
-                        <span>{rubricCategories.filter((c) => c.rubric_id === template.id).length} categories</span>
-                        <span>{totalCriteria(template.id)} criteria</span>
+                        <span>{t("rubrics.categoriesCount", { count: rubricCategories.filter((c) => c.rubric_id === template.id).length })}</span>
+                        <span>{t("rubrics.criteriaCount", { count: totalCriteria(template.id) })}</span>
                       </div>
                     </div>
                   ))}
@@ -304,49 +330,69 @@ function RubricsPage({
             );
           })
         )}
+
+        {!loading ? (
+          <div className="rubrics-danger-zone">
+            <div className="rubrics-danger-copy">
+              <h4>{t("rubrics.dangerZone.title")}</h4>
+              <p className="muted">{t("rubrics.dangerZone.description", { count: rubrics.length })}</p>
+            </div>
+            <button
+              type="button"
+              className="danger"
+              onClick={() => {
+                setDeleteAllConfirmText("");
+                setShowDeleteAllModal(true);
+              }}
+              disabled={rubrics.length === 0 || seedingRubrics || deletingAllRubrics}
+            >
+              {deletingAllRubrics ? t("rubrics.deletingAll") : t("rubrics.deleteAll")}
+            </button>
+          </div>
+        ) : null}
       </section>
 
       {showCreateTemplate && (
         <div className="modal-overlay">
           <div className="modal-card rubrics-modal">
-            <h3>Create New Template</h3>
-            <p className="muted">Build a custom rubric from scratch.</p>
+            <h3>{t("rubrics.modal.createTemplateTitle")}</h3>
+            <p className="muted">{t("rubrics.modal.createTemplateDescription")}</p>
             <label className="stack">
-              <span>Template Name</span>
+              <span>{t("rubrics.modal.templateName")}</span>
               <input
                 value={newTemplateForm.title}
                 onChange={(event) =>
                   setNewTemplateForm((prev) => ({ ...prev, title: event.target.value }))
                 }
-                placeholder="Advanced Writing Skills"
+                placeholder={t("rubrics.modal.templateNamePlaceholder")}
               />
             </label>
             <label className="stack">
-              <span>Grade Level</span>
+              <span>{t("rubrics.modal.gradeLevel")}</span>
               <input
                 value={newTemplateForm.gradeBand}
                 onChange={(event) =>
                   setNewTemplateForm((prev) => ({ ...prev, gradeBand: event.target.value }))
                 }
-                placeholder="Years 7-9"
+                placeholder={t("rubrics.modal.gradeLevelPlaceholder")}
               />
             </label>
             <label className="stack">
-              <span>Subject</span>
+              <span>{t("rubrics.modal.subject")}</span>
               <input
                 value={newTemplateForm.subject}
                 onChange={(event) =>
                   setNewTemplateForm((prev) => ({ ...prev, subject: event.target.value }))
                 }
-                placeholder="English"
+                placeholder={t("rubrics.modal.subjectPlaceholder")}
               />
             </label>
             <div className="modal-actions">
               <button type="button" className="link" onClick={() => setShowCreateTemplate(false)}>
-                Cancel
+                {t("common.actions.cancel")}
               </button>
               <button type="button" onClick={handleCreateTemplate}>
-                Create
+                {t("common.actions.create")}
               </button>
             </div>
           </div>
@@ -366,26 +412,26 @@ function RubricsPage({
                 </div>
                 <div>
                   <div className="rubrics-editor-subject" style={{ color: subjectColor(selectedTemplate.subject) }}>
-                    {selectedTemplate.subject || "Subject"}
+                    {selectedTemplate.subject || t("rubrics.subject")}
                   </div>
                   <div className="rubrics-editor-title">{selectedTemplate.title}</div>
-                  <div className="muted">{selectedTemplate.grade_band || "Grade band"}</div>
+                  <div className="muted">{selectedTemplate.grade_band || t("rubrics.gradeBand")}</div>
                 </div>
               </div>
               <button
                 type="button"
                 className="icon-button rubrics-editor-close"
                 onClick={() => setSelectedTemplate(null)}
-                aria-label="Close rubric editor"
+                aria-label={t("rubrics.aria.closeEditor")}
               >
                 ×
               </button>
             </div>
 
             <div className="rubrics-info-card">
-              <h4>Template Information</h4>
+              <h4>{t("rubrics.templateInformation")}</h4>
               <label className="stack">
-                <span>Template Name</span>
+                <span>{t("rubrics.modal.templateName")}</span>
                 <input
                   value={selectedTemplate.title}
                   onChange={(event) =>
@@ -397,7 +443,7 @@ function RubricsPage({
                 />
               </label>
               <label className="stack">
-                <span>Grade Level</span>
+                <span>{t("rubrics.modal.gradeLevel")}</span>
                 <input
                   value={selectedTemplate.grade_band || ""}
                   onChange={(event) =>
@@ -409,7 +455,7 @@ function RubricsPage({
                 />
               </label>
               <label className="stack">
-                <span>Subject</span>
+                <span>{t("rubrics.modal.subject")}</span>
                 <input
                   value={selectedTemplate.subject || ""}
                   onChange={(event) =>
@@ -424,14 +470,14 @@ function RubricsPage({
 
             <div className="rubrics-categories">
               <div className="rubrics-categories-header">
-                <h4>Categories & Criteria</h4>
+                <h4>{t("rubrics.categoriesAndCriteria")}</h4>
                 <button type="button" className="link" onClick={() => setShowAddCategory(true)}>
-                  Add Category
+                  {t("rubrics.addCategory")}
                 </button>
               </div>
 
               {templateCategories.length === 0 ? (
-                <div className="muted">No categories yet.</div>
+                <div className="muted">{t("rubrics.noCategoriesYet")}</div>
               ) : (
                 templateCategories.map((category) => {
                   const criteria = rubricCriteria
@@ -442,7 +488,7 @@ function RubricsPage({
                       <div className="rubric-category-header">
                         <div>
                           <strong>{category.name}</strong>
-                          <span className="muted"> • {criteria.length} criteria</span>
+                          <span className="muted"> • {t("rubrics.criteriaCount", { count: criteria.length })}</span>
                         </div>
                         <button
                           type="button"
@@ -453,13 +499,13 @@ function RubricsPage({
                         </button>
                       </div>
                       {criteria.length === 0 ? (
-                        <div className="muted">No criteria yet.</div>
+                        <div className="muted">{t("rubrics.noCriteriaYet")}</div>
                       ) : (
                         <ul className="rubric-criteria-list">
                           {criteria.map((criterion) => (
                             <li key={criterion.id}>
                               <div>
-                                <strong>{criterion.label || "Criterion"}</strong>
+                                <strong>{criterion.label || t("rubrics.criterion")}</strong>
                                 {criterion.description ? (
                                   <div className="muted">{criterion.description}</div>
                                 ) : null}
@@ -470,7 +516,7 @@ function RubricsPage({
                                   className="order-btn"
                                   onClick={() => setEditingCriterion({ ...criterion })}
                                 >
-                                  Edit
+                                  {t("calendar.actions.edit")}
                                 </button>
                                 <button
                                   type="button"
@@ -489,7 +535,7 @@ function RubricsPage({
                         className="link"
                         onClick={() => setShowAddCriterion(category)}
                       >
-                        Add Criterion
+                        {t("rubrics.addCriterion")}
                       </button>
                     </div>
                   );
@@ -499,7 +545,7 @@ function RubricsPage({
 
             <div className="modal-actions rubrics-editor-actions">
               <button type="button" className="secondary" onClick={() => setSelectedTemplate(null)}>
-                Done
+                {t("common.actions.done")}
               </button>
             </div>
           </div>
@@ -509,22 +555,22 @@ function RubricsPage({
       {showAddCategory && (
         <div className="modal-overlay">
           <div className="modal-card rubrics-modal">
-            <h3>New Category</h3>
-            <p className="muted">Add a new category to organize criteria.</p>
+            <h3>{t("rubrics.modal.newCategoryTitle")}</h3>
+            <p className="muted">{t("rubrics.modal.newCategoryDescription")}</p>
             <label className="stack">
-              <span>Category Name</span>
+              <span>{t("rubrics.modal.categoryName")}</span>
               <input
                 value={newCategoryName}
                 onChange={(event) => setNewCategoryName(event.target.value)}
-                placeholder="Critical Thinking"
+                placeholder={t("rubrics.modal.categoryNamePlaceholder")}
               />
             </label>
             <div className="modal-actions">
               <button type="button" className="link" onClick={() => setShowAddCategory(false)}>
-                Cancel
+                {t("common.actions.cancel")}
               </button>
               <button type="button" onClick={handleCreateCategory} disabled={!newCategoryName.trim()}>
-                Add
+                {t("common.actions.add")}
               </button>
             </div>
           </div>
@@ -534,38 +580,38 @@ function RubricsPage({
       {showAddCriterion && (
         <div className="modal-overlay">
           <div className="modal-card rubrics-modal">
-            <h3>New Criterion</h3>
-            <p className="muted">Add a new skill to track in {showAddCriterion.name}.</p>
+            <h3>{t("rubrics.modal.newCriterionTitle")}</h3>
+            <p className="muted">{t("rubrics.modal.newCriterionDescription", { name: showAddCriterion.name })}</p>
             <label className="stack">
-              <span>Criterion Name</span>
+              <span>{t("rubrics.modal.criterionName")}</span>
               <input
                 value={newCriterionForm.label}
                 onChange={(event) =>
                   setNewCriterionForm((prev) => ({ ...prev, label: event.target.value }))
                 }
-                placeholder="Critical Thinking Skills"
+                placeholder={t("rubrics.modal.criterionNamePlaceholder")}
               />
             </label>
             <label className="stack">
-              <span>Description (Optional)</span>
+              <span>{t("rubrics.modal.descriptionOptional")}</span>
               <input
                 value={newCriterionForm.description}
                 onChange={(event) =>
                   setNewCriterionForm((prev) => ({ ...prev, description: event.target.value }))
                 }
-                placeholder="Analyzes information and draws conclusions"
+                placeholder={t("rubrics.modal.descriptionPlaceholder")}
               />
             </label>
             <div className="modal-actions">
               <button type="button" className="link" onClick={() => setShowAddCriterion(null)}>
-                Cancel
+                {t("common.actions.cancel")}
               </button>
               <button
                 type="button"
                 onClick={handleCreateCriterion}
                 disabled={!newCriterionForm.label.trim() && !newCriterionForm.description.trim()}
               >
-                Add
+                {t("common.actions.add")}
               </button>
             </div>
           </div>
@@ -575,9 +621,9 @@ function RubricsPage({
       {editingCriterion && (
         <div className="modal-overlay">
           <div className="modal-card rubrics-modal">
-            <h3>Edit Criterion</h3>
+            <h3>{t("rubrics.modal.editCriterionTitle")}</h3>
             <label className="stack">
-              <span>Criterion Name</span>
+              <span>{t("rubrics.modal.criterionName")}</span>
               <input
                 value={editingCriterion.label || ""}
                 onChange={(event) =>
@@ -586,7 +632,7 @@ function RubricsPage({
               />
             </label>
             <label className="stack">
-              <span>Description</span>
+              <span>{t("rubrics.modal.description")}</span>
               <input
                 value={editingCriterion.description || ""}
                 onChange={(event) =>
@@ -596,10 +642,49 @@ function RubricsPage({
             </label>
             <div className="modal-actions">
               <button type="button" className="link" onClick={() => setEditingCriterion(null)}>
-                Cancel
+                {t("common.actions.cancel")}
               </button>
               <button type="button" onClick={handleUpdateCriterion}>
-                Save
+                {t("common.actions.save")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteAllModal && (
+        <div className="modal-overlay">
+          <div className="modal-card rubrics-modal rubrics-danger-modal">
+            <h3>{t("rubrics.modal.deleteAllTitle")}</h3>
+            <p className="muted">{t("rubrics.modal.deleteAllDescription", { count: rubrics.length })}</p>
+            <p className="rubrics-delete-warning">{t("rubrics.modal.deleteAllWarning")}</p>
+            <label className="stack">
+              <span>{t("rubrics.modal.deleteAllConfirmLabel", { keyword: deleteAllKeyword })}</span>
+              <input
+                value={deleteAllConfirmText}
+                onChange={(event) => setDeleteAllConfirmText(event.target.value)}
+                placeholder={deleteAllKeyword}
+              />
+            </label>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  if (deletingAllRubrics) return;
+                  setShowDeleteAllModal(false);
+                  setDeleteAllConfirmText("");
+                }}
+              >
+                {t("common.actions.cancel")}
+              </button>
+              <button
+                type="button"
+                className="danger"
+                onClick={handleDeleteAll}
+                disabled={deleteAllConfirmText.trim().toUpperCase() !== deleteAllKeyword || deletingAllRubrics}
+              >
+                {deletingAllRubrics ? t("rubrics.deletingAll") : t("rubrics.deleteAll")}
               </button>
             </div>
           </div>

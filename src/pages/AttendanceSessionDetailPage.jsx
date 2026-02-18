@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
+import { enUS, ptBR } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import {
   ATTENDANCE_STATUSES,
@@ -46,6 +48,7 @@ function StatusIcon({ kind }) {
 }
 
 function AttendanceEntryRow({ entry, student, handleUpdateAttendanceEntry }) {
+  const { t } = useTranslation();
   const [noteValue, setNoteValue] = useState(entry.note || "");
   const statusMeta = getAttendanceStatusMeta(entry.status);
   const statusColor = statusMeta.color;
@@ -78,13 +81,13 @@ function AttendanceEntryRow({ entry, student, handleUpdateAttendanceEntry }) {
                   : undefined
               }
               onClick={() => handleUpdateAttendanceEntry(entry.id, { status: status.value })}
-              aria-label={status.value}
-              title={status.value}
+              aria-label={t(`attendance.status.${status.key}.label`)}
+              title={t(`attendance.status.${status.key}.label`)}
             >
               <span className="status-btn-icon">
                 <StatusIcon kind={status.kind} />
               </span>
-              <span className="status-btn-text">{status.shortLabel}</span>
+              <span className="status-btn-text">{t(`attendance.status.${status.key}.short`)}</span>
             </button>
           ))}
         </div>
@@ -92,7 +95,7 @@ function AttendanceEntryRow({ entry, student, handleUpdateAttendanceEntry }) {
 
       {entry.status !== ATTENDANCE_STATUS_BY_KEY.present.value && (
         <div className="attendance-note">
-          <span className="muted">Notes</span>
+          <span className="muted">{t("attendance.note.label")}</span>
           <input
             value={noteValue}
             onChange={(event) => setNoteValue(event.target.value)}
@@ -101,7 +104,7 @@ function AttendanceEntryRow({ entry, student, handleUpdateAttendanceEntry }) {
                 note: noteValue.trim() || null,
               })
             }
-            placeholder="Add notes (optional)"
+            placeholder={t("attendance.note.placeholder")}
           />
         </div>
       )}
@@ -116,7 +119,9 @@ function AttendanceSessionDetailPage({
   students,
   handleUpdateAttendanceEntry,
 }) {
+  const { t, i18n } = useTranslation();
   const { sessionId } = useParams();
+  const locale = i18n.language === "pt-BR" ? ptBR : enUS;
   const session = attendanceSessions.find((item) => item.id === sessionId);
   const sessionEntries = attendanceEntries.filter((entry) => entry.session_id === sessionId);
   const sessionClass = classes.find((classItem) => classItem.id === session?.class_id);
@@ -137,8 +142,8 @@ function AttendanceSessionDetailPage({
   if (!session) {
     return (
       <section className="panel">
-        <h2>Session not found</h2>
-        <p className="muted">Select a session from Attendance.</p>
+        <h2>{t("attendance.sessionDetail.notFoundTitle")}</h2>
+        <p className="muted">{t("attendance.sessionDetail.notFoundDescription")}</p>
       </section>
     );
   }
@@ -150,35 +155,36 @@ function AttendanceSessionDetailPage({
           <div className="attendance-summary-icon">📆</div>
           <div>
             <div className="attendance-summary-title">
-              {format(parseISO(session.session_date), "MMMM d, yyyy")}
+              {format(parseISO(session.session_date), "PPPP", { locale })}
             </div>
             <div className="muted">
-              {sessionClass ? sessionClass.name : "Class"} • {sessionEntries.length} students
+              {sessionClass ? sessionClass.name : t("attendance.classFallback")} •{" "}
+              {t("attendance.count.students", { count: sessionEntries.length })}
             </div>
           </div>
         </div>
 
         <div className="attendance-summary-stats">
           <div>
-            <div className="muted">Present</div>
+            <div className="muted">{t("attendance.status.present.short")}</div>
             <strong style={{ color: "#16a34a" }}>{counts.present}</strong>
           </div>
           <div>
-            <div className="muted">Didn't come</div>
+            <div className="muted">{t("attendance.status.absent.label")}</div>
             <strong style={{ color: "#ef4444" }}>{counts.absent}</strong>
           </div>
           <div>
-            <div className="muted">Late</div>
+            <div className="muted">{t("attendance.status.late.short")}</div>
             <strong style={{ color: "#f59e0b" }}>{counts.late}</strong>
           </div>
           <div>
-            <div className="muted">Left early</div>
+            <div className="muted">{t("attendance.status.leftEarly.short")}</div>
             <strong style={{ color: "#eab308" }}>{counts.leftEarly}</strong>
           </div>
         </div>
 
         <div className="attendance-rate">
-          <div className="muted">Attendance Rate</div>
+          <div className="muted">{t("attendance.stats.attendanceRate")}</div>
           <div className="attendance-rate-bar">
             <span style={{ width: `${summaryRate}%`, background: summaryColor }} />
           </div>
@@ -189,7 +195,7 @@ function AttendanceSessionDetailPage({
       </div>
 
       <div className="attendance-student-list">
-        <h3>Mark Attendance</h3>
+        <h3>{t("attendance.sessionDetail.markAttendance")}</h3>
         {rows.map(({ student, entry }) =>
           entry ? (
             <AttendanceEntryRow

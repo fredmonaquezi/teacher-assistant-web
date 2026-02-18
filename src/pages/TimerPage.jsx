@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const TIMER_PREFS_KEY = "ta_timer_custom_duration";
 const TIMER_PRESETS = [
-  { minutes: 1, label: "1 min", color: "#2563eb", icon: "🐇" },
-  { minutes: 5, label: "5 min", color: "#16a34a", icon: "⚡" },
-  { minutes: 10, label: "10 min", color: "#f97316", icon: "🔥" },
-  { minutes: 15, label: "15 min", color: "#7c3aed", icon: "⭐" },
-  { minutes: 30, label: "30 min", color: "#ec4899", icon: "💗" },
-  { minutes: 45, label: "45 min", color: "#4f46e5", icon: "✨" },
-  { minutes: 60, label: "1 hour", color: "#dc2626", icon: "⏲️" },
+  { minutes: 1, color: "#2563eb", icon: "🐇" },
+  { minutes: 5, color: "#16a34a", icon: "⚡" },
+  { minutes: 10, color: "#f97316", icon: "🔥" },
+  { minutes: 15, color: "#7c3aed", icon: "⭐" },
+  { minutes: 30, color: "#ec4899", icon: "💗" },
+  { minutes: 45, color: "#4f46e5", icon: "✨" },
+  { minutes: 60, color: "#dc2626", icon: "⏲️" },
 ];
 
 function readStoredMinutes() {
@@ -38,6 +39,7 @@ function readStoredSeconds() {
 }
 
 function TimerPage({ startTimerSeconds }) {
+  const { t } = useTranslation();
   const [customMinutes, setCustomMinutes] = useState(readStoredMinutes);
   const [customSeconds, setCustomSeconds] = useState(readStoredSeconds);
 
@@ -54,15 +56,15 @@ function TimerPage({ startTimerSeconds }) {
     <section className="panel timer-page">
       <div className="timer-header-card">
         <div className="timer-header-copy">
-          <span className="timer-kicker">Focus Tool</span>
-          <h2>Classroom Timer</h2>
-          <p className="muted">Choose a duration and keep every activity on track.</p>
+          <span className="timer-kicker">{t("timer.kicker")}</span>
+          <h2>{t("timer.title")}</h2>
+          <p className="muted">{t("timer.subtitle")}</p>
         </div>
         <div className="timer-icon" aria-hidden="true">⏱️</div>
       </div>
 
       <div className="timer-section">
-        <h3>Quick Timers</h3>
+        <h3>{t("timer.quickTimers")}</h3>
         <div className="timer-presets">
           {TIMER_PRESETS.map((preset) => (
             <button
@@ -75,26 +77,26 @@ function TimerPage({ startTimerSeconds }) {
               <div className="timer-preset-icon" style={{ color: preset.color }}>
                 {preset.icon}
               </div>
-              <div className="timer-preset-label">{preset.label}</div>
-              <div className="timer-preset-sub">{preset.minutes} min</div>
+              <div className="timer-preset-label">{t("timer.presetLabel", { count: preset.minutes })}</div>
+              <div className="timer-preset-sub">{t("timer.presetSub", { count: preset.minutes })}</div>
             </button>
           ))}
         </div>
       </div>
 
       <div className="timer-section">
-        <h3>Custom Timer</h3>
+        <h3>{t("timer.custom.title")}</h3>
         <div className="timer-custom-card">
           <div className="timer-display">
             <span>{String(customMinutes).padStart(2, "0")}</span>
             <span>:</span>
             <span>{String(customSeconds).padStart(2, "0")}</span>
           </div>
-          <p className="timer-custom-hint">Set your exact countdown length</p>
+          <p className="timer-custom-hint">{t("timer.custom.hint")}</p>
 
           <div className="timer-picker-row">
             <label className="stack">
-              <span>Minutes</span>
+              <span>{t("timer.custom.minutes")}</span>
               <select
                 value={customMinutes}
                 onChange={(event) => setCustomMinutes(Number(event.target.value))}
@@ -107,7 +109,7 @@ function TimerPage({ startTimerSeconds }) {
               </select>
             </label>
             <label className="stack">
-              <span>Seconds</span>
+              <span>{t("timer.custom.seconds")}</span>
               <select
                 value={customSeconds}
                 onChange={(event) => setCustomSeconds(Number(event.target.value))}
@@ -127,7 +129,7 @@ function TimerPage({ startTimerSeconds }) {
             disabled={totalCustomSeconds === 0}
             onClick={() => startTimerSeconds(totalCustomSeconds)}
           >
-            ▶ Start Custom Timer
+            {t("timer.custom.start")}
           </button>
         </div>
       </div>

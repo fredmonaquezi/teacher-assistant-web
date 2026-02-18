@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import ReorderModeToggle from "../components/common/ReorderModeToggle";
 import { useHandleDrag } from "../hooks/useHandleDrag";
@@ -16,6 +17,7 @@ function ClassesPage({
   subjects,
   loading,
 }) {
+  const { t } = useTranslation();
   const [showAddClass, setShowAddClass] = useState(false);
   const [dragClassId, setDragClassId] = useState(null);
   const navigate = useNavigate();
@@ -31,9 +33,16 @@ function ClassesPage({
 
   const classHandleClassName = `drag-handle${isReorderEnabled && !isMobileLayout ? "" : " disabled"}`;
   const classCount = classes.length;
+  const classCountLabel = t("classes.count.class", { count: classCount });
+  const studentCountLabel = t("classes.count.student", { count: students.length });
+  const subjectCountLabel = t("classes.count.subject", { count: subjects.length });
   const classSummaryLabel = loading
-    ? "Loading your classes..."
-    : `${classCount} class${classCount === 1 ? "" : "es"} • ${students.length} students • ${subjects.length} subjects`;
+    ? t("classes.summary.loading")
+    : t("classes.summary.loaded", {
+        classCountLabel,
+        studentCountLabel,
+        subjectCountLabel,
+      });
 
   return (
     <>
@@ -41,7 +50,7 @@ function ClassesPage({
       <section className="panel classes-page">
         <div className="classes-header">
           <div className="classes-header-copy">
-            <h2>Classes</h2>
+            <h2>{t("classes.title")}</h2>
             <p>{classSummaryLabel}</p>
           </div>
           <div className="classes-header-actions">
@@ -49,13 +58,13 @@ function ClassesPage({
               <ReorderModeToggle isReorderMode={isReorderMode} setIsReorderMode={setIsReorderMode} />
             )}
             <button type="button" className="classes-add-btn" onClick={() => setShowAddClass(true)}>
-              + Add Class
+              {t("classes.addClass")}
             </button>
           </div>
         </div>
 
         {loading ? (
-          <p className="muted">Loading classes...</p>
+          <p className="muted">{t("classes.loadingClasses")}</p>
         ) : (
           <div className="class-card-grid">
             {classes.map((item, index) => {
@@ -112,7 +121,7 @@ function ClassesPage({
                           <button
                             type="button"
                             className="reorder-mobile-btn"
-                            aria-label={`Move ${item.name} up`}
+                            aria-label={t("classes.aria.moveUp", { name: item.name })}
                             disabled={!previousClass}
                             onClick={(event) => {
                               event.stopPropagation();
@@ -125,7 +134,7 @@ function ClassesPage({
                           <button
                             type="button"
                             className="reorder-mobile-btn"
-                            aria-label={`Move ${item.name} down`}
+                            aria-label={t("classes.aria.moveDown", { name: item.name })}
                             disabled={!nextClass}
                             onClick={(event) => {
                               event.stopPropagation();
@@ -141,7 +150,7 @@ function ClassesPage({
                         <button
                           type="button"
                           className={classHandleClassName}
-                          aria-label={`Drag ${item.name}`}
+                          aria-label={t("classes.aria.drag", { name: item.name })}
                           onClick={(event) => event.stopPropagation()}
                           onPointerDown={(event) => onClassHandlePointerDown(item.id, event)}
                           onPointerMove={onClassHandlePointerMove}
@@ -158,7 +167,7 @@ function ClassesPage({
                           event.stopPropagation();
                           handleDeleteClass(item.id);
                         }}
-                        aria-label={`Delete ${item.name}`}
+                        aria-label={t("classes.aria.delete", { name: item.name })}
                       >
                         ✕
                       </button>
@@ -167,17 +176,17 @@ function ClassesPage({
                   <div className="class-card-meta">
                     <div className="class-card-stat">
                       <strong>{studentCount}</strong>
-                      <span>students</span>
+                      <span>{t("classes.students")}</span>
                     </div>
                     <div className="class-card-stat">
                       <strong>{subjectCount}</strong>
-                      <span>subjects</span>
+                      <span>{t("classes.subjects")}</span>
                     </div>
                   </div>
                 </div>
               );
             })}
-            {classes.length === 0 && <div className="muted">No classes yet.</div>}
+            {classes.length === 0 && <div className="muted">{t("classes.empty")}</div>}
           </div>
         )}
       </section>
@@ -185,41 +194,41 @@ function ClassesPage({
       {showAddClass && (
         <div className="modal-overlay">
           <div className="modal-card">
-            <h3>Add Class</h3>
+            <h3>{t("classes.modal.title")}</h3>
             <label className="stack">
-              <span>Class name</span>
+              <span>{t("classes.modal.className")}</span>
               <input
                 value={classForm.name}
                 onChange={(event) =>
                   setClassForm((prev) => ({ ...prev, name: event.target.value }))
                 }
-                placeholder="Grade 3 - Ms. Rivera"
+                placeholder={t("classes.modal.classNamePlaceholder")}
                 required
               />
             </label>
             <label className="stack">
-              <span>Grade level</span>
+              <span>{t("classes.modal.gradeLevel")}</span>
               <input
                 value={classForm.gradeLevel}
                 onChange={(event) =>
                   setClassForm((prev) => ({ ...prev, gradeLevel: event.target.value }))
                 }
-                placeholder="3rd"
+                placeholder={t("classes.modal.gradeLevelPlaceholder")}
               />
             </label>
             <label className="stack">
-              <span>School year</span>
+              <span>{t("classes.modal.schoolYear")}</span>
               <input
                 value={classForm.schoolYear}
                 onChange={(event) =>
                   setClassForm((prev) => ({ ...prev, schoolYear: event.target.value }))
                 }
-                placeholder="2025-2026"
+                placeholder={t("classes.modal.schoolYearPlaceholder")}
               />
             </label>
             <div className="modal-actions">
               <button type="button" className="link" onClick={() => setShowAddClass(false)}>
-                Cancel
+                {t("common.actions.cancel")}
               </button>
               <button
                 type="button"
@@ -228,7 +237,7 @@ function ClassesPage({
                   setShowAddClass(false);
                 }}
               >
-                Add
+                {t("common.actions.add")}
               </button>
             </div>
           </div>

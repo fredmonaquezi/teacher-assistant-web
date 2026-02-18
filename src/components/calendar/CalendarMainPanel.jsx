@@ -1,5 +1,7 @@
 import { format, isToday } from "date-fns";
 import { parseISO } from "date-fns";
+import { useTranslation } from "react-i18next";
+import { getDateLocale } from "../../utils/dateLocale";
 
 function CalendarMainPanel({
   classId,
@@ -25,6 +27,9 @@ function CalendarMainPanel({
   units,
   upcomingEvents,
 }) {
+  const { t, i18n } = useTranslation();
+  const locale = getDateLocale(i18n.language, { capitalizePtBrMonths: true });
+
   return (
     <>
       <section className="panel calendar-page">
@@ -45,20 +50,20 @@ function CalendarMainPanel({
                 className={viewMode === "month" ? "active" : ""}
                 onClick={() => setViewMode("month")}
               >
-                Month
+                {t("calendar.view.month")}
               </button>
               <button
                 type="button"
                 className={viewMode === "week" ? "active" : ""}
                 onClick={() => setViewMode("week")}
               >
-                Week
+                {t("calendar.view.week")}
               </button>
             </div>
             <div className="calendar-filters">
               {!classId && (
                 <select value={activeClassId} onChange={(event) => setActiveClassId(event.target.value)}>
-                  <option value="">All Classes</option>
+                  <option value="">{t("calendar.allClasses")}</option>
                   {classOptions.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.label}
@@ -66,7 +71,11 @@ function CalendarMainPanel({
                   ))}
                 </select>
               )}
-              {classId && <span className="badge">Class: {activeClassLabel || "Selected class"}</span>}
+              {classId && (
+                <span className="badge">
+                  {t("calendar.classLabel", { classLabel: activeClassLabel || t("calendar.selectedClass") })}
+                </span>
+              )}
               <button
                 type="button"
                 className="secondary"
@@ -75,7 +84,7 @@ function CalendarMainPanel({
                   setSelectedDate(format(new Date(), "yyyy-MM-dd"));
                 }}
               >
-                Today
+                {t("calendar.today")}
               </button>
             </div>
           </div>
@@ -109,7 +118,7 @@ function CalendarMainPanel({
               >
                 <div className="calendar-day-top">
                   <span className="calendar-day-number">
-                    {viewMode === "week" ? format(dateObj, "EEE d") : dayLabel}
+                    {viewMode === "week" ? format(dateObj, "EEE d", { locale }) : dayLabel}
                   </span>
                   {isToday(dateObj) && <span className="calendar-dot" />}
                 </div>
@@ -119,7 +128,7 @@ function CalendarMainPanel({
                       units.find((unit) => unit.id === item.unit_id)?.name ||
                       subjects.find((subject) => subject.id === item.subject_id)?.name ||
                       classes.find((classItem) => classItem.id === item.class_id)?.name ||
-                      "Diary Entry";
+                      t("calendar.diaryEntry");
                     const title = item.title || entryLabel;
                     return (
                       <span key={item.id} className={item.title ? "event" : "entry"} title={title}>
@@ -136,15 +145,17 @@ function CalendarMainPanel({
       </section>
 
       <section className="panel calendar-upcoming">
-        <h3>Upcoming Alerts</h3>
+        <h3>{t("calendar.upcomingAlerts")}</h3>
         {upcomingEvents.length === 0 ? (
-          <p className="muted">No upcoming alerts.</p>
+          <p className="muted">{t("calendar.noUpcomingAlerts")}</p>
         ) : (
           <ul className="list calendar-upcoming-list">
             {upcomingEvents.map((item) => (
               <li key={item.id}>
                 <strong>{item.title}</strong>
-                <span className="calendar-upcoming-date">{format(parseISO(item.event_date), "EEE, MMM d")}</span>
+                <span className="calendar-upcoming-date">
+                  {format(parseISO(item.event_date), "EEE, MMM d", { locale })}
+                </span>
               </li>
             ))}
           </ul>

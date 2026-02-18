@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
+import { enUS, ptBR } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { averageFromPercents, getAssessmentMaxScore, performanceColor, scoreToPercent } from "../utils/assessmentMetrics";
 
 const AssessmentEntryRow = ({ entry, student, handleUpdateAssessmentEntry, assessmentMaxScore }) => {
+  const { t } = useTranslation();
   const [scoreValue, setScoreValue] = useState(
     entry.score !== null && entry.score !== undefined ? String(entry.score) : ""
   );
@@ -20,7 +23,7 @@ const AssessmentEntryRow = ({ entry, student, handleUpdateAssessmentEntry, asses
           {student.first_name} {student.last_name}
         </div>
         <div className="grade-entry-score">
-          <span className="muted">Score:</span>
+          <span className="muted">{t("assessmentDetail.entry.score")}</span>
           <input
             type="number"
             step="0.1"
@@ -40,7 +43,7 @@ const AssessmentEntryRow = ({ entry, student, handleUpdateAssessmentEntry, asses
         </div>
       </div>
       <div className="grade-entry-notes">
-        <span className="muted">Notes</span>
+        <span className="muted">{t("assessmentDetail.entry.notes")}</span>
         <input
           value={noteValue}
           onChange={(event) => setNoteValue(event.target.value)}
@@ -49,7 +52,7 @@ const AssessmentEntryRow = ({ entry, student, handleUpdateAssessmentEntry, asses
               notes: noteValue.trim() || null,
             })
           }
-          placeholder="Add notes"
+          placeholder={t("assessmentDetail.entry.addNotes")}
         />
       </div>
     </div>
@@ -68,7 +71,9 @@ const AssessmentDetailPage = ({
   handleEnsureAssessmentEntries,
   handleUpdateAssessmentNotes,
 }) => {
+  const { t, i18n } = useTranslation();
   const { assessmentId } = useParams();
+  const locale = i18n.language === "pt-BR" ? ptBR : enUS;
   const assessment = assessments.find((item) => item.id === assessmentId);
   const assessmentEntriesForAssessment = assessmentEntries.filter(
     (entry) => entry.assessment_id === assessmentId
@@ -93,8 +98,8 @@ const AssessmentDetailPage = ({
   if (!assessment) {
     return (
       <section className="panel">
-        <h2>Assessment not found</h2>
-        <p className="muted">Select an assessment from the gradebook.</p>
+        <h2>{t("assessmentDetail.notFoundTitle")}</h2>
+        <p className="muted">{t("assessmentDetail.notFoundDescription")}</p>
       </section>
     );
   }
@@ -115,29 +120,31 @@ const AssessmentDetailPage = ({
     <section className="panel gradebook-detail">
       <div className="gradebook-header gradebook-detail-hero">
         <div>
-          <p className="gradebook-kicker">Assessment Details</p>
+          <p className="gradebook-kicker">{t("assessmentDetail.kicker")}</p>
           <h2>{assessment.title}</h2>
         </div>
         <div className="gradebook-date-pill">
-          {assessment.assessment_date ? format(parseISO(assessment.assessment_date), "PPP") : ""}
+          {assessment.assessment_date
+            ? format(parseISO(assessment.assessment_date), "PPP", { locale })
+            : ""}
         </div>
       </div>
 
       <div className="gradebook-stats">
         <div className="stat-card gradebook-stat-card">
-            <div className="stat-label">Class Average</div>
+            <div className="stat-label">{t("assessmentDetail.stats.classAverage")}</div>
             <div className="stat-value" style={{ color: averageColor }}>
             {average.toFixed(1)}%
             </div>
           </div>
         <div className="stat-card gradebook-stat-card">
-            <div className="stat-label">Highest</div>
+            <div className="stat-label">{t("assessmentDetail.stats.highest")}</div>
             <div className="stat-value" style={{ color: "#16a34a" }}>
             {highest.toFixed(1)}%
             </div>
           </div>
         <div className="stat-card gradebook-stat-card">
-            <div className="stat-label">Lowest</div>
+            <div className="stat-label">{t("assessmentDetail.stats.lowest")}</div>
             <div className="stat-value" style={{ color: "#ef4444" }}>
             {lowest.toFixed(1)}%
             </div>
@@ -145,23 +152,23 @@ const AssessmentDetailPage = ({
       </div>
 
       <div className="gradebook-info">
-        <h3>Assessment Info</h3>
+        <h3>{t("assessmentDetail.info.title")}</h3>
         <div className="gradebook-info-grid">
           {classItem && (
             <div className="gradebook-info-item">
-              <span className="muted">Class</span>
+              <span className="muted">{t("assessmentDetail.info.class")}</span>
               <strong>{classItem.name}</strong>
             </div>
           )}
           {subjectItem && (
             <div className="gradebook-info-item">
-              <span className="muted">Subject</span>
+              <span className="muted">{t("assessmentDetail.info.subject")}</span>
               <strong>{subjectItem.name}</strong>
             </div>
           )}
           {unitItem && (
             <div className="gradebook-info-item">
-              <span className="muted">Unit</span>
+              <span className="muted">{t("assessmentDetail.info.unit")}</span>
               <strong>{unitItem.name}</strong>
             </div>
           )}
@@ -169,7 +176,7 @@ const AssessmentDetailPage = ({
       </div>
 
       <div className="gradebook-notes">
-        <h3>Description</h3>
+        <h3>{t("assessmentDetail.description.title")}</h3>
         <textarea
           rows="4"
           value={assessment.notes || ""}
@@ -183,20 +190,23 @@ const AssessmentDetailPage = ({
           onBlur={(event) =>
             handleUpdateAssessmentNotes(assessment.id, event.target.value)
           }
-          placeholder="Add description"
+          placeholder={t("assessmentDetail.description.placeholder")}
         />
       </div>
 
       <div className="gradebook-students">
         <div className="gradebook-students-header">
-          <h3>Student Grades</h3>
+          <h3>{t("assessmentDetail.students.title")}</h3>
           <span className="muted">
-            {scored.length} / {assessmentEntriesForAssessment.length} graded
+            {t("assessmentDetail.students.graded", {
+              graded: scored.length,
+              total: assessmentEntriesForAssessment.length,
+            })}
           </span>
         </div>
 
         {assessmentEntriesForAssessment.length === 0 ? (
-          <div className="muted">No students yet.</div>
+          <div className="muted">{t("assessmentDetail.students.empty")}</div>
         ) : (
           <div className="gradebook-entries">
             {classStudents.map((student) => {
