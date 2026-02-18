@@ -405,6 +405,11 @@
   gap: 8px;
 }
 
+.calendar-diary-list {
+  display: grid;
+  gap: 0;
+}
+
 .calendar-time-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -453,6 +458,35 @@
 .calendar-entry-card p,
 .calendar-event-card p {
   margin: 4px 0 0;
+}
+
+.calendar-diary-item {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(181, 137, 95, 0.25);
+}
+
+.calendar-diary-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 2px;
+}
+
+.calendar-diary-item .calendar-entry-summary-btn {
+  all: unset;
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.calendar-diary-item .calendar-entry-summary-btn:hover {
+  background: transparent;
+}
+
+.calendar-diary-item .calendar-entry-summary-btn:focus-visible {
+  outline: 2px solid #c08a55;
+  outline-offset: 2px;
 }
 
 .calendar-entry-detail-modal {

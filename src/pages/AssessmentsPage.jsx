@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate } from "react-router-dom";
 import { averageFromPercents, getAssessmentMaxScore, performanceColor, scoreToPercent } from "../utils/assessmentMetrics";
 
@@ -25,6 +26,7 @@ const AssessmentsPage = ({
   assessments = [],
   assessmentEntries = [],
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const sortedClasses = useMemo(() => [...classes].sort(bySortThenName), [classes]);
   const [selectedClassId, setSelectedClassId] = useState("");
@@ -106,21 +108,20 @@ const AssessmentsPage = ({
       <section className="panel gradebook-page">
         <div className="gradebook-page-header">
           <div>
-            <h2>Gradebook</h2>
-            <p className="muted">Follow the same iOS flow: class, subject, then unit.</p>
+            <h2>{t("assessments.title")}</h2>
           </div>
           {selectedUnit && (
             <NavLink to={`/units/${selectedUnit.id}`} className="gradebook-open-unit">
-              Open Unit Workspace
+              {t("assessments.openUnitWorkspace")}
             </NavLink>
           )}
         </div>
 
         <div className="gradebook-launcher-grid">
           <article className="gradebook-step-card">
-            <p className="gradebook-step-title">Step 1 - Choose Class</p>
+            <p className="gradebook-step-title">{t("assessments.steps.chooseClass")}</p>
             {sortedClasses.length === 0 ? (
-              <p className="muted">No classes found.</p>
+              <p className="muted">{t("assessments.empty.noClasses")}</p>
             ) : (
               <div className="gradebook-step-list">
                 {sortedClasses.map((item) => (
@@ -139,11 +140,11 @@ const AssessmentsPage = ({
           </article>
 
           <article className="gradebook-step-card">
-            <p className="gradebook-step-title">Step 2 - Choose Subject</p>
+            <p className="gradebook-step-title">{t("assessments.steps.chooseSubject")}</p>
             {!selectedClass ? (
-              <p className="muted">Pick a class first.</p>
+              <p className="muted">{t("assessments.empty.pickClassFirst")}</p>
             ) : subjectsForClass.length === 0 ? (
-              <p className="muted">This class has no subjects.</p>
+              <p className="muted">{t("assessments.empty.classNoSubjects")}</p>
             ) : (
               <div className="gradebook-step-list">
                 {subjectsForClass.map((item) => (
@@ -162,11 +163,11 @@ const AssessmentsPage = ({
           </article>
 
           <article className="gradebook-step-card">
-            <p className="gradebook-step-title">Step 3 - Choose Unit</p>
+            <p className="gradebook-step-title">{t("assessments.steps.chooseUnit")}</p>
             {!selectedSubject ? (
-              <p className="muted">Pick a subject first.</p>
+              <p className="muted">{t("assessments.empty.pickSubjectFirst")}</p>
             ) : unitsForSubject.length === 0 ? (
-              <p className="muted">This subject has no units.</p>
+              <p className="muted">{t("assessments.empty.subjectNoUnits")}</p>
             ) : (
               <div className="gradebook-step-list">
                 {unitsForSubject.map((item) => (
@@ -189,19 +190,19 @@ const AssessmentsPage = ({
           <>
             <div className="gradebook-matrix-stats">
               <div className="stat-card gradebook-stat-card">
-                <div className="stat-label">Students</div>
+                <div className="stat-label">{t("assessments.stats.students")}</div>
                 <div className="stat-value" style={{ color: "#8a5c34" }}>
                   {studentsForClass.length}
                 </div>
               </div>
               <div className="stat-card gradebook-stat-card">
-                <div className="stat-label">Assessments</div>
+                <div className="stat-label">{t("assessments.stats.assessments")}</div>
                 <div className="stat-value" style={{ color: "#9b6a3f" }}>
                   {assessmentsForUnit.length}
                 </div>
               </div>
               <div className="stat-card gradebook-stat-card">
-                <div className="stat-label">Unit Average</div>
+                <div className="stat-label">{t("assessments.stats.unitAverage")}</div>
                 <div className="stat-value" style={{ color: unitAverageColor }}>
                   {unitAverage.toFixed(1)}%
                 </div>
@@ -210,22 +211,22 @@ const AssessmentsPage = ({
 
             <div className="gradebook-table-scroll">
               {loading ? (
-                <p className="muted">Loading gradebook...</p>
+                <p className="muted">{t("assessments.loading")}</p>
               ) : assessmentsForUnit.length === 0 ? (
-                <p className="muted">This unit has no assessments yet.</p>
+                <p className="muted">{t("assessments.empty.unitNoAssessments")}</p>
               ) : studentsForClass.length === 0 ? (
-                <p className="muted">This class has no students yet.</p>
+                <p className="muted">{t("assessments.empty.classNoStudents")}</p>
               ) : (
                 <table className="gradebook-matrix-table">
                   <thead>
                     <tr>
-                      <th className="student-col">Student</th>
+                      <th className="student-col">{t("assessments.table.student")}</th>
                       {assessmentsForUnit.map((assessment) => (
                         <th key={assessment.id} className="grade-col">
                           {assessment.title}
                         </th>
                       ))}
-                      <th className="grade-col">Average</th>
+                      <th className="grade-col">{t("assessments.table.average")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -267,7 +268,10 @@ const AssessmentsPage = ({
                                   className="gradebook-grade-cell"
                                   style={{ color: cellColor, background: cellBg }}
                                   onClick={() => navigate(`/assessments/${assessment.id}`)}
-                                  aria-label={`Open ${assessment.title} for ${student.first_name} ${student.last_name}`}
+                                  aria-label={t("assessments.aria.openAssessmentForStudent", {
+                                    assessmentTitle: assessment.title,
+                                    studentName: `${student.first_name} ${student.last_name}`,
+                                  })}
                                 >
                                   {scoreLabel(entry?.score)}
                                 </button>

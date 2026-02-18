@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
+import { enUS, ptBR } from "date-fns/locale";
 import { DayPicker } from "react-day-picker";
+import { useTranslation } from "react-i18next";
 
 function RunningRecordsPage({
   formError,
@@ -13,6 +15,8 @@ function RunningRecordsPage({
   loading,
   runningRecords,
 }) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === "pt-BR" ? ptBR : enUS;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedClassFilter, setSelectedClassFilter] = useState("");
@@ -37,13 +41,13 @@ function RunningRecordsPage({
 
   const getStudentName = (studentId) => {
     const student = studentLookup.get(studentId);
-    return student ? `${student.first_name} ${student.last_name}` : "Unknown Student";
+    return student ? `${student.first_name} ${student.last_name}` : t("runningRecords.unknownStudent");
   };
 
   const classDisplayName = (classId) => {
-    if (!classId) return "No Class";
+    if (!classId) return t("runningRecords.noClass");
     const classItem = classLookup.get(classId);
-    if (!classItem) return "No Class";
+    if (!classItem) return t("runningRecords.noClass");
     if (!classItem.grade_level) return classItem.name;
     return `${classItem.name} (${classItem.grade_level})`;
   };
@@ -101,12 +105,12 @@ function RunningRecordsPage({
   const levelMeta = (levelValue) => {
     const normalized = normalizeLevel(levelValue);
     if (normalized === "Independent (95-100%)") {
-      return { short: "Independent", color: "#16a34a", tint: "#dcfce7", badge: "✓" };
+      return { short: t("runningRecords.levels.independent.short"), color: "#16a34a", tint: "#dcfce7", badge: "✓" };
     }
     if (normalized === "Instructional (90-94%)") {
-      return { short: "Instructional", color: "#ea580c", tint: "#ffedd5", badge: "📘" };
+      return { short: t("runningRecords.levels.instructional.short"), color: "#ea580c", tint: "#ffedd5", badge: "📘" };
     }
-    return { short: "Frustration", color: "#dc2626", tint: "#fee2e2", badge: "⚠" };
+    return { short: t("runningRecords.levels.frustration.short"), color: "#dc2626", tint: "#fee2e2", badge: "⚠" };
   };
 
   const totalRecords = runningRecords.length;
@@ -205,22 +209,22 @@ function RunningRecordsPage({
     if (sortedRecords.length === 0) return;
     const escape = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
     const header = [
-      "Student",
-      "Class",
-      "Date",
-      "Text Title",
-      "Level",
-      "Accuracy %",
-      "Total Words",
-      "Errors",
-      "Self Corrections",
-      "SC Ratio",
-      "Notes",
+      t("runningRecords.export.student"),
+      t("runningRecords.export.class"),
+      t("runningRecords.export.date"),
+      t("runningRecords.export.textTitle"),
+      t("runningRecords.export.level"),
+      t("runningRecords.export.accuracy"),
+      t("runningRecords.export.totalWords"),
+      t("runningRecords.export.errors"),
+      t("runningRecords.export.selfCorrections"),
+      t("runningRecords.export.scRatio"),
+      t("runningRecords.export.notes"),
     ];
     const rows = sortedRecords.map((record) => {
       const student = studentLookup.get(record.student_id);
       return [
-        `${student?.first_name || ""} ${student?.last_name || ""}`.trim() || "Unknown Student",
+        `${student?.first_name || ""} ${student?.last_name || ""}`.trim() || t("runningRecords.unknownStudent"),
         classDisplayName(student?.class_id),
         record.record_date || "",
         record.text_title || "",
@@ -269,16 +273,16 @@ function RunningRecordsPage({
       {formError && <div className="error">{formError}</div>}
       <section className="panel running-records-panel">
         <div className="running-records-title">
-          <h2>Running Records</h2>
+          <h2>{t("runningRecords.title")}</h2>
           <div className="running-records-actions">
             <button type="button" className="secondary" onClick={exportRunningRecordsCsv} disabled={sortedRecords.length === 0}>
-              Export CSV
+              {t("runningRecords.exportCsv")}
             </button>
             <button type="button" className="secondary" onClick={exportRunningRecordsJson} disabled={sortedRecords.length === 0}>
-              Export JSON
+              {t("runningRecords.exportJson")}
             </button>
             <button type="button" onClick={() => setShowCreateModal(true)}>
-              + New Record
+              {t("runningRecords.newRecord")}
             </button>
           </div>
         </div>
@@ -287,34 +291,34 @@ function RunningRecordsPage({
           <article className="rr-stat">
             <div className="rr-stat-icon">📄</div>
             <div className="rr-stat-value">{totalRecords}</div>
-            <div className="rr-stat-label">Total Records</div>
+            <div className="rr-stat-label">{t("runningRecords.stats.totalRecords")}</div>
           </article>
           <article className="rr-stat">
             <div className="rr-stat-icon">👥</div>
             <div className="rr-stat-value">{studentsAssessed}</div>
-            <div className="rr-stat-label">Students Assessed</div>
+            <div className="rr-stat-label">{t("runningRecords.stats.studentsAssessed")}</div>
           </article>
           <article className="rr-stat">
             <div className="rr-stat-icon">📈</div>
             <div className="rr-stat-value">{avgAccuracy}%</div>
-            <div className="rr-stat-label">Avg. Accuracy</div>
+            <div className="rr-stat-label">{t("runningRecords.stats.avgAccuracy")}</div>
           </article>
           <article className="rr-stat">
             <div className="rr-stat-icon">🎯</div>
             <div className="rr-stat-value">{filteredAvgAccuracy}%</div>
-            <div className="rr-stat-label">Filtered Avg.</div>
+            <div className="rr-stat-label">{t("runningRecords.stats.filteredAvg")}</div>
           </article>
         </div>
 
         <div className="rr-level-summary">
-          <span className="independent">Independent: {filteredLevelCounts.independent}</span>
-          <span className="instructional">Instructional: {filteredLevelCounts.instructional}</span>
-          <span className="frustration">Frustration: {filteredLevelCounts.frustration}</span>
+          <span className="independent">{t("runningRecords.levels.independent.short")}: {filteredLevelCounts.independent}</span>
+          <span className="instructional">{t("runningRecords.levels.instructional.short")}: {filteredLevelCounts.instructional}</span>
+          <span className="frustration">{t("runningRecords.levels.frustration.short")}: {filteredLevelCounts.frustration}</span>
         </div>
 
         <div className="running-records-filters">
           <label className="stack">
-            <span>Class</span>
+            <span>{t("runningRecords.filters.class")}</span>
             <select
               value={selectedClassFilter}
               onChange={(event) => {
@@ -322,7 +326,7 @@ function RunningRecordsPage({
                 setSelectedStudentFilter("");
               }}
             >
-              <option value="">All Classes</option>
+              <option value="">{t("runningRecords.filters.allClasses")}</option>
               {classOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.label}
@@ -331,12 +335,12 @@ function RunningRecordsPage({
             </select>
           </label>
           <label className="stack">
-            <span>Student</span>
+            <span>{t("runningRecords.filters.student")}</span>
             <select
               value={selectedStudentFilter}
               onChange={(event) => setSelectedStudentFilter(event.target.value)}
             >
-              <option value="">All Students</option>
+              <option value="">{t("runningRecords.filters.allStudents")}</option>
               {students
                 .filter((student) => !selectedClassFilter || student.class_id === selectedClassFilter)
                 .map((student) => (
@@ -347,29 +351,29 @@ function RunningRecordsPage({
             </select>
           </label>
           <label className="stack">
-            <span>Search</span>
+            <span>{t("runningRecords.filters.search")}</span>
             <input
               type="text"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Student or text title"
+              placeholder={t("runningRecords.filters.searchPlaceholder")}
             />
           </label>
           <label className="stack">
-            <span>Sort</span>
+            <span>{t("runningRecords.filters.sort")}</span>
             <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
-              <option value="date_desc">Newest first</option>
-              <option value="date_asc">Oldest first</option>
-              <option value="accuracy_desc">Accuracy high-low</option>
-              <option value="accuracy_asc">Accuracy low-high</option>
+              <option value="date_desc">{t("runningRecords.filters.sortNewest")}</option>
+              <option value="date_asc">{t("runningRecords.filters.sortOldest")}</option>
+              <option value="accuracy_desc">{t("runningRecords.filters.sortAccuracyHighLow")}</option>
+              <option value="accuracy_asc">{t("runningRecords.filters.sortAccuracyLowHigh")}</option>
             </select>
           </label>
           <div className="rr-date-quick">
             {[
-              { id: "all", label: "All time" },
-              { id: "7d", label: "Last 7 days" },
-              { id: "30d", label: "Last 30 days" },
-              { id: "term", label: "This term" },
+              { id: "all", label: t("runningRecords.filters.allTime") },
+              { id: "7d", label: t("runningRecords.filters.last7Days") },
+              { id: "30d", label: t("runningRecords.filters.last30Days") },
+              { id: "term", label: t("runningRecords.filters.thisTerm") },
             ].map((range) => (
               <button
                 key={range.id}
@@ -414,18 +418,18 @@ function RunningRecordsPage({
               setSortBy("date_desc");
             }}
           >
-            Clear Filters
+            {t("runningRecords.filters.clear")}
           </button>
         </div>
 
         {loading ? (
-          <p className="muted">Loading running records...</p>
+          <p className="muted">{t("runningRecords.loading")}</p>
         ) : sortedRecords.length === 0 ? (
           <div className="rr-empty">
-            <h3>No Running Records Yet</h3>
-            <p className="muted">Create your first running record to start tracking reading growth.</p>
+            <h3>{t("runningRecords.empty.title")}</h3>
+            <p className="muted">{t("runningRecords.empty.description")}</p>
             <button type="button" onClick={() => setShowCreateModal(true)}>
-              Create First Record
+              {t("runningRecords.empty.createFirst")}
             </button>
           </div>
         ) : (
@@ -444,29 +448,29 @@ function RunningRecordsPage({
                   <div className="rr-card-header">
                     <div>
                       <p className="rr-card-student">{studentName}</p>
-                      <p className="rr-card-title">{record.text_title || "Untitled Text"}</p>
+                      <p className="rr-card-title">{record.text_title || t("runningRecords.untitledText")}</p>
                       <p className="rr-card-class">{classDisplayName(student?.class_id)}</p>
                     </div>
-                    <div className="rr-card-date">{record.record_date || "No date"}</div>
+                    <div className="rr-card-date">{record.record_date || t("runningRecords.noDate")}</div>
                   </div>
                   <div className="rr-mini-grid">
                     <article>
                       <strong style={{ color: meta.color }}>
                         {record.accuracy_pct !== null ? `${record.accuracy_pct}%` : "--"}
                       </strong>
-                      <span>Accuracy</span>
+                      <span>{t("runningRecords.metrics.accuracy")}</span>
                     </article>
                     <article>
                       <strong>{record.errors ?? 0}</strong>
-                      <span>Errors</span>
+                      <span>{t("runningRecords.metrics.errors")}</span>
                     </article>
                     <article>
                       <strong>{record.self_corrections ?? 0}</strong>
-                      <span>SC</span>
+                      <span>{t("runningRecords.metrics.sc")}</span>
                     </article>
                     <article>
                       <strong>{record.total_words ?? 0}</strong>
-                      <span>Words</span>
+                      <span>{t("runningRecords.metrics.words")}</span>
                     </article>
                   </div>
                   <div className="rr-level-badge" style={{ color: meta.color, background: meta.tint }}>
@@ -485,8 +489,8 @@ function RunningRecordsPage({
           <div className="modal-card running-records-modal">
             <div className="rr-modal-header">
               <div>
-                <h3>New Running Record</h3>
-                <p className="muted">Record reading assessment data</p>
+                <h3>{t("runningRecords.modal.newTitle")}</h3>
+                <p className="muted">{t("runningRecords.modal.newDescription")}</p>
               </div>
               <button
                 type="button"
@@ -495,14 +499,14 @@ function RunningRecordsPage({
                   setShowCreateModal(false);
                   setShowCalendar(false);
                 }}
-                aria-label="Close"
+                aria-label={t("common.actions.close")}
               >
                 ×
               </button>
             </div>
             <form onSubmit={onCreateRecord} className="grid">
               <label className="stack">
-                <span>Student</span>
+                <span>{t("runningRecords.modal.student")}</span>
                 <select
                   value={runningRecordForm.studentId}
                   onChange={(event) =>
@@ -510,7 +514,7 @@ function RunningRecordsPage({
                   }
                   required
                 >
-                  <option value="">Select a student</option>
+                  <option value="">{t("runningRecords.modal.selectStudent")}</option>
                   {groupedStudents.map((group) => (
                     <optgroup key={group.className} label={group.className}>
                       {group.students.map((student) => (
@@ -523,14 +527,14 @@ function RunningRecordsPage({
                 </select>
               </label>
               <label className="stack date-picker">
-                <span>Date</span>
+                <span>{t("runningRecords.modal.date")}</span>
                 <input
                   type="text"
                   value={runningRecordForm.recordDate}
                   onClick={() => setShowCalendar(true)}
                   onFocus={() => setShowCalendar(true)}
                   readOnly
-                  placeholder="Click to choose"
+                  placeholder={t("runningRecords.modal.clickToChoose")}
                   required
                 />
                 {showCalendar && (
@@ -551,17 +555,17 @@ function RunningRecordsPage({
                 )}
               </label>
               <label className="stack">
-                <span>Text Title</span>
+                <span>{t("runningRecords.modal.textTitle")}</span>
                 <input
                   value={runningRecordForm.textTitle}
                   onChange={(event) =>
                     setRunningRecordForm((prev) => ({ ...prev, textTitle: event.target.value }))
                   }
-                  placeholder="e.g., The Cat in the Hat"
+                  placeholder={t("runningRecords.modal.textTitlePlaceholder")}
                 />
               </label>
               <label className="stack">
-                <span>Total Words</span>
+                <span>{t("runningRecords.modal.totalWords")}</span>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -574,7 +578,7 @@ function RunningRecordsPage({
                 />
               </label>
               <label className="stack">
-                <span>Errors</span>
+                <span>{t("runningRecords.modal.errors")}</span>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -587,7 +591,7 @@ function RunningRecordsPage({
                 />
               </label>
               <label className="stack">
-                <span>Self-Corrections (SC)</span>
+                <span>{t("runningRecords.modal.selfCorrections")}</span>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -600,28 +604,28 @@ function RunningRecordsPage({
                 />
               </label>
               <label className="stack rr-notes-field">
-                <span>Notes (Optional)</span>
+                <span>{t("runningRecords.modal.notesOptional")}</span>
                 <textarea
                   rows="3"
                   value={runningRecordForm.notes}
                   onChange={(event) =>
                     setRunningRecordForm((prev) => ({ ...prev, notes: event.target.value }))
                   }
-                  placeholder="Optional notes"
+                  placeholder={t("runningRecords.modal.notesPlaceholder")}
                 />
               </label>
               {totalWords > 0 && (
                 <div className="rr-live-results">
-                  <h4>Results</h4>
+                  <h4>{t("runningRecords.modal.results")}</h4>
                   <p>
-                    Accuracy: <strong>{liveAccuracy.toFixed(1)}%</strong>
+                    {t("runningRecords.metrics.accuracy")}: <strong>{liveAccuracy.toFixed(1)}%</strong>
                   </p>
                   <p>
-                    Reading Level: <strong>{levelMeta(liveLevel).short}</strong>
+                    {t("runningRecords.modal.readingLevel")}: <strong>{levelMeta(liveLevel).short}</strong>
                   </p>
                   {liveRatio && (
                     <p>
-                      Self-Correction Ratio: <strong>{liveRatio}</strong>
+                      {t("runningRecords.modal.selfCorrectionRatio")}: <strong>{liveRatio}</strong>
                     </p>
                   )}
                 </div>
@@ -635,9 +639,9 @@ function RunningRecordsPage({
                     setShowCalendar(false);
                   }}
                 >
-                  Cancel
+                  {t("common.actions.cancel")}
                 </button>
-                <button type="submit">Save</button>
+                <button type="submit">{t("common.actions.save")}</button>
               </div>
             </form>
           </div>
@@ -649,59 +653,59 @@ function RunningRecordsPage({
           <div className="modal-card running-records-detail-modal">
             <div className="rr-modal-header">
               <div>
-                <h3>Running Record</h3>
+                <h3>{t("runningRecords.detail.title")}</h3>
                 <p className="muted">{getStudentName(selectedRecord.student_id)}</p>
               </div>
               <button
                 type="button"
                 className="icon-button"
                 onClick={() => setSelectedRecord(null)}
-                aria-label="Close"
+                aria-label={t("common.actions.close")}
               >
                 ×
               </button>
             </div>
             <div className="rr-detail-block">
-              <p className="rr-detail-title">{selectedRecord.text_title || "Untitled Text"}</p>
-              <p className="muted">{selectedRecordDate ? format(selectedRecordDate, "PPP") : "No date"}</p>
+              <p className="rr-detail-title">{selectedRecord.text_title || t("runningRecords.untitledText")}</p>
+              <p className="muted">{selectedRecordDate ? format(selectedRecordDate, "PPP", { locale }) : t("runningRecords.noDate")}</p>
             </div>
             <div
               className="rr-detail-accuracy"
               style={{ background: selectedRecordLevel?.tint, color: selectedRecordLevel?.color }}
             >
               <div>
-                <p className="muted">Accuracy</p>
+                <p className="muted">{t("runningRecords.metrics.accuracy")}</p>
                 <p>{selectedRecord.accuracy_pct ?? 0}%</p>
               </div>
               <div>{selectedRecordLevel?.short}</div>
             </div>
             <div className="rr-detail-grid">
               <article>
-                <span>Total Words</span>
+                <span>{t("runningRecords.modal.totalWords")}</span>
                 <strong>{selectedRecord.total_words ?? 0}</strong>
               </article>
               <article>
-                <span>Errors</span>
+                <span>{t("runningRecords.metrics.errors")}</span>
                 <strong>{selectedRecord.errors ?? 0}</strong>
               </article>
               <article>
-                <span>Self-Corrections</span>
+                <span>{t("runningRecords.modal.selfCorrections")}</span>
                 <strong>{selectedRecord.self_corrections ?? 0}</strong>
               </article>
               <article>
-                <span>SC Ratio</span>
-                <strong>{selectedRecord.sc_ratio !== null ? `1:${selectedRecord.sc_ratio}` : "N/A"}</strong>
+                <span>{t("runningRecords.metrics.scRatio")}</span>
+                <strong>{selectedRecord.sc_ratio !== null ? `1:${selectedRecord.sc_ratio}` : t("runningRecords.na")}</strong>
               </article>
             </div>
             {!!selectedRecord.notes && (
               <div className="rr-detail-notes">
-                <h4>Notes</h4>
+                <h4>{t("runningRecords.modal.notesOptional")}</h4>
                 <p>{selectedRecord.notes}</p>
               </div>
             )}
             <div className="modal-actions">
               <button type="button" className="secondary" onClick={() => setSelectedRecord(null)}>
-                Done
+                {t("common.actions.done")}
               </button>
               <button
                 type="button"
@@ -711,7 +715,7 @@ function RunningRecordsPage({
                   setSelectedRecord(null);
                 }}
               >
-                Delete
+                {t("common.actions.delete")}
               </button>
             </div>
           </div>

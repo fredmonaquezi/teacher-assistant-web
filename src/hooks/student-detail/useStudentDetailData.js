@@ -1,21 +1,22 @@
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { averageFromPercents, entryToPercent, performanceColor } from "../../utils/assessmentMetrics";
 import { getAttendanceTotal, summarizeAttendanceEntries } from "../../utils/attendanceMetrics";
 
-function normalizedLevel(value) {
+function normalizedLevel(value, t) {
   const level = (value || "").toLowerCase();
-  if (level.startsWith("independent")) return { label: "Independent", color: "#16a34a", short: "Ind." };
-  if (level.startsWith("instructional")) return { label: "Instructional", color: "#ea580c", short: "Inst." };
-  return { label: "Frustration", color: "#dc2626", short: "Frust." };
+  if (level.startsWith("independent")) return { label: t("runningRecords.levels.independent.short"), color: "#16a34a", short: t("runningRecords.levels.independent.short") };
+  if (level.startsWith("instructional")) return { label: t("runningRecords.levels.instructional.short"), color: "#ea580c", short: t("runningRecords.levels.instructional.short") };
+  return { label: t("runningRecords.levels.frustration.short"), color: "#dc2626", short: t("runningRecords.levels.frustration.short") };
 }
 
-function ratingLabel(rating) {
-  if (rating === 1) return "Needs Significant Support";
-  if (rating === 2) return "Beginning to Develop";
-  if (rating === 3) return "Developing";
-  if (rating === 4) return "Proficient";
-  if (rating === 5) return "Mastering / Exceeding";
-  return "Not Rated";
+function ratingLabel(rating, t) {
+  if (rating === 1) return t("development.ratingShort.1");
+  if (rating === 2) return t("development.ratingShort.2");
+  if (rating === 3) return t("development.ratingShort.3");
+  if (rating === 4) return t("development.ratingShort.4");
+  if (rating === 5) return t("development.ratingShort.5");
+  return t("development.notRated");
 }
 
 function averageColor(value) {
@@ -49,6 +50,7 @@ function useStudentDetailData({
   developmentScoreForm,
   setDevelopmentScoreForm,
 }) {
+  const { t } = useTranslation();
   const student = useMemo(
     () => students.find((item) => item.id === studentId),
     [students, studentId]
@@ -65,7 +67,7 @@ function useStudentDetailData({
 
   const classLabel = classItem
     ? `${classItem.name}${classItem.grade_level ? ` (${classItem.grade_level})` : ""}`
-    : "No class";
+    : t("studentOverview.noClass");
 
   const records = useMemo(
     () =>
@@ -75,7 +77,7 @@ function useStudentDetailData({
     [runningRecords, studentId]
   );
 
-  const latestLevel = records.length ? normalizedLevel(records[0].level) : null;
+  const latestLevel = records.length ? normalizedLevel(records[0].level, t) : null;
 
   const avgAccuracy = records.length
     ? records.reduce((sum, record) => sum + Number(record.accuracy_pct || 0), 0) / records.length
@@ -167,7 +169,7 @@ function useStudentDetailData({
           const percent = entryToPercent(entry, assessmentLookup);
           return {
             id: entry.id,
-            title: assessment?.title || "Assessment",
+            title: assessment?.title || t("assessments.title"),
             subjectName: subjectLookup.get(assessment?.subject_id)?.name || "",
             assessmentDate: assessment?.assessment_date || "",
             percent,
@@ -175,7 +177,7 @@ function useStudentDetailData({
               entry.score !== null && Number.isFinite(Number(entry.score)) && percent !== null,
           };
         }),
-    [assessmentsForStudent, assessmentLookup, subjectLookup]
+    [assessmentsForStudent, assessmentLookup, subjectLookup, t]
   );
 
   const criteriaLookup = useMemo(() => {
@@ -224,12 +226,12 @@ function useStudentDetailData({
     () =>
       latestScoresByCriterion.reduce((acc, score) => {
         const criterion = criteriaLookup.get(score.criterion_id);
-        const categoryName = categoryLookup.get(criterion?.category_id)?.name || "Other";
+        const categoryName = categoryLookup.get(criterion?.category_id)?.name || t("development.other");
         if (!acc[categoryName]) acc[categoryName] = [];
         acc[categoryName].push(score);
         return acc;
       }, {}),
-    [latestScoresByCriterion, criteriaLookup, categoryLookup]
+    [latestScoresByCriterion, criteriaLookup, categoryLookup, t]
   );
 
   const activeDevelopmentHistory = activeDevelopmentCriterionId
@@ -243,7 +245,7 @@ function useStudentDetailData({
     : null;
 
   const activeDevelopmentCategoryName = activeDevelopmentCriterion
-    ? categoryLookup.get(activeDevelopmentCriterion.category_id)?.name || "Other"
+    ? categoryLookup.get(activeDevelopmentCriterion.category_id)?.name || t("development.other")
     : "";
 
   const sparklineData = useMemo(() => {
@@ -299,11 +301,11 @@ function useStudentDetailData({
         const rubric = rubricLookup.get(category?.rubric_id);
         return {
           ...criterion,
-          categoryName: category?.name || "Other",
-          gradeBand: (rubric?.grade_band || "General").trim() || "General",
+          categoryName: category?.name || t("development.other"),
+          gradeBand: (rubric?.grade_band || t("development.general")).trim() || t("development.general"),
         };
       }),
-    [rubricCriteria, categoryLookup, rubricLookup]
+    [rubricCriteria, categoryLookup, rubricLookup, t]
   );
 
   const filteredCriteriaForForm = useMemo(() => {
@@ -372,8 +374,8 @@ function useStudentDetailData({
     rubricYearOptions,
     groupedCriterionOptions,
     selectedCriterionMeta,
-    normalizedLevel,
-    ratingLabel,
+    normalizedLevel: (value) => normalizedLevel(value, t),
+    ratingLabel: (rating) => ratingLabel(rating, t),
     averageColor,
     trendLabel,
   };

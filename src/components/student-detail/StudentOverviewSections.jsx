@@ -1,4 +1,18 @@
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+
+function genderOptionLabelKey(option) {
+  const normalized = String(option || "").trim().toLowerCase();
+  if (["male", "masculino"].includes(normalized)) return "male";
+  if (["female", "feminino"].includes(normalized)) return "female";
+  if (["non-binary", "non binary", "gender neutral", "gênero neutro", "genero neutro"].includes(normalized)) {
+    return "nonBinary";
+  }
+  if (["prefer not to say", "prefiro não informar", "prefiro nao informar"].includes(normalized)) {
+    return "preferNotToSay";
+  }
+  return null;
+}
 
 function renderStudentStatusIcon(kind) {
   switch (kind) {
@@ -50,6 +64,12 @@ function StudentOverviewSections({
   performanceBySubject,
   recentAssessments,
 }) {
+  const { t } = useTranslation();
+  const genderKey = genderOptionLabelKey(student.gender);
+  const genderLabel = genderKey
+    ? t(`common.gender.${genderKey}`)
+    : student.gender || t("common.gender.preferNotToSay");
+
   return (
     <>
       <section className="panel student-profile-header">
@@ -61,20 +81,20 @@ function StudentOverviewSections({
             </h2>
             <p className="muted">{classLabel}</p>
             <div className="student-profile-chips">
-              <span className="student-chip">{student.gender || "Prefer not to say"}</span>
+              <span className="student-chip">{genderLabel}</span>
               <span className={`student-chip ${student.notes ? "" : "subtle"}`}>
-                {student.notes ? "Notes saved" : "No notes"}
+                {student.notes ? t("studentOverview.notesSaved") : t("studentOverview.noNotes")}
               </span>
             </div>
           </div>
         </div>
         <button type="button" className="secondary" onClick={onOpenEditInfo}>
-          Edit Info
+          {t("studentOverview.editInfo")}
         </button>
       </section>
 
       <section className="panel student-status-panel">
-        <h3>Quick Status</h3>
+        <h3>{t("studentOverview.quickStatus")}</h3>
         <div className="student-status-grid">
           <button
             type="button"
@@ -85,8 +105,8 @@ function StudentOverviewSections({
               {renderStudentStatusIcon("participating")}
             </span>
             <div>
-              <strong>Participating Well</strong>
-              <p>{student.is_participating_well ? "Active" : "Inactive"}</p>
+              <strong>{t("studentOverview.status.participatingWell")}</strong>
+              <p>{student.is_participating_well ? t("studentOverview.status.active") : t("studentOverview.status.inactive")}</p>
             </div>
           </button>
           <button
@@ -98,8 +118,8 @@ function StudentOverviewSections({
               {renderStudentStatusIcon("needsHelp")}
             </span>
             <div>
-              <strong>Needs Help</strong>
-              <p>{student.needs_help ? "Active" : "Inactive"}</p>
+              <strong>{t("studentOverview.status.needsHelp")}</strong>
+              <p>{student.needs_help ? t("studentOverview.status.active") : t("studentOverview.status.inactive")}</p>
             </div>
           </button>
           <button
@@ -111,8 +131,8 @@ function StudentOverviewSections({
               {renderStudentStatusIcon("homework")}
             </span>
             <div>
-              <strong>Missing Homework</strong>
-              <p>{student.missing_homework ? "Active" : "Inactive"}</p>
+              <strong>{t("studentOverview.status.missingHomework")}</strong>
+              <p>{student.missing_homework ? t("studentOverview.status.active") : t("studentOverview.status.inactive")}</p>
             </div>
           </button>
         </div>
@@ -120,39 +140,39 @@ function StudentOverviewSections({
 
       <section className="student-stat-row">
         <article className="panel student-stat-card">
-          <p className="muted">Overall Average</p>
+          <p className="muted">{t("studentOverview.stats.overallAverage")}</p>
           <p style={{ color: averageColor(overallAverage) }}>{overallAverage.toFixed(1)}%</p>
         </article>
         <article className="panel student-stat-card">
-          <p className="muted">Total Assessments</p>
+          <p className="muted">{t("studentOverview.stats.totalAssessments")}</p>
           <p style={{ color: "#8a5c34" }}>{totalAssessments}</p>
         </article>
       </section>
 
       <section className="panel">
-        <h3>Attendance Summary</h3>
+        <h3>{t("studentOverview.attendanceSummary")}</h3>
         {attendanceTotal === 0 ? (
-          <p className="muted">No attendance records yet.</p>
+          <p className="muted">{t("studentOverview.noAttendance")}</p>
         ) : (
           <div className="attendance-summary-grid">
             <article>
               <strong>{attendanceSummary.present}</strong>
-              <span>Present</span>
+              <span>{t("attendance.status.present.short")}</span>
               <small>{Math.round((attendanceSummary.present / attendanceTotal) * 100)}%</small>
             </article>
             <article>
               <strong>{attendanceSummary.absent}</strong>
-              <span>Absent</span>
+              <span>{t("attendance.status.absent.short")}</span>
               <small>{Math.round((attendanceSummary.absent / attendanceTotal) * 100)}%</small>
             </article>
             <article>
               <strong>{attendanceSummary.late}</strong>
-              <span>Late</span>
+              <span>{t("attendance.status.late.short")}</span>
               <small>{Math.round((attendanceSummary.late / attendanceTotal) * 100)}%</small>
             </article>
             <article>
               <strong>{attendanceSummary.leftEarly}</strong>
-              <span>Left Early</span>
+              <span>{t("attendance.status.leftEarly.short")}</span>
               <small>{Math.round((attendanceSummary.leftEarly / attendanceTotal) * 100)}%</small>
             </article>
           </div>
@@ -161,27 +181,27 @@ function StudentOverviewSections({
 
       <section className="panel">
         <div className="student-section-title">
-          <h3>Running Records</h3>
+          <h3>{t("studentOverview.runningRecords")}</h3>
           <NavLink to="/running-records" className="student-view-all-btn">
-            View all
+            {t("studentOverview.viewAll")}
           </NavLink>
         </div>
         {records.length === 0 ? (
-          <p className="muted">No running records yet.</p>
+          <p className="muted">{t("studentOverview.noRunningRecords")}</p>
         ) : (
           <>
             <div className="student-running-stats">
               <article>
                 <strong>{records.length}</strong>
-                <span>Total</span>
+                <span>{t("studentOverview.stats.total")}</span>
               </article>
               <article>
                 <strong>{avgAccuracy.toFixed(1)}%</strong>
-                <span>Avg. Accuracy</span>
+                <span>{t("studentOverview.stats.avgAccuracy")}</span>
               </article>
               <article>
                 <strong style={{ color: latestLevel?.color }}>{latestLevel?.short || "-"}</strong>
-                <span>Latest</span>
+                <span>{t("studentOverview.stats.latest")}</span>
               </article>
             </div>
             <ul className="list student-mini-list">
@@ -189,7 +209,7 @@ function StudentOverviewSections({
                 const level = normalizedLevel(record.level);
                 return (
                   <li key={record.id}>
-                    <span>{record.record_date || "No date"} · {record.text_title || "Untitled text"}</span>
+                    <span>{record.record_date || t("runningRecords.noDate")} · {record.text_title || t("runningRecords.untitledText")}</span>
                     <strong style={{ color: level.color }}>{record.accuracy_pct ?? 0}%</strong>
                   </li>
                 );
@@ -200,16 +220,16 @@ function StudentOverviewSections({
       </section>
 
       <section className="panel">
-        <h3>Performance by Subject</h3>
+        <h3>{t("studentOverview.performanceBySubject")}</h3>
         {performanceBySubject.length === 0 ? (
-          <p className="muted">No subjects in this class yet.</p>
+          <p className="muted">{t("studentOverview.noSubjects")}</p>
         ) : (
           <div className="student-subject-grid">
             {performanceBySubject.map((item) => (
               <article key={item.subject.id}>
                 <div>
                   <strong>{item.subject.name}</strong>
-                  <p className="muted">{item.count} assessments</p>
+                  <p className="muted">{t("studentOverview.assessmentsCount", { count: item.count })}</p>
                 </div>
                 <p style={{ color: averageColor(item.average) }}>{item.average.toFixed(1)}%</p>
               </article>
@@ -219,9 +239,9 @@ function StudentOverviewSections({
       </section>
 
       <section className="panel">
-        <h3>Recent Assessments</h3>
+        <h3>{t("studentOverview.recentAssessments")}</h3>
         {recentAssessments.length === 0 ? (
-          <p className="muted">No assessments yet.</p>
+          <p className="muted">{t("studentOverview.noAssessments")}</p>
         ) : (
           <ul className="list student-mini-list">
             {recentAssessments.map((item) => (
@@ -234,7 +254,7 @@ function StudentOverviewSections({
                 {item.isGraded ? (
                   <strong style={{ color: averageColor(item.percent) }}>{item.percent.toFixed(1)}%</strong>
                 ) : (
-                  <strong className="muted">Not graded</strong>
+                  <strong className="muted">{t("studentOverview.notGraded")}</strong>
                 )}
               </li>
             ))}

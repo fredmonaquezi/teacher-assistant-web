@@ -327,6 +327,39 @@ body {
   border-top: 1px dashed #bea785;
 }
 
+.language-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid #c8aa7d;
+  background: #f8ecd1;
+}
+
+.language-toggle button {
+  min-height: 34px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #62492f;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.language-toggle button:hover {
+  background: #fbf0d8;
+  border-color: #b68f5e;
+}
+
+.language-toggle button.active {
+  color: #3b2a16;
+  border-color: #9f855a;
+  background: #f9e8b3;
+  box-shadow: 0 4px 8px rgba(52, 38, 14, 0.16);
+}
+
 .sidebar-account-link {
   position: relative;
   border-radius: 999px;

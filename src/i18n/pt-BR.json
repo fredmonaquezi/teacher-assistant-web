@@ -1,0 +1,959 @@
+{
+  "common": {
+    "language": {
+      "label": "Idioma",
+      "en": "EN",
+      "ptBR": "PT-BR"
+    },
+    "actions": {
+      "cancel": "Cancelar",
+      "add": "Adicionar",
+      "reorderMode": "Modo de Reordenação",
+      "doneReordering": "Concluir Reordenação",
+      "back": "Voltar",
+      "close": "Fechar",
+      "create": "Criar",
+      "delete": "Excluir",
+      "done": "Concluir",
+      "next": "Próximo",
+      "save": "Salvar"
+    },
+    "gender": {
+      "female": "Feminino",
+      "male": "Masculino",
+      "nonBinary": "Gênero Neutro",
+      "preferNotToSay": "Prefiro não informar"
+    }
+  },
+  "route": {
+    "loadingPage": "Carregando página..."
+  },
+  "layout": {
+    "mobileNav": {
+      "openAria": "Abrir menu de navegação",
+      "closeAria": "Fechar menu de navegação",
+      "open": "Menu",
+      "close": "Fechar menu"
+    },
+    "sidebar": {
+      "kicker": "Assistente do Professor",
+      "title": "Central da Sala",
+      "signedInAs": "Conectado como {{identity}}",
+      "profile": "Perfil",
+      "signOut": "Sair"
+    },
+    "nav": {
+      "dashboard": "Painel",
+      "classes": "Turmas",
+      "attendance": "Presença",
+      "gradebook": "Notas",
+      "groups": "Grupos",
+      "calendar": "Calendário",
+      "timer": "Cronômetro",
+      "randomPicker": "Escolha Aleatória",
+      "runningRecords": "Registros de Leitura"
+    },
+    "greeting": {
+      "kicker": "Assistente do Professor",
+      "hello": "Olá, {{name}}.",
+      "todayIs": "Hoje é {{date}}"
+    },
+    "events": {
+      "title": "Próximos Eventos",
+      "calendar": "Calendário",
+      "empty": "Sem eventos nos próximos 15 dias.",
+      "dateTbd": "Data a definir",
+      "allDay": "Dia inteiro",
+      "timeTbd": "Horário a definir",
+      "untitled": "Evento sem título"
+    }
+  },
+  "auth": {
+    "title": "Assistente do Professor",
+    "subtitle": "Entre para sincronizar seus dados em todos os dispositivos.",
+    "email": "E-mail",
+    "password": "Senha",
+    "working": "Processando...",
+    "createAccount": "Criar conta",
+    "signIn": "Entrar",
+    "or": "ou",
+    "createWithGoogle": "Criar conta com Google",
+    "signInWithGoogle": "Entrar com Google",
+    "completingGoogleSignIn": "Concluindo login com Google...",
+    "alreadyHaveAccount": "Já tem uma conta? Entrar",
+    "newHere": "Novo por aqui? Criar uma conta",
+    "success": {
+      "checkEmail": "Verifique seu e-mail para confirmar sua conta e depois entre."
+    },
+    "errors": {
+      "generic": "Algo deu errado. Tente novamente.",
+      "googleMissingClientId": "O login Google está ativado, mas VITE_GOOGLE_CLIENT_ID está ausente.",
+      "googleLoadFailed": "Falha ao carregar o login Google. Atualize e tente novamente.",
+      "googleMissingCredential": "O Google não retornou uma credencial de login.",
+      "googleSignInFailed": "Falha no login com Google. Tente novamente."
+    }
+  },
+  "dashboard": {
+    "tiles": {
+      "classes": "Turmas",
+      "attendance": "Presença",
+      "gradebook": "Notas",
+      "rubrics": "Rubricas",
+      "groups": "Grupos",
+      "randomPicker": "Escolha Aleatória",
+      "timer": "Cronômetro",
+      "runningRecords": "Registros de Leitura",
+      "calendar": "Calendário"
+    }
+  },
+  "classes": {
+    "title": "Turmas",
+    "addClass": "+ Adicionar Turma",
+    "loadingClasses": "Carregando turmas...",
+    "students": "alunos",
+    "subjects": "disciplinas",
+    "empty": "Ainda não há turmas.",
+    "summary": {
+      "loading": "Carregando suas turmas...",
+      "loaded": "{{classCountLabel}} • {{studentCountLabel}} • {{subjectCountLabel}}"
+    },
+    "count": {
+      "class_one": "{{count}} turma",
+      "class_other": "{{count}} turmas",
+      "student_one": "{{count}} aluno",
+      "student_other": "{{count}} alunos",
+      "subject_one": "{{count}} disciplina",
+      "subject_other": "{{count}} disciplinas"
+    },
+    "aria": {
+      "moveUp": "Mover {{name}} para cima",
+      "moveDown": "Mover {{name}} para baixo",
+      "drag": "Arrastar {{name}}",
+      "delete": "Excluir {{name}}"
+    },
+    "modal": {
+      "title": "Adicionar Turma",
+      "className": "Nome da turma",
+      "classNamePlaceholder": "3º ano - Profª. Maria",
+      "gradeLevel": "Ano escolar",
+      "gradeLevelPlaceholder": "3º",
+      "schoolYear": "Ano letivo",
+      "schoolYearPlaceholder": "2025-2026"
+    }
+  },
+  "attendance": {
+    "title": "Presença",
+    "classLabel": "Turma: {{classLabel}}",
+    "classFallback": "Turma",
+    "actions": {
+      "selectClass": "Selecionar turma",
+      "byDate": "Por data",
+      "today": "Hoje"
+    },
+    "stats": {
+      "totalSessions": "Total de Sessões",
+      "students": "Alunos",
+      "attendanceRate": "Taxa de Presença"
+    },
+    "sessions": {
+      "title": "Sessões de Presença",
+      "emptyTitle": "Ainda não há sessões de presença",
+      "emptyDescription": "Crie sua primeira sessão para começar a registrar presença."
+    },
+    "relative": {
+      "today": "Hoje",
+      "yesterday": "Ontem",
+      "daysAgo_one": "há {{count}} dia",
+      "daysAgo_other": "há {{count}} dias"
+    },
+    "status": {
+      "present": {
+        "label": "Presente",
+        "short": "Presente"
+      },
+      "late": {
+        "label": "Chegou atrasado",
+        "short": "Atrasado"
+      },
+      "leftEarly": {
+        "label": "Saiu cedo",
+        "short": "Saiu cedo"
+      },
+      "absent": {
+        "label": "Não veio",
+        "short": "Ausente"
+      }
+    },
+    "note": {
+      "label": "Observações",
+      "placeholder": "Adicionar observações (opcional)"
+    },
+    "modal": {
+      "title": "Adicionar Sessão de Presença",
+      "description": "Escolha uma data para registrar presença.",
+      "selectDate": "Selecionar data",
+      "selectedDate": "Data selecionada: {{date}}",
+      "createSession": "Criar Sessão"
+    },
+    "confirm": {
+      "deleteSession": "Excluir esta sessão de presença?"
+    },
+    "aria": {
+      "deleteSession": "Excluir sessão"
+    },
+    "count": {
+      "students_one": "{{count}} aluno",
+      "students_other": "{{count}} alunos"
+    },
+    "sessionDetail": {
+      "notFoundTitle": "Sessão não encontrada",
+      "notFoundDescription": "Selecione uma sessão na página de Presença.",
+      "markAttendance": "Marcar Presença"
+    }
+  },
+  "assessments": {
+    "title": "Notas",
+    "subtitle": "Siga o mesmo fluxo do iOS: turma, disciplina e unidade.",
+    "openUnitWorkspace": "Abrir Área da Unidade",
+    "steps": {
+      "chooseClass": "Etapa 1 - Escolher Turma",
+      "chooseSubject": "Etapa 2 - Escolher Disciplina",
+      "chooseUnit": "Etapa 3 - Escolher Unidade"
+    },
+    "stats": {
+      "students": "Alunos",
+      "assessments": "Avaliações",
+      "unitAverage": "Média da Unidade"
+    },
+    "table": {
+      "student": "Aluno",
+      "average": "Média"
+    },
+    "loading": "Carregando notas...",
+    "empty": {
+      "noClasses": "Nenhuma turma encontrada.",
+      "pickClassFirst": "Escolha uma turma primeiro.",
+      "classNoSubjects": "Esta turma não possui disciplinas.",
+      "pickSubjectFirst": "Escolha uma disciplina primeiro.",
+      "subjectNoUnits": "Esta disciplina não possui unidades.",
+      "unitNoAssessments": "Esta unidade ainda não possui avaliações.",
+      "classNoStudents": "Esta turma ainda não possui alunos."
+    },
+    "aria": {
+      "openAssessmentForStudent": "Abrir {{assessmentTitle}} para {{studentName}}"
+    }
+  },
+  "assessmentDetail": {
+    "notFoundTitle": "Avaliação não encontrada",
+    "notFoundDescription": "Selecione uma avaliação na página de notas.",
+    "kicker": "Detalhes da Avaliação",
+    "stats": {
+      "classAverage": "Média da Turma",
+      "highest": "Maior",
+      "lowest": "Menor"
+    },
+    "info": {
+      "title": "Informações da Avaliação",
+      "class": "Turma",
+      "subject": "Disciplina",
+      "unit": "Unidade"
+    },
+    "description": {
+      "title": "Descrição",
+      "placeholder": "Adicionar descrição"
+    },
+    "students": {
+      "title": "Notas dos Alunos",
+      "graded": "{{graded}} / {{total}} avaliados",
+      "empty": "Ainda não há alunos."
+    },
+    "entry": {
+      "score": "Nota:",
+      "notes": "Observações",
+      "addNotes": "Adicionar observações"
+    }
+  },
+  "profile": {
+    "title": "Perfil e Preferências",
+    "subtitle": "Gerencie sua conta, segurança e preferências do aplicativo.",
+    "messages": {
+      "couldNotSaveProfile": "Não foi possível salvar o perfil.",
+      "profileUpdated": "Perfil atualizado.",
+      "passwordLength": "A senha deve ter pelo menos 6 caracteres.",
+      "passwordMismatch": "A confirmação da senha não corresponde.",
+      "couldNotUpdatePassword": "Não foi possível atualizar a senha.",
+      "passwordUpdated": "Senha atualizada."
+    },
+    "basicInfo": {
+      "title": "Informações Básicas",
+      "fullName": "Nome completo",
+      "fullNamePlaceholder": "Seu nome completo",
+      "displayName": "Nome de exibição",
+      "displayNamePlaceholder": "Como o app deve chamar você",
+      "email": "E-mail",
+      "school": "Escola",
+      "schoolPlaceholder": "Nome da escola",
+      "gradeLevels": "Anos/séries lecionados",
+      "gradeLevelsPlaceholder": "ex.: 5º-6º ano",
+      "saving": "Salvando...",
+      "save": "Salvar perfil"
+    },
+    "security": {
+      "title": "Segurança",
+      "newPassword": "Nova senha",
+      "newPasswordPlaceholder": "Pelo menos 6 caracteres",
+      "confirmPassword": "Confirmar nova senha",
+      "confirmPasswordPlaceholder": "Repita a senha",
+      "updating": "Atualizando...",
+      "updatePassword": "Atualizar senha"
+    },
+    "preferences": {
+      "title": "Preferências",
+      "dateFormat": "Formato de data",
+      "dateFormatMdy": "Mês / Dia / Ano",
+      "dateFormatDmy": "Dia / Mês / Ano",
+      "timeFormat": "Formato de hora",
+      "timeFormat12h": "12 horas",
+      "timeFormat24h": "24 horas",
+      "defaultLandingPage": "Página inicial padrão",
+      "preview": "Pré-visualização",
+      "landing": {
+        "dashboard": "Painel",
+        "calendar": "Calendário",
+        "classes": "Turmas",
+        "gradebook": "Notas"
+      }
+    }
+  },
+  "timer": {
+    "kicker": "Ferramenta de Foco",
+    "title": "Cronômetro da Sala",
+    "subtitle": "Escolha uma duração e mantenha cada atividade no ritmo.",
+    "quickTimers": "Cronômetros Rápidos",
+    "presetLabel_one": "{{count}} min",
+    "presetLabel_other": "{{count}} min",
+    "presetSub_one": "{{count}} min",
+    "presetSub_other": "{{count}} min",
+    "custom": {
+      "title": "Cronômetro Personalizado",
+      "hint": "Defina exatamente o tempo da contagem regressiva",
+      "minutes": "Minutos",
+      "seconds": "Segundos",
+      "start": "▶ Iniciar Cronômetro Personalizado"
+    }
+  },
+  "calendar": {
+    "setupMessage": "As tabelas do calendário ainda não estão configuradas. Execute /Users/fred/Documents/teacher-assistant-web/supabase_calendar_tables.sql no editor SQL do Supabase e atualize.",
+    "today": "Hoje",
+    "allClasses": "Todas as Turmas",
+    "selectedClass": "Turma selecionada",
+    "classLabel": "Turma: {{classLabel}}",
+    "none": "Nenhum",
+    "allDay": "Dia inteiro",
+    "diaryEntry": "Entrada de Diário",
+    "classEntry": "Entrada de Aula",
+    "upcomingAlerts": "Próximos Alertas",
+    "noUpcomingAlerts": "Sem alertas próximos.",
+    "timeRangeSeparator": " – ",
+    "view": {
+      "month": "Mês",
+      "week": "Semana"
+    },
+    "actions": {
+      "save": "Salvar",
+      "saveChanges": "Salvar alterações",
+      "saveEvent": "Salvar Evento",
+      "edit": "Editar"
+    },
+    "modals": {
+      "newDiaryEntryTitle": "Nova Entrada de Diário",
+      "editDiaryEntryTitle": "Editar Entrada de Diário",
+      "newEventTitle": "Novo Evento"
+    },
+    "form": {
+      "class": "Turma",
+      "subject": "Disciplina",
+      "unit": "Unidade",
+      "title": "Título",
+      "startTime": "Hora de início",
+      "endTime": "Hora de término",
+      "plan": "Plano",
+      "planPlaceholder": "O que será ensinado",
+      "objectives": "Objetivos",
+      "objectivesPlaceholder": "Objetivos de aprendizagem",
+      "materials": "Materiais",
+      "materialsPlaceholder": "Livros, slides, folhas...",
+      "notes": "Observações",
+      "notesPlaceholder": "Observações opcionais",
+      "details": "Detalhes",
+      "detailsPlaceholder": "Detalhes opcionais",
+      "eventTitlePlaceholder": "Título do evento"
+    },
+    "validation": {
+      "selectClassForEntry": "Selecione uma turma para a entrada de diário.",
+      "eventTitleRequired": "O título do evento é obrigatório."
+    },
+    "confirm": {
+      "deleteDiaryEntry": "Excluir esta entrada de diário?",
+      "deleteEvent": "Excluir este evento?"
+    },
+    "aria": {
+      "deleteDiaryEntry": "Excluir entrada de diário"
+    },
+    "dayDetail": {
+      "classDiary": "Diário de Aula",
+      "addEntry": "+ Adicionar Entrada",
+      "noDiaryEntries": "Sem entradas de diário para este dia.",
+      "timeNotSet": "Horário não definido",
+      "eventsAndAlerts": "Eventos e Alertas",
+      "addEvent": "+ Adicionar Evento",
+      "noEvents": "Sem eventos para este dia."
+    },
+    "entryDetail": {
+      "goals": "Metas",
+      "noGoals": "Nenhuma meta adicionada.",
+      "materialsNeeded": "Materiais Necessários",
+      "noMaterials": "Nenhum material listado.",
+      "noHomeworkNotes": "Nenhuma tarefa/observação adicionada.",
+      "classDevelopment": "Desenvolvimento da Aula",
+      "noPlan": "Nenhum plano adicionado.",
+      "dayObservations": "Observações do Dia",
+      "noObservations": "Nenhuma observação registrada."
+    }
+  },
+  "classDetail": {
+    "addStudent": {
+      "description": "Somente os dados básicos do perfil. Você pode completar mais informações depois.",
+      "errorNameRequired": "Nome e sobrenome são obrigatórios.",
+      "firstName": "Primeiro nome",
+      "firstNamePlaceholder": "Ex.: Ana",
+      "gender": "Gênero",
+      "lastName": "Último nome",
+      "lastNamePlaceholder": "Ex.: Souza",
+      "notes": "Notas",
+      "notesPlaceholder": "Opcional",
+      "title": "Adicionar Aluno"
+    },
+    "analytics": {
+      "allSubjects": "Todas as disciplinas",
+      "attendance": "Presença",
+      "classAverage": "Média da Turma",
+      "development": "Desenvolvimento",
+      "excellent": "Excelente",
+      "good": "Bom",
+      "needsAttention": "Precisa attention",
+      "needsWork": "Precisa Melhorar",
+      "noGradedData": "Sem avaliado data",
+      "performanceDistribution": "Distribuição de Desempenho",
+      "subjectPerformance": "Desempenho na Disciplina",
+      "title": "Análises",
+      "topPerformers": "Alunos destaque"
+    },
+    "aria": {
+      "dragSubject": "Arrastar disciplina {{name}}",
+      "moveSubjectDown": "mover disciplina para baixo {{name}}",
+      "moveSubjectUp": "mover disciplina para cima {{name}}"
+    },
+    "flags": {
+      "absentOften": "Absent often",
+      "missingHomework": "Faltando tarefa",
+      "needsHelp": "Precisa ajuda"
+    },
+    "notFoundDescription": "Go voltar e choose a turma.",
+    "notFoundTitle": "Turma não encontrado",
+    "overview": {
+      "grade": "Ano",
+      "kicker": "Visão da turma",
+      "notSet": "Não set",
+      "schoolYear": "Ano Escolar {{year}}",
+      "students": "Alunos",
+      "subjects": "Disciplinas"
+    },
+    "quickActions": {
+      "attendance": "Presença",
+      "groups": "Grupos",
+      "randomPicker": "Escolher Aluno Aleatório",
+      "title": "Ações Rápidas"
+    },
+    "students": {
+      "addStudent": "Adicionar aluno",
+      "empty": "Nenhum aluno nesta turma ainda.",
+      "openProfile": "Abrir perfil",
+      "participatingWell": "Participating bem",
+      "title": "Alunos"
+    },
+    "subjects": {
+      "addSubject": "Adicionar disciplina",
+      "empty": "Nenhuma disciplina ainda.",
+      "notes": "Observações",
+      "notesPlaceholder": "Notas",
+      "openToManage": "Abrir para gerenciar",
+      "subjectName": "Nome da Disciplina",
+      "subjectNamePlaceholder": "ex: ELA, Matemática",
+      "title": "Disciplinas"
+    }
+  },
+  "development": {
+    "addNewRating": "Adicionar novo avaliação",
+    "allYearRanges": "Todas as Faixas de Anos",
+    "cancelNewRating": "Cancelar novo avaliação",
+    "closeHistory": "Fechar histórico",
+    "criterion": "Critério",
+    "criteriaLabel": "Critérios",
+    "criterionHistory": "Critério histórico",
+    "date": "Data",
+    "earlier": "Anterior",
+    "empty": "Sem registros de desenvolvimento ainda.",
+    "entriesCount": "{{count}} registros",
+    "general": "Geral",
+    "latest": "Mais recente",
+    "noExtraDescription": "Sem extra descrição",
+    "noHistory": "Sem histórico para este critério.",
+    "noNotesAdded": "Sem observações adicionadas.",
+    "noNotesForRecord": "Sem observações para este registro.",
+    "notRated": "Não rated",
+    "notes": "Observações",
+    "optional": "Opcional",
+    "optionalNotes": "Opcional observações",
+    "other": "Outro",
+    "progressTrend": "Progresso tendência",
+    "rating": "Avaliação",
+    "rating15": "Nota (1-5)",
+    "ratingOptions": {
+      "1": "1 - Precisa de Suporte Significativo",
+      "2": "2- Começando a Desenvolver",
+      "3": "3 - Desenvolvendo",
+      "4": "4 - Proficiente",
+      "5": "5 - Superou as Expectativas"
+    },
+    "ratingShort": {
+      "1": "1/5",
+      "2": "2/5",
+      "3": "3/5",
+      "4": "4/5",
+      "5": "5/5"
+    },
+    "ratingsMoved": "Avaliação mudou de {{first}} para {{last}}.",
+    "saveNewRating": "Salvar novo avaliação",
+    "selectCriterion": "Selecionar Critério",
+    "selectCriterionHelp": "Selecione um critério para ver o que ele mede antes de salvar",
+    "selectedCriterion": "Selected critério",
+    "sparklineHint": "Linha mostra a evolução das últimas avaliações.",
+    "title": "Desenvolvimento",
+    "trend": "Tendência",
+    "trendBaseline": "Linha de base",
+    "trendImproved": "Melhorou",
+    "trendNeedsSupport": "Precisa de apoio",
+    "trendSteady": "Estável",
+    "update": "Atualizar",
+    "updateDescription": "Escolha os anos primeiro e depois escolha os critérios com contexto",
+    "updateTitle": "Atualizar Acompanhamento de Desenvolvimento",
+    "yearRange": "Faixas de Anos"
+  },
+  "groups": {
+    "actions": {
+      "generateGroups": "Gerar grupos",
+      "regenerateGroups": "Gerar novamente grupos"
+    },
+    "advanced": {
+      "balanceAcademic": "Equilibrar por Nível Acadêmico",
+      "balanceGender": "Equilibrar os gêneros",
+      "help": "Ajuda",
+      "helpAcademic": "Usa o desempenho recente nas avaliações para distribuir níveis de aprendizagem entre os grupos.",
+      "helpGender": "Tenta misturar a representação de gênero em cada grupo, quando possível.",
+      "helpPairPartners": "Agrupa alunos que precisam de apoio com um colega que pode ajudar.",
+      "helpRespectSeparations": "Mantém em grupos diferentes os alunos das suas regras de separação.",
+      "helpTitle": "Como Funcionam as Configurações Avançadas",
+      "hide": "Ocultar",
+      "hideHelp": "Ocultar Ajuda",
+      "pairPartners": "Agrupar com Parceiro de Suporte",
+      "respectSeparations": "Respeitar separações",
+      "separations": "Separações",
+      "show": "Mostrar",
+      "title": "Configurações Avançadas"
+    },
+    "empty": {
+      "description": "Escolha uma turma e gere grupos para começar.",
+      "title": "Nenhum grupo gerado ainda"
+    },
+    "results": {
+      "groupN": "Grupo {{number}}",
+      "title": "Resultados"
+    },
+    "separations": {
+      "add": "Adicionar",
+      "selectStudent": "Selecionar aluno",
+      "studentA": "Aluno a",
+      "studentB": "Aluno b",
+      "studentFallback": "Aluno",
+      "title": "Separações"
+    },
+    "settings": {
+      "expectedGroups": "Esperado grupos ({{count}})",
+      "selectClass": "Selecionar turma",
+      "studentsPerGroup": "Alunos per grupo",
+      "title": "Configurações"
+    },
+    "stats": {
+      "groups": "Grupos",
+      "students": "Alunos"
+    },
+    "subtitle": "Criar grupos balanceados com opções avançadas",
+    "title": "Gerador Inteligente de Grupos"
+  },
+  "random": {
+    "allClasses": "Todas as turmas",
+    "categories": {
+      "guardian": "Responsável",
+      "helper": "Ajudante",
+      "lineLeader": "Líder de Fila",
+      "messenger": "Mensageiro",
+      "helperRotation": "Ajudantes"
+    },
+    "class": "Turma",
+    "custom": {
+      "addSubtitle": "Defina o nome da rotação para criar uma nova função personalizada.",
+      "addTitle": "Criar Rotação Personalizada",
+      "deleteDescription": "Tem certeza que deseja excluir \"{{role}}\"?",
+      "deleteTitle": "Excluir Rotação Personalizada",
+      "roleName": "Nome da rotação",
+      "roleNamePlaceholder": "ex.: Monitor de materiais"
+    },
+    "feedback": {
+      "alreadyClear": "Já limpar {{role}}",
+      "resetCount": "{{count}} reiniciar {{role}}"
+    },
+    "kicker": "Ferramentas de Sala",
+    "lists": {
+      "alreadyUsedCount": "{{count}} já usados",
+      "availableCount": "{{count}} disponíveis"
+    },
+    "quick": {
+      "note": "(qualquer aluno, sem seguir nenhuma regra de escolha)",
+      "subtitle": "Clique aqui para uma escolha aleatória instantânea",
+      "title": "Escolha Aleatória Rápida"
+    },
+    "result": {
+      "markUsed": "Marcar usados",
+      "randomPick": "Escolha Aleatória",
+      "skipAbsent": "Pular absent",
+      "todaysRole": "Função de hoje: {{role}}"
+    },
+    "rotation": {
+      "addCustom": "Rotação Personalizada",
+      "clearUsed": "Limpar usados",
+      "deleteCustom": "Excluir personalizado",
+      "deleteRoleAria": "Excluir função aria {{role}}",
+      "everyoneUsed": "Todos usados {{role}}",
+      "leftCount": "{{count}} restantes",
+      "pickNext": "Sortear próximo {{role}}",
+      "resetStartOver": "Reiniciar start novamente",
+      "roleRotation": "Rotação de {{role}}",
+      "subtitle": "Rotação",
+      "title": "Rotação"
+    },
+    "rotationTrackedAllClasses": "Rotação acompanhada por turma",
+    "selectedClass": "Selected turma",
+    "stats": {
+      "available": "Disponíveis",
+      "total": "Total",
+      "used": "Usados"
+    },
+    "subtitle": "Aleatório",
+    "title": "Escolha Aleatória"
+  },
+  "rubrics": {
+    "addCategory": "Adicionar categoria",
+    "addCriterion": "Adicionar critério",
+    "aria": {
+      "closeEditor": "Fechar editor",
+      "deleteTemplate": "Excluir modelo"
+    },
+    "categoriesAndCriteria": "Categorias e critérios",
+    "categoriesCount": "{{count}} categorias",
+    "confirm": {
+      "deleteCategory": "Excluir categoria",
+      "deleteCriterion": "Excluir critério",
+      "deleteTemplate": "Excluir modelo"
+    },
+    "createDefault": "Criar padrão",
+    "createNew": "Criar novo",
+    "creatingDefaultMessage": "Criando rubricas padrão...",
+    "criteriaCount": "{{count}} critérios",
+    "criterion": "Critério",
+    "dangerZone": {
+      "title": "Zona de risco",
+      "description": "Exclua todas as rubricas e registros relacionados ({{count}} modelos)."
+    },
+    "deleteAll": "Excluir todas as rubricas",
+    "deletingAll": "Excluindo tudo...",
+    "gradeBand": "Faixa de ano",
+    "loading": "Carregando",
+    "modal": {
+      "categoryName": "Categoria nome",
+      "categoryNamePlaceholder": "Categoria nome exemplo",
+      "createTemplateDescription": "Criar modelo descrição",
+      "createTemplateTitle": "Criar modelo título",
+      "criterionName": "Critério nome",
+      "criterionNamePlaceholder": "Critério nome exemplo",
+      "description": "Janela",
+      "descriptionOptional": "Descrição opcional",
+      "descriptionPlaceholder": "Descrição exemplo",
+      "editCriterionTitle": "Editar critério título",
+      "deleteAllConfirmLabel": "Digite {{keyword}} para confirmar",
+      "deleteAllDescription": "Isto removerá permanentemente todas as rubricas deste espaço.",
+      "deleteAllTitle": "Excluir todas as rubricas?",
+      "deleteAllWarning": "Isto também remove categorias, critérios e vínculos com registros de desenvolvimento.",
+      "gradeLevel": "Ano nível",
+      "gradeLevelPlaceholder": "Ano nível exemplo",
+      "newCategoryDescription": "Novo categoria descrição",
+      "newCategoryTitle": "Novo categoria título",
+      "newCriterionDescription": "Novo critério descrição {{name}}",
+      "newCriterionTitle": "Novo critério título",
+      "subject": "Disciplina",
+      "subjectPlaceholder": "Disciplina exemplo",
+      "templateName": "Modelo nome",
+      "templateNamePlaceholder": "Modelo nome exemplo"
+    },
+    "noCategoriesYet": "Ainda não há categorias.",
+    "noCriteriaYet": "Ainda não há critérios.",
+    "seedingDefault": "Gerando padrão",
+    "subject": "Disciplina",
+    "subtitle": "Crie e gerencie modelos de rubricas por disciplina e ano.",
+    "templateInformation": "Modelo informações",
+    "title": "Rubricas"
+  },
+  "runningRecords": {
+    "detail": {
+      "title": "Detalhe"
+    },
+    "empty": {
+      "createFirst": "Criar primeiro registro",
+      "description": "Crie seu primeiro registro para acompanhar progresso.",
+      "title": "Nenhum registro de leitura ainda"
+    },
+    "export": {
+      "accuracy": "Accuracy",
+      "class": "Turma",
+      "date": "Data",
+      "errors": "Erros",
+      "level": "Nível",
+      "notes": "Observações",
+      "scRatio": "SC relação",
+      "selfCorrections": "Auto correções",
+      "student": "Aluno",
+      "textTitle": "Texto título",
+      "totalWords": "Total palavras"
+    },
+    "exportCsv": "Exportar csv",
+    "exportJson": "Exportar json",
+    "filters": {
+      "allClasses": "Todas as turmas",
+      "allStudents": "Todos os alunos",
+      "allTime": "Todos os tempos",
+      "class": "Turma",
+      "clear": "Limpar",
+      "last30Days": "Últimos 30 dias",
+      "last7Days": "Últimos 7 dias",
+      "search": "Buscar",
+      "searchPlaceholder": "Buscar",
+      "sort": "Ordenar",
+      "sortAccuracyHighLow": "Acertos: maior para menor",
+      "sortAccuracyLowHigh": "Acertos: menor para maior",
+      "sortNewest": "Ordenar mais recente",
+      "sortOldest": "Ordenar mais antigo",
+      "student": "Aluno",
+      "thisTerm": "Este período"
+    },
+    "levels": {
+      "frustration": {
+        "short": "Frustração"
+      },
+      "independent": {
+        "short": "Independente"
+      },
+      "instructional": {
+        "short": "Instrucional"
+      }
+    },
+    "loading": "Carregando",
+    "metrics": {
+      "accuracy": "Acertos",
+      "errors": "Erros",
+      "sc": "Autocorreções",
+      "scRatio": "Relação AC",
+      "words": "Palavras"
+    },
+    "modal": {
+      "clickToChoose": "Clique para escolher",
+      "date": "Data",
+      "errors": "Erros",
+      "newDescription": "Registre as informações de leitura",
+      "newTitle": "Novo Registro",
+      "notesOptional": "Observações opcional",
+      "notesPlaceholder": "Notas",
+      "readingLevel": "Reading nível",
+      "results": "Resultados",
+      "selectStudent": "Selecionar aluno",
+      "selfCorrectionRatio": "Relação de autocorreção",
+      "selfCorrections": "Auto correções",
+      "student": "Aluno",
+      "textTitle": "Texto título",
+      "textTitlePlaceholder": "ex: Sítio do Pica Pau Amarelo",
+      "totalWords": "Total palavras"
+    },
+    "na": "N/A",
+    "newRecord": "Novo Registro",
+    "noClass": "sem turma",
+    "noDate": "sem data",
+    "stats": {
+      "avgAccuracy": "Média de Acertos",
+      "filteredAvg": "Média filtrada",
+      "studentsAssessed": "Alunos avaliados",
+      "totalRecords": "Total de registros"
+    },
+    "title": "Running registros",
+    "unknownStudent": "Desconhecido aluno",
+    "untitledText": "Untitled texto"
+  },
+  "studentDetail": {
+    "notFoundDescription": "Volte e selecione um aluno.",
+    "notFoundTitle": "Aluno não encontrado"
+  },
+  "studentEdit": {
+    "description": "Atualize os dados de {{name}}.",
+    "gender": "Gênero",
+    "helpLink": "Abrir Grupos",
+    "helpPrefix": "Precisa ajustar agrupamentos?",
+    "notes": "Observações",
+    "notesPlaceholder": "Observações exemplo",
+    "title": "Aluno editar"
+  },
+  "studentOverview": {
+    "assessmentsCount": "{{count}} avaliações",
+    "attendanceSummary": "Resumo de Presença",
+    "editInfo": "Editar info",
+    "noAssessments": "Sem avaliações recentes.",
+    "noAttendance": "Sem dados de presença ainda.",
+    "noClass": "sem turma",
+    "noNotes": "Sem observações",
+    "noRunningRecords": "Sem registros de leitura ainda.",
+    "noSubjects": "Sem disciplinas avaliadas ainda.",
+    "notGraded": "Não avaliado",
+    "notesSaved": "Observações saved",
+    "performanceBySubject": "Desempenho por disciplina",
+    "quickStatus": "Status Rápido",
+    "recentAssessments": "Avaliações Recentes",
+    "runningRecords": "Registros de Leitura",
+    "stats": {
+      "avgAccuracy": "Avg accuracy",
+      "latest": "Mais recente",
+      "overallAverage": "Média Geral",
+      "total": "Total",
+      "totalAssessments": "Número total de avaliações"
+    },
+    "status": {
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "missingHomework": "Faltando tarefa",
+      "needsHelp": "Precisando de ajuda",
+      "participatingWell": "Participando bem"
+    },
+    "viewAll": "Ver todos"
+  },
+  "subjectDetail": {
+    "addUnit": "Adicionar unidade",
+    "aria": {
+      "deleteUnit": "Excluir unidade",
+      "drag": "Arrastar {{name}}",
+      "moveDown": "Mover baixo {{name}}",
+      "moveUp": "Mover cima {{name}}"
+    },
+    "createFirstUnit": "Criar primeiro unidade",
+    "delete": {
+      "description": "Excluir {{name}}",
+      "title": "Excluir"
+    },
+    "emptyDescription": "Adicione a primeira unidade desta disciplina.",
+    "emptyTitle": "Nenhuma unidade ainda",
+    "modal": {
+      "addDescription": "Crie um nome claro para a unidade para encontrar mais fácil",
+      "addTitle": "Adicionar Nova Unidade",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Notas Opcionais",
+      "preview": "Preview",
+      "unitName": "Nome da Unidade",
+      "unitNamePlaceholder": "ex: Unidade 1, Frações, Roma Antiga"
+    },
+    "noDescription": "Sem descrição",
+    "notFoundDescription": "Selecione uma disciplina no boletim.",
+    "notFoundTitle": "Disciplina não encontrado",
+    "reorderTip": "Ative o modo de reordenação para mover unidades.",
+    "stats": {
+      "subjectAverage": "Média da Disciplina",
+      "totalAssessments": "Número Total de Avaliações",
+      "totalUnits": "Número de Unidades"
+    },
+    "unitKicker": "Unidade",
+    "unitsTitle": "Unidades"
+  },
+  "unitDetail": {
+    "addAssessment": "Adicionar avaliação",
+    "aria": {
+      "deleteAssessment": "Excluir avaliação",
+      "drag": "Arrastar {{title}}",
+      "moveDown": "Mover baixo {{title}}",
+      "moveUp": "Mover cima {{title}}"
+    },
+    "assessmentKicker": "Avaliação chamada",
+    "assessmentsTitle": "Avaliações título",
+    "copy": {
+      "confirmDescription": "Copiar {{count}} avaliações para a unidade de destino?",
+      "confirmTitle": "Confirmar título",
+      "copy": "Copiar",
+      "moreCount": "+{{count}} avaliações",
+      "selectSubject": "Selecionar disciplina",
+      "selectUnit": "Selecionar unidade",
+      "subject": "Disciplina",
+      "subjectStepTitle": "Disciplina step título",
+      "unit": "Unidade",
+      "unitStepTitle": "Unidade step título"
+    },
+    "createFirstAssessment": "Criar primeiro avaliação",
+    "deleteAssessment": {
+      "description": "Excluir avaliação {{title}}",
+      "title": "Excluir avaliação"
+    },
+    "emptyDescription": "Adicione a primeira avaliação desta unidade.",
+    "emptyTitle": "Nenhuma avaliação ainda",
+    "kicker": "Unidade detalhe",
+    "modal": {
+      "addDescription": "Adicionar descrição",
+      "addTitle": "Adicionar título",
+      "assessmentName": "Avaliação nome",
+      "assessmentNamePlaceholder": "Avaliação nome exemplo",
+      "date": "Data",
+      "maxScore": "Max nota",
+      "preview": "Preview"
+    },
+    "noDate": "sem data",
+    "noNotesYet": "Sem observações ainda",
+    "notFoundDescription": "Selecionar a unidade from Boletim.",
+    "notFoundTitle": "Unidade não encontrado",
+    "points": "pts",
+    "quickActions": {
+      "copyCriteria": "Copiar critérios",
+      "gradebook": "Boletim",
+      "importAssessments": "Importar avaliações",
+      "title": "Rápido actions",
+      "viewAllGrades": "Ver todos notas"
+    },
+    "reorderTip": "Ative o modo de reordenação para mover avaliações.",
+    "stats": {
+      "assessments": "Avaliações",
+      "totalGrades": "Total notas",
+      "unitAverage": "Unidade média"
+    },
+    "subjectLabel": "Disciplina label {{subjectName}}"
+  }
+}

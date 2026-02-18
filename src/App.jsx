@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AuthForm from "./components/auth/AuthForm";
 import ReorderModeToggle from "./components/common/ReorderModeToggle";
@@ -34,9 +35,10 @@ const TimerPage = lazy(() => import("./pages/TimerPage"));
 const UnitDetailPage = lazy(() => import("./pages/UnitDetailPage"));
 
 function RouteFallback() {
+  const { t } = useTranslation();
   return (
     <section className="panel">
-      <p className="muted">Loading page...</p>
+      <p className="muted">{t("route.loadingPage")}</p>
     </section>
   );
 }
@@ -120,6 +122,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     handleCreateRubricTemplate,
     handleUpdateRubricTemplate,
     handleDeleteRubricTemplate,
+    handleDeleteAllRubrics,
     handleCreateRubricCategory,
     handleDeleteRubricCategory,
     handleCreateRubricCriterion,
@@ -309,6 +312,7 @@ function TeacherWorkspace({ user, onSignOut }) {
                 handleCreateRubricTemplate={handleCreateRubricTemplate}
                 handleUpdateRubricTemplate={handleUpdateRubricTemplate}
                 handleDeleteRubricTemplate={handleDeleteRubricTemplate}
+                handleDeleteAllRubrics={handleDeleteAllRubrics}
                 handleCreateRubricCategory={handleCreateRubricCategory}
                 handleDeleteRubricCategory={handleDeleteRubricCategory}
                 handleCreateRubricCriterion={handleCreateRubricCriterion}

@@ -1,8 +1,12 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
+import { enUS, ptBR } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../supabaseClient";
 
 function ProfilePage({ user, preferences, onPreferencesChange }) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === "pt-BR" ? ptBR : enUS;
   const metadata = user?.user_metadata || {};
   const [profileForm, setProfileForm] = useState({
     fullName: metadata.full_name || metadata.name || "",
@@ -22,14 +26,14 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
   const datePreview = useMemo(() => {
     const now = new Date();
     return preferences?.dateFormat === "DMY"
-      ? format(now, "EEEE, d MMMM yyyy")
-      : format(now, "EEEE, MMMM d, yyyy");
-  }, [preferences?.dateFormat]);
+      ? format(now, "EEEE, d MMMM yyyy", { locale })
+      : format(now, "EEEE, MMMM d, yyyy", { locale });
+  }, [locale, preferences?.dateFormat]);
 
   const timePreview = useMemo(() => {
     const now = new Date();
-    return preferences?.timeFormat === "24h" ? format(now, "HH:mm") : format(now, "h:mm a");
-  }, [preferences?.timeFormat]);
+    return preferences?.timeFormat === "24h" ? format(now, "HH:mm", { locale }) : format(now, "p", { locale });
+  }, [locale, preferences?.timeFormat]);
 
   const saveProfile = async (event) => {
     event.preventDefault();
@@ -50,11 +54,11 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
     const { error: updateError } = await supabase.auth.updateUser(payload);
     setSavingProfile(false);
     if (updateError) {
-      setError(updateError.message || "Could not save profile.");
+      setError(updateError.message || t("profile.messages.couldNotSaveProfile"));
       return;
     }
 
-    setStatus("Profile updated.");
+    setStatus(t("profile.messages.profileUpdated"));
   };
 
   const savePassword = async (event) => {
@@ -63,11 +67,11 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
     setStatus("");
 
     if (passwordForm.password.length < 6) {
-      setError("Password should have at least 6 characters.");
+      setError(t("profile.messages.passwordLength"));
       return;
     }
     if (passwordForm.password !== passwordForm.confirmPassword) {
-      setError("Password confirmation does not match.");
+      setError(t("profile.messages.passwordMismatch"));
       return;
     }
 
@@ -77,12 +81,12 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
     });
     setSavingPassword(false);
     if (passwordError) {
-      setError(passwordError.message || "Could not update password.");
+      setError(passwordError.message || t("profile.messages.couldNotUpdatePassword"));
       return;
     }
 
     setPasswordForm({ password: "", confirmPassword: "" });
-    setStatus("Password updated.");
+    setStatus(t("profile.messages.passwordUpdated"));
   };
 
   return (
@@ -95,8 +99,8 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
           </svg>
         </div>
         <div>
-          <h2>Profile & Preferences</h2>
-          <p className="muted">Manage your account, security, and app preferences.</p>
+          <h2>{t("profile.title")}</h2>
+          <p className="muted">{t("profile.subtitle")}</p>
         </div>
       </div>
 
@@ -104,124 +108,124 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
       {error && <div className="error">{error}</div>}
 
       <section className="profile-section">
-        <h3>Basic Info</h3>
+        <h3>{t("profile.basicInfo.title")}</h3>
         <form className="profile-form" onSubmit={saveProfile}>
           <label className="stack">
-            <span>Full name</span>
+            <span>{t("profile.basicInfo.fullName")}</span>
             <input
               value={profileForm.fullName}
               onChange={(event) => setProfileForm((prev) => ({ ...prev, fullName: event.target.value }))}
-              placeholder="Your full name"
+              placeholder={t("profile.basicInfo.fullNamePlaceholder")}
             />
           </label>
           <label className="stack">
-            <span>Display name</span>
+            <span>{t("profile.basicInfo.displayName")}</span>
             <input
               value={profileForm.displayName}
               onChange={(event) => setProfileForm((prev) => ({ ...prev, displayName: event.target.value }))}
-              placeholder="How the app should call you"
+              placeholder={t("profile.basicInfo.displayNamePlaceholder")}
             />
           </label>
           <label className="stack">
-            <span>Email</span>
+            <span>{t("profile.basicInfo.email")}</span>
             <input value={user?.email || ""} disabled />
           </label>
           <label className="stack">
-            <span>School</span>
+            <span>{t("profile.basicInfo.school")}</span>
             <input
               value={profileForm.schoolName}
               onChange={(event) => setProfileForm((prev) => ({ ...prev, schoolName: event.target.value }))}
-              placeholder="School name"
+              placeholder={t("profile.basicInfo.schoolPlaceholder")}
             />
           </label>
           <label className="stack profile-full">
-            <span>Grade levels taught</span>
+            <span>{t("profile.basicInfo.gradeLevels")}</span>
             <input
               value={profileForm.gradeLevels}
               onChange={(event) => setProfileForm((prev) => ({ ...prev, gradeLevels: event.target.value }))}
-              placeholder="e.g., Years 5-6"
+              placeholder={t("profile.basicInfo.gradeLevelsPlaceholder")}
             />
           </label>
           <div className="modal-actions profile-actions">
             <button type="submit" disabled={savingProfile}>
-              {savingProfile ? "Saving..." : "Save profile"}
+              {savingProfile ? t("profile.basicInfo.saving") : t("profile.basicInfo.save")}
             </button>
           </div>
         </form>
       </section>
 
       <section className="profile-section">
-        <h3>Security</h3>
+        <h3>{t("profile.security.title")}</h3>
         <form className="profile-form" onSubmit={savePassword}>
           <label className="stack">
-            <span>New password</span>
+            <span>{t("profile.security.newPassword")}</span>
             <input
               type="password"
               value={passwordForm.password}
               onChange={(event) => setPasswordForm((prev) => ({ ...prev, password: event.target.value }))}
-              placeholder="At least 6 characters"
+              placeholder={t("profile.security.newPasswordPlaceholder")}
             />
           </label>
           <label className="stack">
-            <span>Confirm new password</span>
+            <span>{t("profile.security.confirmPassword")}</span>
             <input
               type="password"
               value={passwordForm.confirmPassword}
               onChange={(event) => setPasswordForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
-              placeholder="Repeat password"
+              placeholder={t("profile.security.confirmPasswordPlaceholder")}
             />
           </label>
           <div className="modal-actions profile-actions">
             <button type="submit" disabled={savingPassword}>
-              {savingPassword ? "Updating..." : "Update password"}
+              {savingPassword ? t("profile.security.updating") : t("profile.security.updatePassword")}
             </button>
           </div>
         </form>
       </section>
 
       <section className="profile-section">
-        <h3>Preferences</h3>
+        <h3>{t("profile.preferences.title")}</h3>
         <div className="profile-form">
           <label className="stack">
-            <span>Date format</span>
+            <span>{t("profile.preferences.dateFormat")}</span>
             <select
               value={preferences?.dateFormat || "MDY"}
               onChange={(event) =>
                 onPreferencesChange((prev) => ({ ...prev, dateFormat: event.target.value }))
               }
             >
-              <option value="MDY">Month / Day / Year</option>
-              <option value="DMY">Day / Month / Year</option>
+              <option value="MDY">{t("profile.preferences.dateFormatMdy")}</option>
+              <option value="DMY">{t("profile.preferences.dateFormatDmy")}</option>
             </select>
           </label>
           <label className="stack">
-            <span>Time format</span>
+            <span>{t("profile.preferences.timeFormat")}</span>
             <select
               value={preferences?.timeFormat || "12h"}
               onChange={(event) =>
                 onPreferencesChange((prev) => ({ ...prev, timeFormat: event.target.value }))
               }
             >
-              <option value="12h">12-hour</option>
-              <option value="24h">24-hour</option>
+              <option value="12h">{t("profile.preferences.timeFormat12h")}</option>
+              <option value="24h">{t("profile.preferences.timeFormat24h")}</option>
             </select>
           </label>
           <label className="stack profile-full">
-            <span>Default landing page</span>
+            <span>{t("profile.preferences.defaultLandingPage")}</span>
             <select
               value={preferences?.defaultLandingPath || "/"}
               onChange={(event) =>
                 onPreferencesChange((prev) => ({ ...prev, defaultLandingPath: event.target.value }))
               }
             >
-              <option value="/">Dashboard</option>
-              <option value="/calendar">Calendar</option>
-              <option value="/classes">Classes</option>
-              <option value="/assessments">Gradebook</option>
+              <option value="/">{t("profile.preferences.landing.dashboard")}</option>
+              <option value="/calendar">{t("profile.preferences.landing.calendar")}</option>
+              <option value="/classes">{t("profile.preferences.landing.classes")}</option>
+              <option value="/assessments">{t("profile.preferences.landing.gradebook")}</option>
             </select>
           </label>
           <div className="profile-preview profile-full">
-            <strong>Preview</strong>
+            <strong>{t("profile.preferences.preview")}</strong>
             <span>{datePreview} · {timePreview}</span>
           </div>
         </div>

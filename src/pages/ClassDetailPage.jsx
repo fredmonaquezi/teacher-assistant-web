@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { NavLink, useParams } from "react-router-dom";
 import { averageFromPercents, entryToPercent, performanceColor } from "../utils/assessmentMetrics";
 import { ATTENDANCE_STATUS_BY_KEY } from "../constants/attendance";
@@ -8,6 +9,13 @@ function studentToneFromGender(gender) {
   if (value === "female") return "pink";
   if (value === "non-binary") return "yellow";
   return "blue";
+}
+
+function genderOptionLabelKey(option) {
+  if (option === "Male") return "male";
+  if (option === "Female") return "female";
+  if (option === "Non-binary") return "nonBinary";
+  return "preferNotToSay";
 }
 
 function ClassQuickIcon({ kind }) {
@@ -97,6 +105,7 @@ function ClassDetailPage({
   ReorderModeToggleComponent,
   studentGenderOptions,
 }) {
+  const { t } = useTranslation();
   const { classId } = useParams();
   const ReorderModeToggle = ReorderModeToggleComponent;
   const classItem = classes.find((item) => item.id === classId);
@@ -167,9 +176,9 @@ function ClassDetailPage({
         (entry) => entry.status === ATTENDANCE_STATUS_BY_KEY.absent.value
       ).length;
       const flags = [];
-      if (row.student.needs_help) flags.push("Needs help");
-      if (row.student.missing_homework) flags.push("Missing homework");
-      if (absentCount > 3) flags.push("Absent often");
+      if (row.student.needs_help) flags.push(t("classDetail.flags.needsHelp"));
+      if (row.student.missing_homework) flags.push(t("classDetail.flags.missingHomework"));
+      if (absentCount > 3) flags.push(t("classDetail.flags.absentOften"));
       return { ...row, flags };
     })
     .sort((a, b) => a.average - b.average);
@@ -201,8 +210,8 @@ function ClassDetailPage({
   if (!classItem) {
     return (
       <section className="panel">
-        <h2>Class not found</h2>
-        <p className="muted">Select a class from the Classes page.</p>
+        <h2>{t("classDetail.notFoundTitle")}</h2>
+        <p className="muted">{t("classDetail.notFoundDescription")}</p>
       </section>
     );
   }
@@ -212,41 +221,41 @@ function ClassDetailPage({
       {formError && <div className="error">{formError}</div>}
       <div className="class-top-grid">
         <section className="panel class-overview-panel compact">
-          <p className="class-overview-kicker">Class Overview</p>
+          <p className="class-overview-kicker">{t("classDetail.overview.kicker")}</p>
           <h2>{classItem.name}</h2>
           <div className="class-overview-metrics">
             <article className="class-overview-metric">
-              <span>Grade</span>
-              <strong>{classItem.grade_level || "Not set"}</strong>
+              <span>{t("classDetail.overview.grade")}</span>
+              <strong>{classItem.grade_level || t("classDetail.overview.notSet")}</strong>
             </article>
             <article className="class-overview-metric">
-              <span>Students</span>
+              <span>{t("classDetail.overview.students")}</span>
               <strong>{classStudents.length}</strong>
             </article>
             <article className="class-overview-metric">
-              <span>Subjects</span>
+              <span>{t("classDetail.overview.subjects")}</span>
               <strong>{classSubjects.length}</strong>
             </article>
           </div>
           {classItem.school_year ? (
-            <p className="muted class-overview-year">School year: {classItem.school_year}</p>
+            <p className="muted class-overview-year">{t("classDetail.overview.schoolYear", { year: classItem.school_year })}</p>
           ) : null}
         </section>
 
         <section className="panel class-quick-panel compact">
-          <h3>Quick Actions</h3>
+          <h3>{t("classDetail.quickActions.title")}</h3>
           <div className="quick-actions class-quick-actions">
             <NavLink to={`/random?classId=${classId}`} className="quick-action action-orange">
               <span className="class-quick-icon" aria-hidden="true"><ClassQuickIcon kind="random" /></span>
-              <span>Random Picker</span>
+              <span>{t("classDetail.quickActions.randomPicker")}</span>
             </NavLink>
             <NavLink to={`/groups?classId=${classId}`} className="quick-action action-purple">
               <span className="class-quick-icon" aria-hidden="true"><ClassQuickIcon kind="groups" /></span>
-              <span>Groups</span>
+              <span>{t("classDetail.quickActions.groups")}</span>
             </NavLink>
             <NavLink to={`/attendance?classId=${classId}`} className="quick-action action-blue">
               <span className="class-quick-icon" aria-hidden="true"><ClassQuickIcon kind="attendance" /></span>
-              <span>Attendance</span>
+              <span>{t("classDetail.quickActions.attendance")}</span>
             </NavLink>
           </div>
         </section>
@@ -254,7 +263,7 @@ function ClassDetailPage({
 
       <section className="panel class-students-panel">
         <div className="class-students-header">
-          <h3>Students</h3>
+          <h3>{t("classDetail.students.title")}</h3>
           <button
             type="button"
             className="students-add-btn"
@@ -264,7 +273,7 @@ function ClassDetailPage({
               setShowAddStudent(true);
             }}
           >
-            + Add Student
+            {t("classDetail.students.addStudent")}
           </button>
         </div>
         <button
@@ -276,7 +285,7 @@ function ClassDetailPage({
             setShowAddStudent(true);
           }}
         >
-          + Add Student
+          {t("classDetail.students.addStudent")}
         </button>
         <ul className="student-card-grid">
           {classStudents.map((student) => {
@@ -291,21 +300,21 @@ function ClassDetailPage({
                   <strong>
                     {student.first_name} {student.last_name}
                   </strong>
-                  <span>Open student profile</span>
+                  <span>{t("classDetail.students.openProfile")}</span>
                 </div>
                 <div className="student-card-flags">
                   {student.is_participating_well && (
-                    <span className="student-flag green" title="Participating well" aria-label="Participating well">
+                    <span className="student-flag green" title={t("classDetail.students.participatingWell")} aria-label={t("classDetail.students.participatingWell")}>
                       <StudentFlagIcon kind="star" />
                     </span>
                   )}
                   {student.needs_help && (
-                    <span className="student-flag orange" title="Needs help" aria-label="Needs help">
+                    <span className="student-flag orange" title={t("classDetail.flags.needsHelp")} aria-label={t("classDetail.flags.needsHelp")}>
                       <StudentFlagIcon kind="warning" />
                     </span>
                   )}
                   {student.missing_homework && (
-                    <span className="student-flag red" title="Missing homework" aria-label="Missing homework">
+                    <span className="student-flag red" title={t("classDetail.flags.missingHomework")} aria-label={t("classDetail.flags.missingHomework")}>
                       <StudentFlagIcon kind="book" />
                     </span>
                   )}
@@ -314,40 +323,40 @@ function ClassDetailPage({
             </li>
           );
           })}
-          {classStudents.length === 0 && <li className="muted">No students yet.</li>}
+          {classStudents.length === 0 && <li className="muted">{t("classDetail.students.empty")}</li>}
         </ul>
       </section>
 
       <section className="panel">
         <div className="panel-heading-row">
-          <h3>Subjects</h3>
+          <h3>{t("classDetail.subjects.title")}</h3>
           {isMobileLayout && classSubjects.length > 1 && (
             <ReorderModeToggle isReorderMode={isReorderMode} setIsReorderMode={setIsReorderMode} />
           )}
         </div>
         <form onSubmit={(event) => handleCreateSubject(event, classId)} className="grid">
           <label className="stack">
-            <span>Subject name</span>
+            <span>{t("classDetail.subjects.subjectName")}</span>
             <input
               value={subjectForm.name}
               onChange={(event) =>
                 setSubjectForm((prev) => ({ ...prev, name: event.target.value }))
               }
-              placeholder="ELA"
+              placeholder={t("classDetail.subjects.subjectNamePlaceholder")}
               required
             />
           </label>
           <label className="stack">
-            <span>Notes</span>
+            <span>{t("classDetail.subjects.notes")}</span>
             <input
               value={subjectForm.description}
               onChange={(event) =>
                 setSubjectForm((prev) => ({ ...prev, description: event.target.value }))
               }
-              placeholder="Optional notes"
+              placeholder={t("classDetail.subjects.notesPlaceholder")}
             />
           </label>
-          <button type="submit">Add subject</button>
+          <button type="submit">{t("classDetail.subjects.addSubject")}</button>
         </form>
 
         <ul className="subject-card-grid">
@@ -388,7 +397,7 @@ function ClassDetailPage({
               >
                 <div className="subject-card-name">{subject.name}</div>
                 <div className="subject-card-description">
-                  {subject.description || "Open to manage units and assessments"}
+                  {subject.description || t("classDetail.subjects.openToManage")}
                 </div>
               </NavLink>
               {isMobileReorderActive && (
@@ -396,7 +405,7 @@ function ClassDetailPage({
                   <button
                     type="button"
                     className="reorder-mobile-btn"
-                    aria-label={`Move ${subject.name} up`}
+                    aria-label={t("classDetail.aria.moveSubjectUp", { name: subject.name })}
                     disabled={!previousSubject}
                     onClick={(event) => {
                       event.stopPropagation();
@@ -409,7 +418,7 @@ function ClassDetailPage({
                   <button
                     type="button"
                     className="reorder-mobile-btn"
-                    aria-label={`Move ${subject.name} down`}
+                    aria-label={t("classDetail.aria.moveSubjectDown", { name: subject.name })}
                     disabled={!nextSubject}
                     onClick={(event) => {
                       event.stopPropagation();
@@ -425,7 +434,7 @@ function ClassDetailPage({
                 <button
                   type="button"
                   className={subjectHandleClassName}
-                  aria-label={`Drag ${subject.name}`}
+                  aria-label={t("classDetail.aria.dragSubject", { name: subject.name })}
                   onClick={(event) => event.stopPropagation()}
                   onPointerDown={(event) => onSubjectHandlePointerDown(subject.id, event)}
                   onPointerMove={onSubjectHandlePointerMove}
@@ -438,20 +447,20 @@ function ClassDetailPage({
             </li>
           );
           })}
-          {classSubjects.length === 0 && <li className="muted">No subjects yet.</li>}
+          {classSubjects.length === 0 && <li className="muted">{t("classDetail.subjects.empty")}</li>}
         </ul>
       </section>
 
       <section className="panel class-analytics">
         <div className="class-analytics-header">
-          <h3>Class Analytics</h3>
+          <h3>{t("classDetail.analytics.title")}</h3>
           <div className="class-subject-filter">
             <button
               type="button"
               className={selectedSubjectId === "" ? "active" : ""}
               onClick={() => setSelectedSubjectId("")}
             >
-              All subjects
+              {t("classDetail.analytics.allSubjects")}
             </button>
             {classSubjects.map((subject) => (
               <button
@@ -468,47 +477,47 @@ function ClassDetailPage({
 
         <div className="class-analytics-stats">
           <article className="class-analytics-card">
-            <p>Class Average</p>
+            <p>{t("classDetail.analytics.classAverage")}</p>
             <strong style={{ color: performanceColor(classAverage) }}>
               {classAverage.toFixed(1)}%
             </strong>
           </article>
           <article className="class-analytics-card">
-            <p>Attendance</p>
+            <p>{t("classDetail.analytics.attendance")}</p>
             <strong style={{ color: attendanceRate >= 90 ? "#16a34a" : attendanceRate >= 75 ? "#f59e0b" : "#ef4444" }}>
               {attendanceRate.toFixed(0)}%
             </strong>
           </article>
           <article className="class-analytics-card">
-            <p>Development</p>
+            <p>{t("classDetail.analytics.development")}</p>
             <strong style={{ color: "#7c3aed" }}>{developmentAverage > 0 ? developmentAverage.toFixed(1) : "—"}</strong>
           </article>
         </div>
 
         <div className="class-analytics-grid">
           <article className="class-analytics-block">
-            <h4>Performance Distribution</h4>
+            <h4>{t("classDetail.analytics.performanceDistribution")}</h4>
             <div className="distribution-row">
-              <span>Excellent (70%+)</span>
+              <span>{t("classDetail.analytics.excellent")}</span>
               <span>{excellentCount}</span>
             </div>
             <div className="distribution-track"><span style={{ width: distributionBar(excellentCount), background: "#16a34a" }} /></div>
             <div className="distribution-row">
-              <span>Good (50-69.9%)</span>
+              <span>{t("classDetail.analytics.good")}</span>
               <span>{goodCount}</span>
             </div>
             <div className="distribution-track"><span style={{ width: distributionBar(goodCount), background: "#f59e0b" }} /></div>
             <div className="distribution-row">
-              <span>Needs Work (&lt;50%)</span>
+              <span>{t("classDetail.analytics.needsWork")}</span>
               <span>{needsWorkCount}</span>
             </div>
             <div className="distribution-track"><span style={{ width: distributionBar(needsWorkCount), background: "#ef4444" }} /></div>
           </article>
 
           <article className="class-analytics-block">
-            <h4>Top Performers</h4>
+            <h4>{t("classDetail.analytics.topPerformers")}</h4>
             {topPerformers.length === 0 ? (
-              <p className="muted">No graded data yet.</p>
+              <p className="muted">{t("classDetail.analytics.noGradedData")}</p>
             ) : (
               <ul className="list compact">
                 {topPerformers.map((row, idx) => (
@@ -524,7 +533,7 @@ function ClassDetailPage({
 
         {studentsNeedingAttention.length > 0 && (
           <article className="class-analytics-block">
-            <h4>Needs Attention</h4>
+            <h4>{t("classDetail.analytics.needsAttention")}</h4>
             <ul className="list compact">
               {studentsNeedingAttention.map((row) => (
                 <li key={row.student.id}>
@@ -541,7 +550,7 @@ function ClassDetailPage({
 
         {classSubjects.length > 1 && (
           <article className="class-analytics-block">
-            <h4>Subject Performance</h4>
+            <h4>{t("classDetail.analytics.subjectPerformance")}</h4>
             <ul className="list compact">
               {subjectPerformanceRows.map((row) => (
                 <li key={row.subject.id}>
@@ -558,35 +567,35 @@ function ClassDetailPage({
         <div className="modal-overlay">
           <div className="modal-card add-student-modal">
             <div className="add-student-header">
-              <h3>Add Student</h3>
-              <p className="muted">Basic profile details only. You can update more information later.</p>
+              <h3>{t("classDetail.addStudent.title")}</h3>
+              <p className="muted">{t("classDetail.addStudent.description")}</p>
             </div>
             <div className="add-student-form">
             {(addStudentError || formError) && <div className="error">{addStudentError || formError}</div>}
             <label className="stack">
-              <span>First name</span>
+              <span>{t("classDetail.addStudent.firstName")}</span>
               <input
                 value={studentForm.firstName}
                 onChange={(event) =>
                   setStudentForm((prev) => ({ ...prev, firstName: event.target.value }))
                 }
-                placeholder="Maya"
+                placeholder={t("classDetail.addStudent.firstNamePlaceholder")}
                 required
               />
             </label>
             <label className="stack">
-              <span>Last name</span>
+              <span>{t("classDetail.addStudent.lastName")}</span>
               <input
                 value={studentForm.lastName}
                 onChange={(event) =>
                   setStudentForm((prev) => ({ ...prev, lastName: event.target.value }))
                 }
-                placeholder="Lopez"
+                placeholder={t("classDetail.addStudent.lastNamePlaceholder")}
                 required
               />
             </label>
             <label className="stack">
-              <span>Gender</span>
+              <span>{t("classDetail.addStudent.gender")}</span>
               <select
                 value={studentForm.gender}
                 onChange={(event) =>
@@ -595,20 +604,20 @@ function ClassDetailPage({
               >
                 {studentGenderOptions.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {t(`common.gender.${genderOptionLabelKey(option)}`)}
                   </option>
                 ))}
               </select>
             </label>
             <label className="stack">
-              <span>Notes</span>
+              <span>{t("classDetail.addStudent.notes")}</span>
               <textarea
-                rows="2"
+                rows="3"
                 value={studentForm.notes}
                 onChange={(event) =>
                   setStudentForm((prev) => ({ ...prev, notes: event.target.value }))
                 }
-                placeholder="Optional"
+                placeholder={t("classDetail.addStudent.notesPlaceholder")}
               />
             </label>
             <div className="modal-actions add-student-actions">
@@ -620,14 +629,14 @@ function ClassDetailPage({
                   setShowAddStudent(false);
                 }}
               >
-                Cancel
+                {t("common.actions.cancel")}
               </button>
               <button
                 type="button"
                 onClick={async () => {
                   setAddStudentError("");
                   if (!studentForm.firstName.trim() || !studentForm.lastName.trim()) {
-                    setAddStudentError("Student first and last name are required.");
+                    setAddStudentError(t("classDetail.addStudent.errorNameRequired"));
                     return;
                   }
                   const created = await handleCreateStudent({ preventDefault: () => {} });
@@ -636,7 +645,7 @@ function ClassDetailPage({
                   }
                 }}
               >
-                Add
+                {t("common.actions.add")}
               </button>
             </div>
             </div>

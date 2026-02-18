@@ -104,7 +104,7 @@ function useTeacherWorkspaceData(userId) {
     studentA: "",
     studentB: "",
   });
-  const [groupsShowAdvanced, setGroupsShowAdvanced] = useState(true);
+  const [groupsShowAdvanced, setGroupsShowAdvanced] = useState(false);
   const [groupsShowSeparations, setGroupsShowSeparations] = useState(false);
   const [isGeneratingGroups, setIsGeneratingGroups] = useState(false);
   const groupsScrollTopRef = useRef(0);
@@ -137,6 +137,7 @@ function useTeacherWorkspaceData(userId) {
     handleCreateRubricTemplate,
     handleUpdateRubricTemplate,
     handleDeleteRubricTemplate,
+    handleDeleteAllRubrics,
     handleCreateRubricCategory,
     handleDeleteRubricCategory,
     handleCreateRubricCriterion,
@@ -278,6 +279,7 @@ function useTeacherWorkspaceData(userId) {
     handleCreateRubricTemplate,
     handleUpdateRubricTemplate,
     handleDeleteRubricTemplate,
+    handleDeleteAllRubrics,
     handleCreateRubricCategory,
     handleDeleteRubricCategory,
     handleCreateRubricCriterion,

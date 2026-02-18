@@ -5,15 +5,15 @@ import {
   endOfMonth,
   endOfWeek,
   format,
+  isValid,
   parseISO,
   startOfMonth,
   startOfWeek,
 } from "date-fns";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
-
-const CALENDAR_SETUP_MESSAGE =
-  "Calendar tables are not set up yet. Run /Users/fred/Documents/teacher-assistant-web/supabase_calendar_tables.sql in Supabase SQL Editor, then refresh.";
+import { getDateLocale } from "../../utils/dateLocale";
 
 function createEmptyDiaryEntry() {
   return {
@@ -55,6 +55,8 @@ function useCalendarPageController({
   handleCreateCalendarEvent,
   handleDeleteCalendarEvent,
 }) {
+  const { t, i18n } = useTranslation();
+  const locale = getDateLocale(i18n.language, { capitalizePtBrMonths: true });
   const [searchParams] = useSearchParams();
   const classId = searchParams.get("classId") || "";
   const [activeClassId, setActiveClassId] = useState("");
@@ -98,7 +100,9 @@ function useCalendarPageController({
 
   const unitOptionsForEditSubject = units.filter((unit) => unit.subject_id === editEntryForm.subjectId);
 
-  const monthTitle = viewMode === "month" ? format(anchorDate, "LLLL yyyy") : format(anchorDate, "PPP");
+  const monthTitle = viewMode === "month"
+    ? format(anchorDate, "LLLL yyyy", { locale })
+    : format(anchorDate, "PPP", { locale });
 
   const dayItems = filteredDiaryEntries
     .filter((item) => item.entry_date === selectedDate)
@@ -127,7 +131,10 @@ function useCalendarPageController({
           end: endOfWeek(anchorDate),
         });
 
-  const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const weekdayLabels = eachDayOfInterval({
+    start: startOfWeek(new Date()),
+    end: endOfWeek(new Date()),
+  }).map((day) => format(day, "EEE", { locale }));
 
   const diaryForDay = (dateObj) =>
     filteredDiaryEntries.filter((item) => item.entry_date === format(dateObj, "yyyy-MM-dd"));
@@ -154,16 +161,18 @@ function useCalendarPageController({
   };
 
   const openNewEntryForm = () => {
+    const calendarSetupMessage = t("calendar.setupMessage");
     if (!calendarTablesReady) {
-      setFormError(CALENDAR_SETUP_MESSAGE);
+      setFormError(calendarSetupMessage);
       return;
     }
     setShowNewEntry(true);
   };
 
   const openNewEventForm = () => {
+    const calendarSetupMessage = t("calendar.setupMessage");
     if (!calendarTablesReady) {
-      setFormError(CALENDAR_SETUP_MESSAGE);
+      setFormError(calendarSetupMessage);
       return;
     }
     setShowNewEvent(true);
@@ -172,9 +181,10 @@ function useCalendarPageController({
   const handleCreateDiaryEntry = async (event) => {
     event.preventDefault();
     setFormError("");
+    const calendarSetupMessage = t("calendar.setupMessage");
 
     if (!calendarTablesReady) {
-      setFormError(CALENDAR_SETUP_MESSAGE);
+      setFormError(calendarSetupMessage);
       return;
     }
 
@@ -192,7 +202,7 @@ function useCalendarPageController({
     };
 
     if (!payload.class_id) {
-      setFormError("Select a class for the diary entry.");
+      setFormError(t("calendar.validation.selectClassForEntry"));
       return;
     }
 
@@ -205,7 +215,7 @@ function useCalendarPageController({
 
   const handleDeleteDiaryEntry = async (entryId) => {
     if (!entryId) return;
-    if (!window.confirm("Delete this diary entry?")) return;
+    if (!window.confirm(t("calendar.confirm.deleteDiaryEntry"))) return;
     await handleDeleteCalendarDiaryEntry(entryId);
   };
 
@@ -241,9 +251,10 @@ function useCalendarPageController({
   const handleUpdateDiaryEntry = async (event) => {
     event.preventDefault();
     setFormError("");
+    const calendarSetupMessage = t("calendar.setupMessage");
 
     if (!calendarTablesReady) {
-      setFormError(CALENDAR_SETUP_MESSAGE);
+      setFormError(calendarSetupMessage);
       return;
     }
     if (!editingEntryId) return;
@@ -262,7 +273,7 @@ function useCalendarPageController({
     };
 
     if (!payload.class_id) {
-      setFormError("Select a class for the diary entry.");
+      setFormError(t("calendar.validation.selectClassForEntry"));
       return;
     }
 
@@ -277,9 +288,10 @@ function useCalendarPageController({
   const handleCreateEvent = async (event) => {
     event.preventDefault();
     setFormError("");
+    const calendarSetupMessage = t("calendar.setupMessage");
 
     if (!calendarTablesReady) {
-      setFormError(CALENDAR_SETUP_MESSAGE);
+      setFormError(calendarSetupMessage);
       return;
     }
 
@@ -294,7 +306,7 @@ function useCalendarPageController({
     };
 
     if (!payload.title) {
-      setFormError("Event title is required.");
+      setFormError(t("calendar.validation.eventTitleRequired"));
       return;
     }
 
@@ -307,8 +319,16 @@ function useCalendarPageController({
 
   const handleDeleteEvent = async (eventId) => {
     if (!eventId) return;
-    if (!window.confirm("Delete this event?")) return;
+    if (!window.confirm(t("calendar.confirm.deleteEvent"))) return;
     await handleDeleteCalendarEvent(eventId);
+  };
+
+  const calendarSetupMessage = t("calendar.setupMessage");
+  const formatDateLabel = (dateValue, formatToken) => {
+    if (!dateValue) return "";
+    const parsedDate = typeof dateValue === "string" ? parseISO(dateValue) : dateValue;
+    if (!isValid(parsedDate)) return "";
+    return format(parsedDate, formatToken, { locale });
   };
 
   return {
@@ -352,7 +372,9 @@ function useCalendarPageController({
     diaryForDay,
     eventsForDay,
     splitLines,
-    calendarSetupMessage: CALENDAR_SETUP_MESSAGE,
+    calendarSetupMessage,
+    formatDateLabel,
+    locale,
     navigatePeriod,
     openDay,
     openNewEntryForm,

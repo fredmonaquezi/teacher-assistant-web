@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 
 function GroupsPage({
@@ -22,6 +23,8 @@ function GroupsPage({
   handleAddConstraint,
   handleDeleteConstraint,
 }) {
+  const { t } = useTranslation();
+  const [showAdvancedHelp, setShowAdvancedHelp] = useState(false);
   const [searchParams] = useSearchParams();
   const classId = searchParams.get("classId") || "";
 
@@ -126,15 +129,15 @@ function GroupsPage({
       <section className="panel groups-page">
         <div className="groups-header-card">
           <div className="groups-header-icon">👥</div>
-          <h2>Smart Group Generator</h2>
-          <p className="muted">Create balanced student groups with advanced options.</p>
+          <h2>{t("groups.title")}</h2>
+          <p className="muted">{t("groups.subtitle")}</p>
           <div className="groups-header-info">
             <div>
-              <span className="muted">Students</span>
+              <span className="muted">{t("groups.stats.students")}</span>
               <strong>{classStudents.length || "—"}</strong>
             </div>
             <div>
-              <span className="muted">Groups</span>
+              <span className="muted">{t("groups.stats.groups")}</span>
               <strong>{classGroups.length || "—"}</strong>
             </div>
           </div>
@@ -142,7 +145,7 @@ function GroupsPage({
 
         <div className="groups-controls-card">
           <div className="groups-controls-header">
-            <h3>Group Settings</h3>
+            <h3>{t("groups.settings.title")}</h3>
             {!classId && (
               <select
                 value={groupGenForm.classId}
@@ -150,7 +153,7 @@ function GroupsPage({
                   setGroupGenForm((prev) => ({ ...prev, classId: event.target.value }))
                 }
               >
-                <option value="">Select class</option>
+                <option value="">{t("groups.settings.selectClass")}</option>
                 {classOptions.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
@@ -162,7 +165,7 @@ function GroupsPage({
 
           <div className="groups-size-row">
             <div className="groups-size-display">
-              <div className="muted">Students per group</div>
+              <div className="muted">{t("groups.settings.studentsPerGroup")}</div>
               <div className="groups-size-value">{groupSize}</div>
             </div>
             <div className="groups-size-controls">
@@ -195,7 +198,7 @@ function GroupsPage({
 
           {classStudents.length > 0 && (
             <div className="groups-info-row">
-              This will create approximately {expectedGroupCount} groups.
+              {t("groups.settings.expectedGroups", { count: expectedGroupCount })}
             </div>
           )}
 
@@ -207,15 +210,25 @@ function GroupsPage({
             aria-busy={isGeneratingGroups}
           >
             {isGeneratingGroups && <span className="inline-spinner" aria-hidden="true" />}
-            {classGroups.length ? "Regenerate Groups" : "Generate Groups"}
+            {classGroups.length ? t("groups.actions.regenerateGroups") : t("groups.actions.generateGroups")}
           </button>
         </div>
 
         <div className="groups-advanced-card">
           <div className="groups-advanced-header">
-            <h3>Advanced Options</h3>
-            <button type="button" className="link" onClick={() => setGroupsShowAdvanced((prev) => !prev)}>
-              {groupsShowAdvanced ? "Hide" : "Show"}
+            <h3>{t("groups.advanced.title")}</h3>
+            <button
+              type="button"
+              className="link"
+              onClick={() =>
+                setGroupsShowAdvanced((prev) => {
+                  const next = !prev;
+                  if (!next) setShowAdvancedHelp(false);
+                  return next;
+                })
+              }
+            >
+              {groupsShowAdvanced ? t("groups.advanced.hide") : t("groups.advanced.show")}
             </button>
           </div>
           {groupsShowAdvanced && (
@@ -228,7 +241,7 @@ function GroupsPage({
                     setGroupGenForm((prev) => ({ ...prev, balanceGender: event.target.checked }))
                   }
                 />
-                Balance Gender
+                {t("groups.advanced.balanceGender")}
               </label>
               <label className="checkbox">
                 <input
@@ -238,7 +251,7 @@ function GroupsPage({
                     setGroupGenForm((prev) => ({ ...prev, balanceAbility: event.target.checked }))
                   }
                 />
-                Balance Academic Levels
+                {t("groups.advanced.balanceAcademic")}
               </label>
               <label className="checkbox">
                 <input
@@ -248,7 +261,7 @@ function GroupsPage({
                     setGroupGenForm((prev) => ({ ...prev, pairSupportPartners: event.target.checked }))
                   }
                 />
-                Pair Learning Partners
+                {t("groups.advanced.pairPartners")}
               </label>
               <label className="checkbox">
                 <input
@@ -261,14 +274,41 @@ function GroupsPage({
                     }))
                   }
                 />
-                Respect Separation Rules
+                {t("groups.advanced.respectSeparations")}
               </label>
               <button type="button" className="link" onClick={openSeparationsModal}>
-                Separations
+                {t("groups.advanced.separations")}
               </button>
-              <p className="muted groups-option-help">
-                Academic levels are estimated from recent gradebook scores for this class.
-              </p>
+              {showAdvancedHelp && (
+                <div className="groups-help-card" role="note" aria-live="polite">
+                  <h4>{t("groups.advanced.helpTitle")}</h4>
+                  <ul>
+                    <li>
+                      <strong>{t("groups.advanced.balanceGender")}:</strong>{" "}
+                      {t("groups.advanced.helpGender")}
+                    </li>
+                    <li>
+                      <strong>{t("groups.advanced.balanceAcademic")}:</strong>{" "}
+                      {t("groups.advanced.helpAcademic")}
+                    </li>
+                    <li>
+                      <strong>{t("groups.advanced.pairPartners")}:</strong>{" "}
+                      {t("groups.advanced.helpPairPartners")}
+                    </li>
+                    <li>
+                      <strong>{t("groups.advanced.respectSeparations")}:</strong>{" "}
+                      {t("groups.advanced.helpRespectSeparations")}
+                    </li>
+                  </ul>
+                </div>
+              )}
+              <button
+                type="button"
+                className="link groups-help-toggle"
+                onClick={() => setShowAdvancedHelp((prev) => !prev)}
+              >
+                {showAdvancedHelp ? t("groups.advanced.hideHelp") : t("groups.advanced.help")}
+              </button>
             </div>
           )}
         </div>
@@ -276,19 +316,19 @@ function GroupsPage({
         {grouped.length === 0 ? (
           <div className="groups-empty">
             <div className="groups-empty-icon">✨</div>
-            <div className="groups-empty-title">No groups yet</div>
-            <div className="muted">Configure your settings and click Generate Groups.</div>
+            <div className="groups-empty-title">{t("groups.empty.title")}</div>
+            <div className="muted">{t("groups.empty.description")}</div>
           </div>
         ) : (
           <div className="groups-results">
             <div className="groups-results-header">
-              <h3>Generated Groups</h3>
+              <h3>{t("groups.results.title")}</h3>
             </div>
             <div className="groups-grid">
               {grouped.map(({ group, members }, index) => (
                 <div key={group.id} className="group-card">
                   <div className="group-card-header" style={{ background: gradientForGroup(index) }}>
-                    <span>Group {index + 1}</span>
+                    <span>{t("groups.results.groupN", { number: index + 1 })}</span>
                     <span className="group-card-count">{members.length}</span>
                   </div>
                   <div className="group-card-body">
@@ -314,10 +354,10 @@ function GroupsPage({
       {groupsShowSeparations && (
         <div className="modal-overlay">
           <div className="modal-card separations-modal">
-            <h3>Separation Rules</h3>
+            <h3>{t("groups.separations.title")}</h3>
             <div className="grid">
               <label className="stack">
-                <span>Student A</span>
+                <span>{t("groups.separations.studentA")}</span>
                 <select
                   value={constraintForm.studentA}
                   onChange={(event) =>
@@ -325,7 +365,7 @@ function GroupsPage({
                   }
                   required
                 >
-                  <option value="">Select student</option>
+                  <option value="">{t("groups.separations.selectStudent")}</option>
                   {classStudents.map((student) => (
                     <option key={student.id} value={student.id}>
                       {student.first_name} {student.last_name}
@@ -334,7 +374,7 @@ function GroupsPage({
                 </select>
               </label>
               <label className="stack">
-                <span>Student B</span>
+                <span>{t("groups.separations.studentB")}</span>
                 <select
                   value={constraintForm.studentB}
                   onChange={(event) =>
@@ -342,7 +382,7 @@ function GroupsPage({
                   }
                   required
                 >
-                  <option value="">Select student</option>
+                  <option value="">{t("groups.separations.selectStudent")}</option>
                   {classStudents.map((student) => (
                     <option key={student.id} value={student.id}>
                       {student.first_name} {student.last_name}
@@ -351,7 +391,7 @@ function GroupsPage({
                 </select>
               </label>
               <button type="button" className="separations-add-btn" onClick={handleAddConstraint}>
-                Add separation
+                {t("groups.separations.add")}
               </button>
             </div>
             {classConstraintList.length > 0 && (
@@ -363,16 +403,16 @@ function GroupsPage({
                     <li key={constraint.id}>
                       <div className="list-row">
                         <span>
-                          {studentA ? `${studentA.first_name} ${studentA.last_name}` : "Student"}
+                          {studentA ? `${studentA.first_name} ${studentA.last_name}` : t("groups.separations.studentFallback")}
                           {" ↔ "}
-                          {studentB ? `${studentB.first_name} ${studentB.last_name}` : "Student"}
+                          {studentB ? `${studentB.first_name} ${studentB.last_name}` : t("groups.separations.studentFallback")}
                         </span>
                         <button
                           type="button"
                           className="link danger separation-delete-btn"
                           onClick={() => handleDeleteConstraint(constraint.id)}
                         >
-                          Delete
+                          {t("common.actions.delete")}
                         </button>
                       </div>
                     </li>
@@ -382,7 +422,7 @@ function GroupsPage({
             )}
             <div className="modal-actions separations-actions">
               <button type="button" className="secondary" onClick={closeSeparationsModal}>
-                Done
+                {t("common.actions.done")}
               </button>
             </div>
           </div>

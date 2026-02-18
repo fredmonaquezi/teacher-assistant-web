@@ -1,0 +1,957 @@
+{
+  "common": {
+    "language": {
+      "label": "Language",
+      "en": "EN",
+      "ptBR": "PT-BR"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "add": "Add",
+      "reorderMode": "Reorder Mode",
+      "doneReordering": "Done Reordering",
+      "back": "Back",
+      "close": "Close",
+      "create": "Create",
+      "delete": "Delete",
+      "done": "Done",
+      "next": "Next",
+      "save": "Save"
+    },
+    "gender": {
+      "female": "Female",
+      "male": "Male",
+      "nonBinary": "Gender Neutral",
+      "preferNotToSay": "Prefer not to say"
+    }
+  },
+  "route": {
+    "loadingPage": "Loading page..."
+  },
+  "layout": {
+    "mobileNav": {
+      "openAria": "Open navigation menu",
+      "closeAria": "Close navigation menu",
+      "open": "Menu",
+      "close": "Close menu"
+    },
+    "sidebar": {
+      "kicker": "Teacher Assistant",
+      "title": "Classroom Hub",
+      "signedInAs": "Signed in as {{identity}}",
+      "profile": "Profile",
+      "signOut": "Sign out"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "classes": "Classes",
+      "attendance": "Attendance",
+      "gradebook": "Gradebook",
+      "groups": "Groups",
+      "calendar": "Calendar",
+      "timer": "Timer",
+      "randomPicker": "Random Picker",
+      "runningRecords": "Running Records"
+    },
+    "greeting": {
+      "kicker": "Teacher Assistant",
+      "hello": "Hello, {{name}}.",
+      "todayIs": "Today is {{date}}"
+    },
+    "events": {
+      "title": "Upcoming Events",
+      "calendar": "Calendar",
+      "empty": "No events in the next 15 days.",
+      "dateTbd": "Date TBD",
+      "allDay": "All day",
+      "timeTbd": "Time TBD",
+      "untitled": "Untitled event"
+    }
+  },
+  "auth": {
+    "title": "Teacher Assistant",
+    "subtitle": "Sign in to sync your data across devices.",
+    "email": "Email",
+    "password": "Password",
+    "working": "Working...",
+    "createAccount": "Create account",
+    "signIn": "Sign in",
+    "or": "or",
+    "createWithGoogle": "Create account with Google",
+    "signInWithGoogle": "Sign in with Google",
+    "completingGoogleSignIn": "Completing Google sign-in...",
+    "alreadyHaveAccount": "Already have an account? Sign in",
+    "newHere": "New here? Create an account",
+    "success": {
+      "checkEmail": "Check your email to confirm your account, then sign in."
+    },
+    "errors": {
+      "generic": "Something went wrong. Try again.",
+      "googleMissingClientId": "Google auth is enabled, but VITE_GOOGLE_CLIENT_ID is missing.",
+      "googleLoadFailed": "Failed to load Google sign-in. Refresh and try again.",
+      "googleMissingCredential": "Google did not return a login credential.",
+      "googleSignInFailed": "Google sign-in failed. Try again."
+    }
+  },
+  "dashboard": {
+    "tiles": {
+      "classes": "Classes",
+      "attendance": "Attendance",
+      "gradebook": "Gradebook",
+      "rubrics": "Rubrics",
+      "groups": "Groups",
+      "randomPicker": "Random Picker",
+      "timer": "Timer",
+      "runningRecords": "Running Records",
+      "calendar": "Calendar"
+    }
+  },
+  "classes": {
+    "title": "Classes",
+    "addClass": "+ Add Class",
+    "loadingClasses": "Loading classes...",
+    "students": "students",
+    "subjects": "subjects",
+    "empty": "No classes yet.",
+    "summary": {
+      "loading": "Loading your classes...",
+      "loaded": "{{classCountLabel}} • {{studentCountLabel}} • {{subjectCountLabel}}"
+    },
+    "count": {
+      "class_one": "{{count}} class",
+      "class_other": "{{count}} classes",
+      "student_one": "{{count}} student",
+      "student_other": "{{count}} students",
+      "subject_one": "{{count}} subject",
+      "subject_other": "{{count}} subjects"
+    },
+    "aria": {
+      "moveUp": "Move {{name}} up",
+      "moveDown": "Move {{name}} down",
+      "drag": "Drag {{name}}",
+      "delete": "Delete {{name}}"
+    },
+    "modal": {
+      "title": "Add Class",
+      "className": "Class name",
+      "classNamePlaceholder": "Grade 3 - Ms. Rivera",
+      "gradeLevel": "Grade level",
+      "gradeLevelPlaceholder": "3rd",
+      "schoolYear": "School year",
+      "schoolYearPlaceholder": "2025-2026"
+    }
+  },
+  "attendance": {
+    "title": "Attendance",
+    "classLabel": "Class: {{classLabel}}",
+    "classFallback": "Class",
+    "actions": {
+      "selectClass": "Select class",
+      "byDate": "By date",
+      "today": "Today"
+    },
+    "stats": {
+      "totalSessions": "Total Sessions",
+      "students": "Students",
+      "attendanceRate": "Attendance Rate"
+    },
+    "sessions": {
+      "title": "Attendance Sessions",
+      "emptyTitle": "No attendance sessions yet",
+      "emptyDescription": "Create your first session to start tracking attendance."
+    },
+    "relative": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago"
+    },
+    "status": {
+      "present": {
+        "label": "Present",
+        "short": "Present"
+      },
+      "late": {
+        "label": "Arrived late",
+        "short": "Late"
+      },
+      "leftEarly": {
+        "label": "Left early",
+        "short": "Left early"
+      },
+      "absent": {
+        "label": "Didn't come",
+        "short": "Absent"
+      }
+    },
+    "note": {
+      "label": "Notes",
+      "placeholder": "Add notes (optional)"
+    },
+    "modal": {
+      "title": "Add Attendance Session",
+      "description": "Choose a date to record attendance.",
+      "selectDate": "Select date",
+      "selectedDate": "Selected Date: {{date}}",
+      "createSession": "Create Session"
+    },
+    "confirm": {
+      "deleteSession": "Delete this attendance session?"
+    },
+    "aria": {
+      "deleteSession": "Delete session"
+    },
+    "count": {
+      "students_one": "{{count}} student",
+      "students_other": "{{count}} students"
+    },
+    "sessionDetail": {
+      "notFoundTitle": "Session not found",
+      "notFoundDescription": "Select a session from Attendance.",
+      "markAttendance": "Mark Attendance"
+    }
+  },
+  "assessments": {
+    "title": "Gradebook",
+    "openUnitWorkspace": "Open Unit Workspace",
+    "steps": {
+      "chooseClass": "Step 1 - Choose Class",
+      "chooseSubject": "Step 2 - Choose Subject",
+      "chooseUnit": "Step 3 - Choose Unit"
+    },
+    "stats": {
+      "students": "Students",
+      "assessments": "Assessments",
+      "unitAverage": "Unit Average"
+    },
+    "table": {
+      "student": "Student",
+      "average": "Average"
+    },
+    "loading": "Loading gradebook...",
+    "empty": {
+      "noClasses": "No classes found.",
+      "pickClassFirst": "Pick a class first.",
+      "classNoSubjects": "This class has no subjects.",
+      "pickSubjectFirst": "Pick a subject first.",
+      "subjectNoUnits": "This subject has no units.",
+      "unitNoAssessments": "This unit has no assessments yet.",
+      "classNoStudents": "This class has no students yet."
+    },
+    "aria": {
+      "openAssessmentForStudent": "Open {{assessmentTitle}} for {{studentName}}"
+    }
+  },
+  "assessmentDetail": {
+    "notFoundTitle": "Assessment not found",
+    "notFoundDescription": "Select an assessment from the gradebook.",
+    "kicker": "Assessment Details",
+    "stats": {
+      "classAverage": "Class Average",
+      "highest": "Highest",
+      "lowest": "Lowest"
+    },
+    "info": {
+      "title": "Assessment Info",
+      "class": "Class",
+      "subject": "Subject",
+      "unit": "Unit"
+    },
+    "description": {
+      "title": "Description",
+      "placeholder": "Add description"
+    },
+    "students": {
+      "title": "Student Grades",
+      "graded": "{{graded}} / {{total}} graded",
+      "empty": "No students yet."
+    },
+    "entry": {
+      "score": "Score:",
+      "notes": "Notes",
+      "addNotes": "Add notes"
+    }
+  },
+  "profile": {
+    "title": "Profile & Preferences",
+    "subtitle": "Manage your account, security, and app preferences.",
+    "messages": {
+      "couldNotSaveProfile": "Could not save profile.",
+      "profileUpdated": "Profile updated.",
+      "passwordLength": "Password should have at least 6 characters.",
+      "passwordMismatch": "Password confirmation does not match.",
+      "couldNotUpdatePassword": "Could not update password.",
+      "passwordUpdated": "Password updated."
+    },
+    "basicInfo": {
+      "title": "Basic Info",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "Your full name",
+      "displayName": "Display name",
+      "displayNamePlaceholder": "How the app should call you",
+      "email": "Email",
+      "school": "School",
+      "schoolPlaceholder": "School name",
+      "gradeLevels": "Grade levels taught",
+      "gradeLevelsPlaceholder": "e.g., Years 5-6",
+      "saving": "Saving...",
+      "save": "Save profile"
+    },
+    "security": {
+      "title": "Security",
+      "newPassword": "New password",
+      "newPasswordPlaceholder": "At least 6 characters",
+      "confirmPassword": "Confirm new password",
+      "confirmPasswordPlaceholder": "Repeat password",
+      "updating": "Updating...",
+      "updatePassword": "Update password"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "dateFormat": "Date format",
+      "dateFormatMdy": "Month / Day / Year",
+      "dateFormatDmy": "Day / Month / Year",
+      "timeFormat": "Time format",
+      "timeFormat12h": "12-hour",
+      "timeFormat24h": "24-hour",
+      "defaultLandingPage": "Default landing page",
+      "preview": "Preview",
+      "landing": {
+        "dashboard": "Dashboard",
+        "calendar": "Calendar",
+        "classes": "Classes",
+        "gradebook": "Gradebook"
+      }
+    }
+  },
+  "timer": {
+    "kicker": "Focus Tool",
+    "title": "Classroom Timer",
+    "subtitle": "Choose a duration and keep every activity on track.",
+    "quickTimers": "Quick Timers",
+    "presetLabel_one": "{{count}} min",
+    "presetLabel_other": "{{count}} min",
+    "presetSub_one": "{{count}} min",
+    "presetSub_other": "{{count}} min",
+    "custom": {
+      "title": "Custom Timer",
+      "hint": "Set your exact countdown length",
+      "minutes": "Minutes",
+      "seconds": "Seconds",
+      "start": "▶ Start Custom Timer"
+    }
+  },
+  "calendar": {
+    "setupMessage": "Calendar tables are not set up yet. Run /Users/fred/Documents/teacher-assistant-web/supabase_calendar_tables.sql in Supabase SQL Editor, then refresh.",
+    "today": "Today",
+    "allClasses": "All Classes",
+    "selectedClass": "Selected class",
+    "classLabel": "Class: {{classLabel}}",
+    "none": "None",
+    "allDay": "All day",
+    "diaryEntry": "Diary Entry",
+    "classEntry": "Class Entry",
+    "upcomingAlerts": "Upcoming Alerts",
+    "noUpcomingAlerts": "No upcoming alerts.",
+    "timeRangeSeparator": " – ",
+    "view": {
+      "month": "Month",
+      "week": "Week"
+    },
+    "actions": {
+      "save": "Save",
+      "saveChanges": "Save changes",
+      "saveEvent": "Save Event",
+      "edit": "Edit"
+    },
+    "modals": {
+      "newDiaryEntryTitle": "New Diary Entry",
+      "editDiaryEntryTitle": "Edit Diary Entry",
+      "newEventTitle": "New Event"
+    },
+    "form": {
+      "class": "Class",
+      "subject": "Subject",
+      "unit": "Unit",
+      "title": "Title",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "plan": "Plan",
+      "planPlaceholder": "What will be taught",
+      "objectives": "Objectives",
+      "objectivesPlaceholder": "Learning goals",
+      "materials": "Materials",
+      "materialsPlaceholder": "Books, slides, worksheets...",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional notes",
+      "details": "Details",
+      "detailsPlaceholder": "Optional details",
+      "eventTitlePlaceholder": "Event title"
+    },
+    "validation": {
+      "selectClassForEntry": "Select a class for the diary entry.",
+      "eventTitleRequired": "Event title is required."
+    },
+    "confirm": {
+      "deleteDiaryEntry": "Delete this diary entry?",
+      "deleteEvent": "Delete this event?"
+    },
+    "aria": {
+      "deleteDiaryEntry": "Delete diary entry"
+    },
+    "dayDetail": {
+      "classDiary": "Class Diary",
+      "addEntry": "+ Add Entry",
+      "noDiaryEntries": "No diary entries for this day.",
+      "timeNotSet": "Time not set",
+      "eventsAndAlerts": "Events & Alerts",
+      "addEvent": "+ Add Event",
+      "noEvents": "No events for this day."
+    },
+    "entryDetail": {
+      "goals": "Goals",
+      "noGoals": "No goals added.",
+      "materialsNeeded": "Materials Needed",
+      "noMaterials": "No materials listed.",
+      "noHomeworkNotes": "No homework/notes added.",
+      "classDevelopment": "Class Development",
+      "noPlan": "No plan added.",
+      "dayObservations": "Day Observations",
+      "noObservations": "No observations recorded."
+    }
+  },
+  "classDetail": {
+    "addStudent": {
+      "description": "Basic profile details only. You can update more information later.",
+      "errorNameRequired": "First and last name are required.",
+      "firstName": "First name",
+      "firstNamePlaceholder": "Maya",
+      "gender": "Gender",
+      "lastName": "Last name",
+      "lastNamePlaceholder": "Lopez",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional",
+      "title": "Add Student"
+    },
+    "analytics": {
+      "allSubjects": "All subjects",
+      "attendance": "Attendance",
+      "classAverage": "Class average",
+      "development": "Development",
+      "excellent": "Excellent",
+      "good": "Good",
+      "needsAttention": "Needs attention",
+      "needsWork": "Needs work",
+      "noGradedData": "No graded data",
+      "performanceDistribution": "Performance distribution",
+      "subjectPerformance": "Subject performance",
+      "title": "Analytics",
+      "topPerformers": "Top performers"
+    },
+    "aria": {
+      "dragSubject": "Drag subject {{name}}",
+      "moveSubjectDown": "Move subject down {{name}}",
+      "moveSubjectUp": "Move subject up {{name}}"
+    },
+    "flags": {
+      "absentOften": "Absent often",
+      "missingHomework": "Missing homework",
+      "needsHelp": "Needs help"
+    },
+    "notFoundDescription": "Go back and choose a class.",
+    "notFoundTitle": "Class not found",
+    "overview": {
+      "grade": "Grade",
+      "kicker": "Class detail",
+      "notSet": "Not set",
+      "schoolYear": "School year {{year}}",
+      "students": "Students",
+      "subjects": "Subjects"
+    },
+    "quickActions": {
+      "attendance": "Attendance",
+      "groups": "Groups",
+      "randomPicker": "Random picker",
+      "title": "Quick actions"
+    },
+    "students": {
+      "addStudent": "Add student",
+      "empty": "Empty",
+      "openProfile": "Open profile",
+      "participatingWell": "Participating well",
+      "title": "Students"
+    },
+    "subjects": {
+      "addSubject": "Add subject",
+      "empty": "Empty",
+      "notes": "Notes",
+      "notesPlaceholder": "Notes",
+      "openToManage": "Open to manage",
+      "subjectName": "Subject name",
+      "subjectNamePlaceholder": "e.g., ELA, Math",
+      "title": "Subjects"
+    }
+  },
+  "development": {
+    "addNewRating": "Add new rating",
+    "allYearRanges": "All Year Ranges",
+    "cancelNewRating": "Cancel new rating",
+    "closeHistory": "Close history",
+    "criterion": "Criterion",
+    "criteriaLabel": "Criterion",
+    "criterionHistory": "Criterion history",
+    "date": "Date",
+    "earlier": "Earlier",
+    "empty": "Empty",
+    "entriesCount": "{{count}} entries",
+    "general": "General",
+    "latest": "Latest",
+    "noExtraDescription": "No extra description",
+    "noHistory": "No history",
+    "noNotesAdded": "No notes added",
+    "noNotesForRecord": "No notes for record",
+    "notRated": "Not rated",
+    "notes": "Notes",
+    "optional": "Optional",
+    "optionalNotes": "Optional notes",
+    "other": "Other",
+    "progressTrend": "Progress trend",
+    "rating": "Rating",
+    "rating15": "Rating (1-5)",
+    "ratingOptions": {
+      "1": "1 - Needs Significant Support",
+      "2": "2 - Beginning to Develop",
+      "3": "3 - Developing",
+      "4": "4 - Proficient",
+      "5": "5 - Mastering / Exceeding"
+    },
+    "ratingShort": {
+      "1": "1/5",
+      "2": "2/5",
+      "3": "3/5",
+      "4": "4/5",
+      "5": "5/5"
+    },
+    "ratingsMoved": "Ratings moved {{first}} {{last}}",
+    "saveNewRating": "Save new rating",
+    "selectCriterion": "Select Criterion",
+    "selectCriterionHelp": "Select a criterion to see what it measures before saving.",
+    "selectedCriterion": "Selected criterion",
+    "sparklineHint": "Sparkline hint",
+    "title": "Development",
+    "trend": "Trend",
+    "trendBaseline": "Trend baseline",
+    "trendImproved": "Trend improved",
+    "trendNeedsSupport": "Trend needs support",
+    "trendSteady": "Trend steady",
+    "update": "Update",
+    "updateDescription": "Choose the year range first, then pick the criterion with context",
+    "updateTitle": "Update Development Tracking",
+    "yearRange": "Year Range"
+  },
+  "groups": {
+    "actions": {
+      "generateGroups": "Generate groups",
+      "regenerateGroups": "Regenerate groups"
+    },
+    "advanced": {
+      "balanceAcademic": "Balance by Academic Level",
+      "balanceGender": "Balance by Gender",
+      "help": "Help",
+      "helpAcademic": "Uses recent assessment performance to spread learning levels across groups.",
+      "helpGender": "Tries to mix gender representation within each group when possible.",
+      "helpPairPartners": "Pairs students who need support with a peer who can help.",
+      "helpRespectSeparations": "Keeps students from your separation rules in different groups.",
+      "helpTitle": "How Advanced Settings Work",
+      "hide": "Hide",
+      "hideHelp": "Hide Help",
+      "pairPartners": "Pair Supporting Partner",
+      "respectSeparations": "Respect separations",
+      "separations": "Separations",
+      "show": "Show",
+      "title": "Advanced Settings"
+    },
+    "empty": {
+      "description": "Empty",
+      "title": "Empty"
+    },
+    "results": {
+      "groupN": "Group {{number}}",
+      "title": "Results"
+    },
+    "separations": {
+      "add": "Add",
+      "selectStudent": "Select student",
+      "studentA": "Student a",
+      "studentB": "Student b",
+      "studentFallback": "Student",
+      "title": "Separations"
+    },
+    "settings": {
+      "expectedGroups": "Expected groups ({{count}})",
+      "selectClass": "Select class",
+      "studentsPerGroup": "Students per group",
+      "title": "Settings"
+    },
+    "stats": {
+      "groups": "Groups",
+      "students": "Students"
+    },
+    "subtitle": "Create balanced groups with advanced option",
+    "title": "Smart Group Generator"
+  },
+  "random": {
+    "allClasses": "All classes",
+    "categories": {
+      "guardian": "Guardian",
+      "helper": "Helper",
+      "lineLeader": "Line leader",
+      "messenger": "Messenger"
+    },
+    "class": "Class",
+    "custom": {
+      "addSubtitle": "Add a rotation name to create a new custom role.",
+      "addTitle": "Create Custom Rotation",
+      "deleteDescription": "Are you sure you want to delete \"{{role}}\"?",
+      "deleteTitle": "Delete Custom Rotation",
+      "roleName": "Rotation name",
+      "roleNamePlaceholder": "e.g., Materials Captain"
+    },
+    "feedback": {
+      "alreadyClear": "Already clear {{role}}",
+      "resetCount": "{{count}} reset {{role}}"
+    },
+    "kicker": "Class Tool",
+    "lists": {
+      "alreadyUsedCount": "{{count}} already used",
+      "availableCount": "{{count}} available"
+    },
+    "quick": {
+      "note": "(any student, no rotation tracking)",
+      "subtitle": "Click here for instant random pick",
+      "title": "Quick Random Pick"
+    },
+    "result": {
+      "markUsed": "Mark used",
+      "randomPick": "Random pick",
+      "skipAbsent": "Skip absent",
+      "todaysRole": "Todays role {{role}}"
+    },
+    "rotation": {
+      "addCustom": "Add custom",
+      "clearUsed": "Clear used",
+      "deleteCustom": "Delete custom",
+      "deleteRoleAria": "Delete role aria {{role}}",
+      "everyoneUsed": "Everyone used {{role}}",
+      "leftCount": "{{count}} left",
+      "pickNext": "Pick next {{role}}",
+      "resetStartOver": "Reset start over",
+      "roleRotation": "{{role}} Rotation",
+      "subtitle": "Rotation",
+      "title": "Rotation"
+    },
+    "rotationTrackedAllClasses": "Rotation tracked per class",
+    "selectedClass": "Selected class",
+    "stats": {
+      "available": "Available",
+      "total": "Total",
+      "used": "Used"
+    },
+    "subtitle": "Random",
+    "title": "Random Picker"
+  },
+  "rubrics": {
+    "addCategory": "Add category",
+    "addCriterion": "Add criterion",
+    "aria": {
+      "closeEditor": "Close editor",
+      "deleteTemplate": "Delete template"
+    },
+    "categoriesAndCriteria": "Categories and criteria",
+    "categoriesCount": "{{count}} categories",
+    "confirm": {
+      "deleteCategory": "Delete category",
+      "deleteCriterion": "Delete criterion",
+      "deleteTemplate": "Delete template"
+    },
+    "createDefault": "Create default",
+    "createNew": "Create new",
+    "creatingDefaultMessage": "Creating default message",
+    "criteriaCount": "{{count}} criteria",
+    "criterion": "Criterion",
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Delete all rubric templates and related records ({{count}} templates)."
+    },
+    "deleteAll": "Delete all rubrics",
+    "deletingAll": "Deleting all...",
+    "gradeBand": "Grade band",
+    "loading": "Loading",
+    "modal": {
+      "categoryName": "Category name",
+      "categoryNamePlaceholder": "Category name placeholder",
+      "createTemplateDescription": "Create template description",
+      "createTemplateTitle": "Create template title",
+      "criterionName": "Criterion name",
+      "criterionNamePlaceholder": "Criterion name placeholder",
+      "description": "Modal",
+      "descriptionOptional": "Description optional",
+      "descriptionPlaceholder": "Description placeholder",
+      "editCriterionTitle": "Edit criterion title",
+      "deleteAllConfirmLabel": "Type {{keyword}} to confirm",
+      "deleteAllDescription": "This will permanently remove every rubric template in this workspace.",
+      "deleteAllTitle": "Delete all rubrics?",
+      "deleteAllWarning": "This also removes related categories, criteria, and development score links.",
+      "gradeLevel": "Grade level",
+      "gradeLevelPlaceholder": "Grade level placeholder",
+      "newCategoryDescription": "New category description",
+      "newCategoryTitle": "New category title",
+      "newCriterionDescription": "New criterion description {{name}}",
+      "newCriterionTitle": "New criterion title",
+      "subject": "Subject",
+      "subjectPlaceholder": "Subject placeholder",
+      "templateName": "Template name",
+      "templateNamePlaceholder": "Template name placeholder"
+    },
+    "noCategoriesYet": "No categories yet",
+    "noCriteriaYet": "No criteria yet",
+    "seedingDefault": "Seeding default",
+    "subject": "Subject",
+    "subtitle": "Rubrics",
+    "templateInformation": "Template information",
+    "title": "Rubrics"
+  },
+  "runningRecords": {
+    "detail": {
+      "title": "Detail"
+    },
+    "empty": {
+      "createFirst": "Create first",
+      "description": "Empty",
+      "title": "Empty"
+    },
+    "export": {
+      "accuracy": "Accuracy",
+      "class": "Class",
+      "date": "Date",
+      "errors": "Errors",
+      "level": "Level",
+      "notes": "Notes",
+      "scRatio": "SC ratio",
+      "selfCorrections": "Self corrections",
+      "student": "Student",
+      "textTitle": "Text title",
+      "totalWords": "Total words"
+    },
+    "exportCsv": "Export csv",
+    "exportJson": "Export json",
+    "filters": {
+      "allClasses": "All classes",
+      "allStudents": "All students",
+      "allTime": "All time",
+      "class": "Class",
+      "clear": "Clear",
+      "last30Days": "Last 30 days",
+      "last7Days": "Last 7 days",
+      "search": "Search",
+      "searchPlaceholder": "Search",
+      "sort": "Sort",
+      "sortAccuracyHighLow": "Sort accuracy high low",
+      "sortAccuracyLowHigh": "Sort accuracy low high",
+      "sortNewest": "Sort newest",
+      "sortOldest": "Sort oldest",
+      "student": "Student",
+      "thisTerm": "This term"
+    },
+    "levels": {
+      "frustration": {
+        "short": "Frustration"
+      },
+      "independent": {
+        "short": "Independent"
+      },
+      "instructional": {
+        "short": "Instructional"
+      }
+    },
+    "loading": "Loading",
+    "metrics": {
+      "accuracy": "Accuracy",
+      "errors": "Errors",
+      "sc": "SC",
+      "scRatio": "SC ratio",
+      "words": "Words"
+    },
+    "modal": {
+      "clickToChoose": "Click to choose",
+      "date": "Date",
+      "errors": "Errors",
+      "newDescription": "Record Reading Assessment data",
+      "newTitle": "New Record",
+      "notesOptional": "Notes optional",
+      "notesPlaceholder": "Notes",
+      "readingLevel": "Reading level",
+      "results": "Results",
+      "selectStudent": "Select student",
+      "selfCorrectionRatio": "Self correction ratio",
+      "selfCorrections": "Self corrections",
+      "student": "Student",
+      "textTitle": "Text title",
+      "textTitlePlaceholder": "e.g., The Cat in the Hat",
+      "totalWords": "Total words"
+    },
+    "na": "N/A",
+    "newRecord": "New Record",
+    "noClass": "No class",
+    "noDate": "No date",
+    "stats": {
+      "avgAccuracy": "Avg accuracy",
+      "filteredAvg": "Filtered avg",
+      "studentsAssessed": "Students assessed",
+      "totalRecords": "Total records"
+    },
+    "title": "Running records",
+    "unknownStudent": "Unknown student",
+    "untitledText": "Untitled text"
+  },
+  "studentDetail": {
+    "notFoundDescription": "Not found description",
+    "notFoundTitle": "Not found title"
+  },
+  "studentEdit": {
+    "description": "Student edit {{name}}",
+    "gender": "Gender",
+    "helpLink": "Help link",
+    "helpPrefix": "Help prefix",
+    "notes": "Notes",
+    "notesPlaceholder": "Notes placeholder",
+    "title": "Student edit"
+  },
+  "studentOverview": {
+    "assessmentsCount": "{{count}} assessments",
+    "attendanceSummary": "Attendance summary",
+    "editInfo": "Edit info",
+    "noAssessments": "No assessments",
+    "noAttendance": "No attendance",
+    "noClass": "No class",
+    "noNotes": "No notes",
+    "noRunningRecords": "No running records",
+    "noSubjects": "No subjects",
+    "notGraded": "Not graded",
+    "notesSaved": "Notes saved",
+    "performanceBySubject": "Performance by subject",
+    "quickStatus": "Quick status",
+    "recentAssessments": "Recent assessments",
+    "runningRecords": "Running records",
+    "stats": {
+      "avgAccuracy": "Avg accuracy",
+      "latest": "Latest",
+      "overallAverage": "Overall average",
+      "total": "Total",
+      "totalAssessments": "Total assessments"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "missingHomework": "Missing homework",
+      "needsHelp": "Needs help",
+      "participatingWell": "Participating well"
+    },
+    "viewAll": "View all"
+  },
+  "subjectDetail": {
+    "addUnit": "Add unit",
+    "aria": {
+      "deleteUnit": "Delete unit",
+      "drag": "Drag {{name}}",
+      "moveDown": "Move down {{name}}",
+      "moveUp": "Move up {{name}}"
+    },
+    "createFirstUnit": "Create first unit",
+    "delete": {
+      "description": "Delete {{name}}",
+      "title": "Delete"
+    },
+    "emptyDescription": "Empty description",
+    "emptyTitle": "Empty title",
+    "modal": {
+      "addDescription": "Create a clear unit name so it is easier to find it",
+      "addTitle": "Add New Unit",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional notes",
+      "preview": "Preview",
+      "unitName": "Unit Name",
+      "unitNamePlaceholder": "e.g., Unit 1, Fractions, Ancient Rome"
+    },
+    "noDescription": "No description",
+    "notFoundDescription": "Select a subject from Gradebook.",
+    "notFoundTitle": "Subject not found",
+    "reorderTip": "Reorder tip",
+    "stats": {
+      "subjectAverage": "Subject average",
+      "totalAssessments": "Total assessments",
+      "totalUnits": "Total units"
+    },
+    "unitKicker": "Unit",
+    "unitsTitle": "Units"
+  },
+  "unitDetail": {
+    "addAssessment": "Add assessment",
+    "aria": {
+      "deleteAssessment": "Delete assessment",
+      "drag": "Drag {{title}}",
+      "moveDown": "Move down {{title}}",
+      "moveUp": "Move up {{title}}"
+    },
+    "assessmentKicker": "Assessment kicker",
+    "assessmentsTitle": "Assessments title",
+    "copy": {
+      "confirmDescription": "Confirm description ({{count}})",
+      "confirmTitle": "Confirm title",
+      "copy": "Copy",
+      "moreCount": "{{count}} more",
+      "selectSubject": "Select subject",
+      "selectUnit": "Select unit",
+      "subject": "Subject",
+      "subjectStepTitle": "Subject step title",
+      "unit": "Unit",
+      "unitStepTitle": "Unit step title"
+    },
+    "createFirstAssessment": "Create first assessment",
+    "deleteAssessment": {
+      "description": "Delete assessment {{title}}",
+      "title": "Delete assessment"
+    },
+    "emptyDescription": "Empty description",
+    "emptyTitle": "Empty title",
+    "kicker": "Unit detail",
+    "modal": {
+      "addDescription": "Add description",
+      "addTitle": "Add title",
+      "assessmentName": "Assessment name",
+      "assessmentNamePlaceholder": "Assessment name placeholder",
+      "date": "Date",
+      "maxScore": "Max score",
+      "preview": "Preview"
+    },
+    "noDate": "No date",
+    "noNotesYet": "No notes yet",
+    "notFoundDescription": "Select a unit from Gradebook.",
+    "notFoundTitle": "Unit not found",
+    "points": "pts",
+    "quickActions": {
+      "copyCriteria": "Copy criteria",
+      "gradebook": "Gradebook",
+      "importAssessments": "Import assessments",
+      "title": "Quick actions",
+      "viewAllGrades": "View all grades"
+    },
+    "reorderTip": "Reorder tip",
+    "stats": {
+      "assessments": "Assessments",
+      "totalGrades": "Total grades",
+      "unitAverage": "Unit average"
+    },
+    "subjectLabel": "Subject label {{subjectName}}"
+  }
+}

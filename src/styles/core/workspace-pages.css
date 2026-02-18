@@ -68,12 +68,12 @@
 
 .groups-header-card {
   text-align: center;
-  padding: 22px;
+  padding: 18px 20px;
   border-radius: 18px;
   border: 1px solid #ccb188;
   background: linear-gradient(160deg, #fbf3df 0%, #f2e7c8 100%);
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .groups-header-icon {
@@ -90,9 +90,15 @@
 
 .groups-header-info {
   display: flex;
-  gap: 20px;
+  gap: 14px;
   justify-content: center;
   flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.groups-header-card h2,
+.groups-header-card p {
+  margin: 0;
 }
 
 .groups-header-info div {
@@ -228,6 +234,34 @@
   font-size: 0.82rem;
 }
 
+.groups-help-card {
+  border-radius: 12px;
+  border: 1px solid #ccb188;
+  background: linear-gradient(180deg, #fdf5e3 0%, #f4e8ca 100%);
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.groups-help-card h4 {
+  margin: 0;
+  color: #5b4127;
+  font-size: 0.92rem;
+}
+
+.groups-help-card ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+
+.groups-help-card li {
+  color: #6b5439;
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
 .groups-advanced-options > .link {
   width: fit-content;
   min-height: 42px;
@@ -253,6 +287,10 @@
 .groups-advanced-options > .link:focus-visible {
   outline: 2px solid #b67947;
   outline-offset: 2px;
+}
+
+.groups-help-toggle {
+  justify-self: end;
 }
 
 .separations-modal {
@@ -1749,6 +1787,11 @@ button.danger {
 
 .rr-live-results p {
   margin: 4px 0;
+}
+
+.running-records-modal .modal-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
 }
 
 .running-records-detail-modal {

@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import DevelopmentTrackingSection from "../components/student-detail/DevelopmentTrackingSection";
 import EditStudentModal from "../components/student-detail/EditStudentModal";
@@ -26,6 +27,7 @@ function StudentDetailPage({
   handleUpdateStudent,
   formError,
 }) {
+  const { t } = useTranslation();
   const { studentId } = useParams();
 
   const [showEditInfo, setShowEditInfo] = useState(false);
@@ -157,8 +159,8 @@ function StudentDetailPage({
   if (!student) {
     return (
       <section className="panel">
-        <h2>Student not found</h2>
-        <p className="muted">Select a student from a class.</p>
+        <h2>{t("studentDetail.notFoundTitle")}</h2>
+        <p className="muted">{t("studentDetail.notFoundDescription")}</p>
       </section>
     );
   }
