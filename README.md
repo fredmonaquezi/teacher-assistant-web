@@ -73,10 +73,10 @@ Notes:
 - `VITE_GOOGLE_CLIENT_ID` (only if Google auth enabled)
 4. Redeploy.
 
-Security headers are defined in `vercel.json` and `netlify.toml`.
+Security headers are defined in `vercel.json`.
 
 ## Production security header + OAuth verification checklist
-Run this every time `vercel.json` or `netlify.toml` changes.
+Run this every time `vercel.json` changes.
 
 1. Redeploy your hosting project so new headers go live.
 2. Verify headers on production URL:
