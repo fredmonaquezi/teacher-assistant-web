@@ -107,15 +107,16 @@ function ClassDetailPage({
   const [addStudentError, setAddStudentError] = useState("");
   const [dragSubjectId, setDragSubjectId] = useState(null);
   const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderModeHook();
+  const isMobileReorderActive = isMobileLayout && isReorderMode;
   const {
     onHandlePointerDown: onSubjectHandlePointerDown,
     onHandlePointerMove: onSubjectHandlePointerMove,
     onHandlePointerUp: onSubjectHandlePointerUp,
     isDragAllowed: isSubjectDragAllowed,
     resetHandleDrag: resetSubjectHandleDrag,
-  } = useHandleDragHook(isReorderEnabled);
+  } = useHandleDragHook(isReorderEnabled && !isMobileLayout);
   const draggedSubjectId = dragSubjectId;
-  const subjectHandleClassName = `drag-handle${isReorderEnabled ? "" : " disabled"}`;
+  const subjectHandleClassName = `drag-handle${isReorderEnabled && !isMobileLayout ? "" : " disabled"}`;
   const classStudentIdSet = new Set(classStudents.map((student) => student.id));
   const classAssessmentList = assessments.filter((assessment) => assessment.class_id === classId);
   const filteredAssessmentList = selectedSubjectId
@@ -350,11 +351,14 @@ function ClassDetailPage({
         </form>
 
         <ul className="subject-card-grid">
-          {classSubjects.map((subject) => (
+          {classSubjects.map((subject, index) => {
+            const previousSubject = index > 0 ? classSubjects[index - 1] : null;
+            const nextSubject = index < classSubjects.length - 1 ? classSubjects[index + 1] : null;
+            return (
             <li
               key={subject.id}
-              className="subject-card draggable"
-              draggable={isReorderEnabled}
+              className={`subject-card draggable${isMobileReorderActive ? " reorder-mobile-active" : ""}`}
+              draggable={isReorderEnabled && !isMobileLayout}
               onDragStart={(event) => {
                 if (!isSubjectDragAllowed(subject.id)) {
                   event.preventDefault();
@@ -367,33 +371,73 @@ function ClassDetailPage({
                 resetSubjectHandleDrag();
               }}
               onDragOver={(event) => {
-                if (!isReorderEnabled) return;
+                if (!isReorderEnabled || isMobileLayout) return;
                 event.preventDefault();
               }}
               onDrop={() =>
                 handleSwapSortOrder("subjects", classSubjects, draggedSubjectId, subject.id)
               }
             >
-              <NavLink to={`/subjects/${subject.id}`} className="subject-card-link">
+              <NavLink
+                to={`/subjects/${subject.id}`}
+                className={`subject-card-link${isMobileReorderActive ? " reorder-disabled" : ""}`}
+                onClick={(event) => {
+                  if (!isMobileReorderActive) return;
+                  event.preventDefault();
+                }}
+              >
                 <div className="subject-card-name">{subject.name}</div>
                 <div className="subject-card-description">
                   {subject.description || "Open to manage units and assessments"}
                 </div>
               </NavLink>
-              <button
-                type="button"
-                className={subjectHandleClassName}
-                aria-label={`Drag ${subject.name}`}
-                onClick={(event) => event.stopPropagation()}
-                onPointerDown={(event) => onSubjectHandlePointerDown(subject.id, event)}
-                onPointerMove={onSubjectHandlePointerMove}
-                onPointerUp={onSubjectHandlePointerUp}
-                onPointerCancel={onSubjectHandlePointerUp}
-              >
-                ⠿
-              </button>
+              {isMobileReorderActive && (
+                <div className="reorder-mobile-controls">
+                  <button
+                    type="button"
+                    className="reorder-mobile-btn"
+                    aria-label={`Move ${subject.name} up`}
+                    disabled={!previousSubject}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (!previousSubject) return;
+                      handleSwapSortOrder("subjects", classSubjects, subject.id, previousSubject.id);
+                    }}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    className="reorder-mobile-btn"
+                    aria-label={`Move ${subject.name} down`}
+                    disabled={!nextSubject}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (!nextSubject) return;
+                      handleSwapSortOrder("subjects", classSubjects, subject.id, nextSubject.id);
+                    }}
+                  >
+                    ↓
+                  </button>
+                </div>
+              )}
+              {!isMobileLayout && (
+                <button
+                  type="button"
+                  className={subjectHandleClassName}
+                  aria-label={`Drag ${subject.name}`}
+                  onClick={(event) => event.stopPropagation()}
+                  onPointerDown={(event) => onSubjectHandlePointerDown(subject.id, event)}
+                  onPointerMove={onSubjectHandlePointerMove}
+                  onPointerUp={onSubjectHandlePointerUp}
+                  onPointerCancel={onSubjectHandlePointerUp}
+                >
+                  ⠿
+                </button>
+              )}
             </li>
-          ))}
+          );
+          })}
           {classSubjects.length === 0 && <li className="muted">No subjects yet.</li>}
         </ul>
       </section>

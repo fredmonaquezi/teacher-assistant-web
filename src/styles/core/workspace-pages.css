@@ -870,6 +870,20 @@
   right: 10px;
 }
 
+.subject-card .reorder-mobile-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.subject-card-link.reorder-disabled {
+  cursor: default;
+}
+
+.subject-card.reorder-mobile-active .subject-card-link {
+  padding-right: 88px;
+}
+
 .student-card-grid {
   list-style: none;
   padding: 0;
@@ -2585,4 +2599,3 @@ button.danger {
     grid-template-columns: 1fr;
   }
 }
-

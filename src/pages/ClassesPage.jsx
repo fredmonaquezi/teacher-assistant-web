@@ -20,15 +20,16 @@ function ClassesPage({
   const [dragClassId, setDragClassId] = useState(null);
   const navigate = useNavigate();
   const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderMode();
+  const isMobileReorderActive = isMobileLayout && isReorderMode;
   const {
     onHandlePointerDown: onClassHandlePointerDown,
     onHandlePointerMove: onClassHandlePointerMove,
     onHandlePointerUp: onClassHandlePointerUp,
     isDragAllowed: isClassDragAllowed,
     resetHandleDrag: resetClassHandleDrag,
-  } = useHandleDrag(isReorderEnabled);
+  } = useHandleDrag(isReorderEnabled && !isMobileLayout);
 
-  const classHandleClassName = `drag-handle${isReorderEnabled ? "" : " disabled"}`;
+  const classHandleClassName = `drag-handle${isReorderEnabled && !isMobileLayout ? "" : " disabled"}`;
   const classCount = classes.length;
   const classSummaryLabel = loading
     ? "Loading your classes..."
@@ -57,18 +58,24 @@ function ClassesPage({
           <p className="muted">Loading classes...</p>
         ) : (
           <div className="class-card-grid">
-            {classes.map((item) => {
+            {classes.map((item, index) => {
               const studentCount = students.filter((s) => s.class_id === item.id).length;
               const subjectCount = subjects.filter((s) => s.class_id === item.id).length;
+              const previousClass = index > 0 ? classes[index - 1] : null;
+              const nextClass = index < classes.length - 1 ? classes[index + 1] : null;
               return (
                 <div
                   key={item.id}
                   className="class-card draggable"
                   role="button"
                   tabIndex={0}
-                  draggable={isReorderEnabled}
-                  onClick={() => navigate(`/classes/${item.id}`)}
+                  draggable={isReorderEnabled && !isMobileLayout}
+                  onClick={() => {
+                    if (isMobileReorderActive) return;
+                    navigate(`/classes/${item.id}`);
+                  }}
                   onKeyDown={(event) => {
+                    if (isMobileReorderActive) return;
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
                       navigate(`/classes/${item.id}`);
@@ -86,7 +93,7 @@ function ClassesPage({
                     resetClassHandleDrag();
                   }}
                   onDragOver={(event) => {
-                    if (!isReorderEnabled) return;
+                    if (!isReorderEnabled || isMobileLayout) return;
                     event.preventDefault();
                   }}
                   onDrop={() => handleSwapSortOrder("classes", classes, dragClassId, item.id)}
@@ -100,18 +107,50 @@ function ClassesPage({
                       </div>
                     </div>
                     <div className="class-card-actions">
-                      <button
-                        type="button"
-                        className={classHandleClassName}
-                        aria-label={`Drag ${item.name}`}
-                        onClick={(event) => event.stopPropagation()}
-                        onPointerDown={(event) => onClassHandlePointerDown(item.id, event)}
-                        onPointerMove={onClassHandlePointerMove}
-                        onPointerUp={onClassHandlePointerUp}
-                        onPointerCancel={onClassHandlePointerUp}
-                      >
-                        ⠿
-                      </button>
+                      {isMobileReorderActive && (
+                        <div className="reorder-mobile-controls">
+                          <button
+                            type="button"
+                            className="reorder-mobile-btn"
+                            aria-label={`Move ${item.name} up`}
+                            disabled={!previousClass}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              if (!previousClass) return;
+                              handleSwapSortOrder("classes", classes, item.id, previousClass.id);
+                            }}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            className="reorder-mobile-btn"
+                            aria-label={`Move ${item.name} down`}
+                            disabled={!nextClass}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              if (!nextClass) return;
+                              handleSwapSortOrder("classes", classes, item.id, nextClass.id);
+                            }}
+                          >
+                            ↓
+                          </button>
+                        </div>
+                      )}
+                      {!isMobileLayout && (
+                        <button
+                          type="button"
+                          className={classHandleClassName}
+                          aria-label={`Drag ${item.name}`}
+                          onClick={(event) => event.stopPropagation()}
+                          onPointerDown={(event) => onClassHandlePointerDown(item.id, event)}
+                          onPointerMove={onClassHandlePointerMove}
+                          onPointerUp={onClassHandlePointerUp}
+                          onPointerCancel={onClassHandlePointerUp}
+                        >
+                          ⠿
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="icon-button"

@@ -53,15 +53,16 @@ function UnitDetailPage({
   });
   const [dragAssessmentId, setDragAssessmentId] = useState(null);
   const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderMode();
+  const isMobileReorderActive = isMobileLayout && isReorderMode;
   const {
     onHandlePointerDown: onAssessmentHandlePointerDown,
     onHandlePointerMove: onAssessmentHandlePointerMove,
     onHandlePointerUp: onAssessmentHandlePointerUp,
     isDragAllowed: isAssessmentDragAllowed,
     resetHandleDrag: resetAssessmentHandleDrag,
-  } = useHandleDrag(isReorderEnabled);
+  } = useHandleDrag(isReorderEnabled && !isMobileLayout);
   const draggedAssessmentId = dragAssessmentId;
-  const assessmentHandleClassName = `drag-handle${isReorderEnabled ? "" : " disabled"}`;
+  const assessmentHandleClassName = `drag-handle${isReorderEnabled && !isMobileLayout ? "" : " disabled"}`;
   const subjectsInClass = subject?.class_id
     ? subjects
         .filter((item) => item.class_id === subject.class_id)
@@ -154,7 +155,7 @@ function UnitDetailPage({
             </button>
           </div>
         </div>
-        <div className="unit-reorder-tip">Drag ⠿ to reorder assessments. On mobile, use Reorder Mode.</div>
+        <div className="unit-reorder-tip">Drag ⠿ to reorder assessments. On mobile, use Reorder Mode arrows.</div>
         {unitAssessments.length === 0 ? (
           <div className="unit-empty">
             <h4>No assessments yet</h4>
@@ -171,15 +172,22 @@ function UnitDetailPage({
           </div>
         ) : (
           <div className="unit-assessment-grid">
-            {unitAssessments.map((item) => (
+            {unitAssessments.map((item, index) => {
+              const previousAssessment = index > 0 ? unitAssessments[index - 1] : null;
+              const nextAssessment = index < unitAssessments.length - 1 ? unitAssessments[index + 1] : null;
+              return (
               <article
                 key={item.id}
-                className="unit-assessment-card draggable"
+                className={`unit-assessment-card draggable${isMobileReorderActive ? " mobile-reorder-active" : ""}`}
                 role="button"
                 tabIndex={0}
-                draggable={isReorderEnabled}
-                onClick={() => navigate(`/assessments/${item.id}`)}
+                draggable={isReorderEnabled && !isMobileLayout}
+                onClick={() => {
+                  if (isMobileReorderActive) return;
+                  navigate(`/assessments/${item.id}`);
+                }}
                 onKeyDown={(event) => {
+                  if (isMobileReorderActive) return;
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
                     navigate(`/assessments/${item.id}`);
@@ -197,7 +205,7 @@ function UnitDetailPage({
                   resetAssessmentHandleDrag();
                 }}
                 onDragOver={(event) => {
-                  if (!isReorderEnabled) return;
+                  if (!isReorderEnabled || isMobileLayout) return;
                   event.preventDefault();
                 }}
                 onDrop={() =>
@@ -212,18 +220,60 @@ function UnitDetailPage({
                   </p>
                 </div>
                 <div className="unit-assessment-actions">
-                  <button
-                    type="button"
-                    className={assessmentHandleClassName}
-                    aria-label={`Drag ${item.title}`}
-                    onClick={(event) => event.stopPropagation()}
-                    onPointerDown={(event) => onAssessmentHandlePointerDown(item.id, event)}
-                    onPointerMove={onAssessmentHandlePointerMove}
-                    onPointerUp={onAssessmentHandlePointerUp}
-                    onPointerCancel={onAssessmentHandlePointerUp}
-                  >
-                    ⠿
-                  </button>
+                  {isMobileReorderActive && (
+                    <div className="reorder-mobile-controls">
+                      <button
+                        type="button"
+                        className="reorder-mobile-btn"
+                        aria-label={`Move ${item.title} up`}
+                        disabled={!previousAssessment}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!previousAssessment) return;
+                          handleSwapSortOrder(
+                            "assessments",
+                            unitAssessments,
+                            item.id,
+                            previousAssessment.id
+                          );
+                        }}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className="reorder-mobile-btn"
+                        aria-label={`Move ${item.title} down`}
+                        disabled={!nextAssessment}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!nextAssessment) return;
+                          handleSwapSortOrder(
+                            "assessments",
+                            unitAssessments,
+                            item.id,
+                            nextAssessment.id
+                          );
+                        }}
+                      >
+                        ↓
+                      </button>
+                    </div>
+                  )}
+                  {!isMobileLayout && (
+                    <button
+                      type="button"
+                      className={assessmentHandleClassName}
+                      aria-label={`Drag ${item.title}`}
+                      onClick={(event) => event.stopPropagation()}
+                      onPointerDown={(event) => onAssessmentHandlePointerDown(item.id, event)}
+                      onPointerMove={onAssessmentHandlePointerMove}
+                      onPointerUp={onAssessmentHandlePointerUp}
+                      onPointerCancel={onAssessmentHandlePointerUp}
+                    >
+                      ⠿
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="icon-button"
@@ -238,7 +288,8 @@ function UnitDetailPage({
                   </button>
                 </div>
               </article>
-            ))}
+            );
+            })}
           </div>
         )}
       </section>

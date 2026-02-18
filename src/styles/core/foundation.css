@@ -999,6 +999,43 @@ button:disabled {
   color: #7c4222;
 }
 
+.reorder-mobile-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reorder-mobile-btn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 9px;
+  border: 1px solid #c7ac81;
+  background: rgba(248, 235, 204, 0.92);
+  color: #6b5335;
+  box-shadow: none;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.reorder-mobile-btn:hover {
+  background: rgba(247, 227, 188, 0.96);
+  border-color: #b58f5d;
+  color: #5e482f;
+  transform: none;
+}
+
+.reorder-mobile-btn:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.reorder-mobile-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .panel-heading-row {
   display: flex;
   align-items: center;

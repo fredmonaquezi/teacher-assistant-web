@@ -88,6 +88,10 @@
   box-shadow: 0 12px 22px rgba(84, 61, 34, 0.16);
 }
 
+.subject-unit-card.mobile-reorder-active {
+  padding-right: 114px;
+}
+
 .subject-unit-card:focus-visible {
   outline: 2px solid #b67947;
   outline-offset: 2px;
@@ -463,6 +467,10 @@
   transform: translateY(-1px);
   border-color: #b8925f;
   box-shadow: 0 12px 22px rgba(84, 61, 34, 0.15);
+}
+
+.unit-assessment-card.mobile-reorder-active {
+  padding-right: 114px;
 }
 
 .unit-assessment-card:focus-visible {

@@ -10,8 +10,14 @@ export function useReorderMode() {
     if (typeof window === "undefined") return undefined;
     const mediaQuery = window.matchMedia("(max-width: 720px)");
     const handleChange = (event) => setIsMobileLayout(event.matches);
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
   }, []);
 
   const effectiveReorderMode = isMobileLayout ? isReorderMode : false;

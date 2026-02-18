@@ -45,15 +45,16 @@ function SubjectDetailPage({
   const [unitToDelete, setUnitToDelete] = useState(null);
   const [dragUnitId, setDragUnitId] = useState(null);
   const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderMode();
+  const isMobileReorderActive = isMobileLayout && isReorderMode;
   const {
     onHandlePointerDown: onUnitHandlePointerDown,
     onHandlePointerMove: onUnitHandlePointerMove,
     onHandlePointerUp: onUnitHandlePointerUp,
     isDragAllowed: isUnitDragAllowed,
     resetHandleDrag: resetUnitHandleDrag,
-  } = useHandleDrag(isReorderEnabled);
+  } = useHandleDrag(isReorderEnabled && !isMobileLayout);
   const draggedUnitId = dragUnitId;
-  const unitHandleClassName = `drag-handle${isReorderEnabled ? "" : " disabled"}`;
+  const unitHandleClassName = `drag-handle${isReorderEnabled && !isMobileLayout ? "" : " disabled"}`;
 
   if (!subject) {
     return (
@@ -105,7 +106,7 @@ function SubjectDetailPage({
             </button>
           </div>
         </div>
-        <div className="unit-reorder-tip">Drag ⠿ to reorder units. On mobile, use Reorder Mode.</div>
+        <div className="unit-reorder-tip">Drag ⠿ to reorder units. On mobile, use Reorder Mode arrows.</div>
         {subjectUnits.length === 0 ? (
           <div className="subject-empty">
             <h4>No units yet</h4>
@@ -122,15 +123,22 @@ function SubjectDetailPage({
           </div>
         ) : (
           <div className="subject-units-grid">
-            {subjectUnits.map((unit) => (
+            {subjectUnits.map((unit, index) => {
+              const previousUnit = index > 0 ? subjectUnits[index - 1] : null;
+              const nextUnit = index < subjectUnits.length - 1 ? subjectUnits[index + 1] : null;
+              return (
               <article
                 key={unit.id}
-                className="subject-unit-card draggable"
+                className={`subject-unit-card draggable${isMobileReorderActive ? " mobile-reorder-active" : ""}`}
                 role="button"
                 tabIndex={0}
-                draggable={isReorderEnabled}
-                onClick={() => navigate(`/units/${unit.id}`)}
+                draggable={isReorderEnabled && !isMobileLayout}
+                onClick={() => {
+                  if (isMobileReorderActive) return;
+                  navigate(`/units/${unit.id}`);
+                }}
                 onKeyDown={(event) => {
+                  if (isMobileReorderActive) return;
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
                     navigate(`/units/${unit.id}`);
@@ -148,7 +156,7 @@ function SubjectDetailPage({
                   resetUnitHandleDrag();
                 }}
                 onDragOver={(event) => {
-                  if (!isReorderEnabled) return;
+                  if (!isReorderEnabled || isMobileLayout) return;
                   event.preventDefault();
                 }}
                 onDrop={() => handleSwapSortOrder("units", subjectUnits, draggedUnitId, unit.id)}
@@ -159,18 +167,50 @@ function SubjectDetailPage({
                   <p className="muted">{unit.description || "No description"}</p>
                 </div>
                 <div className="subject-unit-actions">
-                  <button
-                    type="button"
-                    className={unitHandleClassName}
-                    aria-label={`Drag ${unit.name}`}
-                    onClick={(event) => event.stopPropagation()}
-                    onPointerDown={(event) => onUnitHandlePointerDown(unit.id, event)}
-                    onPointerMove={onUnitHandlePointerMove}
-                    onPointerUp={onUnitHandlePointerUp}
-                    onPointerCancel={onUnitHandlePointerUp}
-                  >
-                    ⠿
-                  </button>
+                  {isMobileReorderActive && (
+                    <div className="reorder-mobile-controls">
+                      <button
+                        type="button"
+                        className="reorder-mobile-btn"
+                        aria-label={`Move ${unit.name} up`}
+                        disabled={!previousUnit}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!previousUnit) return;
+                          handleSwapSortOrder("units", subjectUnits, unit.id, previousUnit.id);
+                        }}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className="reorder-mobile-btn"
+                        aria-label={`Move ${unit.name} down`}
+                        disabled={!nextUnit}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!nextUnit) return;
+                          handleSwapSortOrder("units", subjectUnits, unit.id, nextUnit.id);
+                        }}
+                      >
+                        ↓
+                      </button>
+                    </div>
+                  )}
+                  {!isMobileLayout && (
+                    <button
+                      type="button"
+                      className={unitHandleClassName}
+                      aria-label={`Drag ${unit.name}`}
+                      onClick={(event) => event.stopPropagation()}
+                      onPointerDown={(event) => onUnitHandlePointerDown(unit.id, event)}
+                      onPointerMove={onUnitHandlePointerMove}
+                      onPointerUp={onUnitHandlePointerUp}
+                      onPointerCancel={onUnitHandlePointerUp}
+                    >
+                      ⠿
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="icon-button"
@@ -185,7 +225,8 @@ function SubjectDetailPage({
                   </button>
                 </div>
               </article>
-            ))}
+            );
+            })}
           </div>
         )}
       </section>
