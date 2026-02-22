@@ -36,7 +36,7 @@
       "close": "Fechar menu"
     },
     "sidebar": {
-      "kicker": "Assistente do Professor",
+      "kicker": "Teacher Codex",
       "title": "Central da Sala",
       "signedInAs": "Conectado como {{identity}}",
       "profile": "Perfil",
@@ -55,7 +55,7 @@
       "runningRecords": "Registros de Leitura"
     },
     "greeting": {
-      "kicker": "Assistente do Professor",
+      "kicker": "Teacher Codex",
       "hello": "Olá, {{name}}.",
       "todayIs": "Hoje é {{date}}"
     },
@@ -70,7 +70,7 @@
     }
   },
   "auth": {
-    "title": "Assistente do Professor",
+    "title": "Teacher Codex",
     "subtitle": "Entre para sincronizar seus dados em todos os dispositivos.",
     "email": "E-mail",
     "password": "Senha",

@@ -36,7 +36,7 @@
       "close": "Close menu"
     },
     "sidebar": {
-      "kicker": "Teacher Assistant",
+      "kicker": "Teacher Codex",
       "title": "Classroom Hub",
       "signedInAs": "Signed in as {{identity}}",
       "profile": "Profile",
@@ -55,7 +55,7 @@
       "runningRecords": "Running Records"
     },
     "greeting": {
-      "kicker": "Teacher Assistant",
+      "kicker": "Teacher Codex",
       "hello": "Hello, {{name}}.",
       "todayIs": "Today is {{date}}"
     },
@@ -70,7 +70,7 @@
     }
   },
   "auth": {
-    "title": "Teacher Assistant",
+    "title": "Teacher Codex",
     "subtitle": "Sign in to sync your data across devices.",
     "email": "Email",
     "password": "Password",

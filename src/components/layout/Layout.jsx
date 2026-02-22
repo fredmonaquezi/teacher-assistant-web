@@ -15,7 +15,7 @@ import { formatDisplayName } from "../../utils/formatDisplayName";
 
 function Layout({ user, onSignOut, preferences, calendarEvents = [], children }) {
   const { t, i18n } = useTranslation();
-  const appName = "Teacher Assistant";
+  const appName = "Teacher Codex";
   const userEmail = user?.email || "";
   const displayName = formatDisplayName(user);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
