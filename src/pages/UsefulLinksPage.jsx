@@ -29,6 +29,11 @@ function getLinkDomain(url) {
   }
 }
 
+function isInteractiveTarget(target) {
+  if (!(target instanceof Element)) return false;
+  return !!target.closest("button,input,textarea,select,a,label");
+}
+
 function UsefulLinksPage({
   formError,
   usefulLinks,
@@ -125,7 +130,7 @@ function UsefulLinksPage({
           )}
         </div>
 
-        <form className="useful-links-form" onSubmit={onSubmitCreate}>
+        <form className="useful-links-form" onSubmit={onSubmitCreate} noValidate>
           <label className="stack">
             <span>{t("usefulLinks.form.titleLabel")}</span>
             <input
@@ -134,7 +139,6 @@ function UsefulLinksPage({
                 setCreateForm((current) => ({ ...current, title: event.target.value }))
               }
               placeholder={t("usefulLinks.form.titlePlaceholder")}
-              required
             />
           </label>
           <label className="stack">
@@ -146,7 +150,6 @@ function UsefulLinksPage({
               }
               placeholder={t("usefulLinks.form.urlPlaceholder")}
               inputMode="url"
-              required
             />
           </label>
           <label className="stack">
@@ -176,8 +179,23 @@ function UsefulLinksPage({
               return (
                 <article
                   key={link.id}
-                  className={`useful-link-card draggable${isMobileReorderActive ? " mobile-reorder-active" : ""}`}
+                  className={`useful-link-card draggable${isMobileReorderActive ? " mobile-reorder-active" : " openable"}`}
                   draggable={isReorderEnabled && !isMobileLayout}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`${t("usefulLinks.actions.open")}: ${link.title}`}
+                  onClick={(event) => {
+                    if (isMobileReorderActive) return;
+                    if (isInteractiveTarget(event.target)) return;
+                    openExternalLink(link.url);
+                  }}
+                  onKeyDown={(event) => {
+                    if (isMobileReorderActive) return;
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                    if (isInteractiveTarget(event.target)) return;
+                    event.preventDefault();
+                    openExternalLink(link.url);
+                  }}
                   onDragStart={(event) => {
                     if (!isLinkDragAllowed(link.id)) {
                       event.preventDefault();
@@ -208,7 +226,10 @@ function UsefulLinksPage({
                             className="reorder-mobile-btn"
                             aria-label={t("usefulLinks.aria.moveUp", { title: link.title })}
                             disabled={!previousLink}
-                            onClick={() => handleMobileMove(link.id, -1)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleMobileMove(link.id, -1);
+                            }}
                           >
                             ↑
                           </button>
@@ -217,7 +238,10 @@ function UsefulLinksPage({
                             className="reorder-mobile-btn"
                             aria-label={t("usefulLinks.aria.moveDown", { title: link.title })}
                             disabled={!nextLink}
-                            onClick={() => handleMobileMove(link.id, 1)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleMobileMove(link.id, 1);
+                            }}
                           >
                             ↓
                           </button>
@@ -228,6 +252,7 @@ function UsefulLinksPage({
                           type="button"
                           className={`drag-handle${isReorderEnabled && !isMobileLayout ? "" : " disabled"}`}
                           aria-label={t("usefulLinks.aria.drag", { title: link.title })}
+                          onClick={(event) => event.stopPropagation()}
                           onPointerDown={(event) => onLinkHandlePointerDown(link.id, event)}
                           onPointerMove={onLinkHandlePointerMove}
                           onPointerUp={onLinkHandlePointerUp}
@@ -239,14 +264,20 @@ function UsefulLinksPage({
                       <button
                         type="button"
                         className="secondary useful-link-open-btn"
-                        onClick={() => openExternalLink(link.url)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openExternalLink(link.url);
+                        }}
                       >
                         {t("usefulLinks.actions.open")}
                       </button>
                       <button
                         type="button"
                         className="secondary useful-link-edit-btn"
-                        onClick={() => openEditModal(link)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openEditModal(link);
+                        }}
                       >
                         {t("usefulLinks.actions.edit")}
                       </button>
@@ -254,7 +285,10 @@ function UsefulLinksPage({
                         type="button"
                         className="icon-button useful-link-delete-btn"
                         aria-label={t("usefulLinks.aria.delete", { title: link.title })}
-                        onClick={() => onDeleteLink(link)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onDeleteLink(link);
+                        }}
                       >
                         ✕
                       </button>
@@ -273,7 +307,7 @@ function UsefulLinksPage({
         <div className="modal-overlay">
           <div className="modal-card useful-links-edit-modal">
             <h3>{t("usefulLinks.editModal.title")}</h3>
-            <form className="stack" onSubmit={onSubmitEdit}>
+            <form className="stack" onSubmit={onSubmitEdit} noValidate>
               <label className="stack">
                 <span>{t("usefulLinks.form.titleLabel")}</span>
                 <input
@@ -281,7 +315,6 @@ function UsefulLinksPage({
                   onChange={(event) =>
                     setEditForm((current) => ({ ...current, title: event.target.value }))
                   }
-                  required
                 />
               </label>
               <label className="stack">
@@ -292,7 +325,6 @@ function UsefulLinksPage({
                     setEditForm((current) => ({ ...current, url: event.target.value }))
                   }
                   inputMode="url"
-                  required
                 />
               </label>
               <label className="stack">

@@ -152,3 +152,28 @@ test("reorders links on mobile with reorder mode controls", async () => {
     expect(handleSwapUsefulLinkSortOrder).toHaveBeenCalledWith(expect.any(Array), "link-1", "link-2")
   );
 });
+
+test("opens link when clicking the card body", async () => {
+  const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+
+  render(
+    <UsefulLinksPage
+      formError=""
+      usefulLinks={BASE_LINKS}
+      handleCreateUsefulLink={vi.fn()}
+      handleUpdateUsefulLink={vi.fn()}
+      handleDeleteUsefulLink={vi.fn()}
+      handleSwapUsefulLinkSortOrder={vi.fn()}
+    />
+  );
+
+  fireEvent.click(screen.getByText("District Portal"));
+
+  await waitFor(() =>
+    expect(openSpy).toHaveBeenCalledWith(
+      "https://district.example.com",
+      "_blank",
+      "noopener,noreferrer"
+    )
+  );
+});

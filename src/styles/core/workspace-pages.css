@@ -610,7 +610,7 @@
 
 .useful-links-page {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .useful-links-header {
@@ -626,23 +626,47 @@
 
 .useful-links-copy p {
   margin: 6px 0 0;
-  color: #5f6d7d;
+  color: #68563e;
+  font-size: 0.95rem;
 }
 
 .useful-links-form {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   gap: 10px;
-  padding: 12px;
-  border: 1px solid #d5deec;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid #c7ad83;
   border-radius: 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%);
+  background: linear-gradient(180deg, rgba(250, 242, 225, 0.96) 0%, rgba(244, 232, 206, 0.95) 100%);
+  box-shadow: 0 10px 16px rgba(82, 61, 36, 0.1);
+}
+
+.useful-links-form input {
+  background: #fff8e8;
+  border-color: #c8ab7f;
+  color: #3e2f20;
+}
+
+.useful-links-form input::placeholder {
+  color: #837055;
+}
+
+.useful-links-form input:focus {
+  border-color: #b67947;
+  box-shadow: 0 0 0 3px rgba(182, 121, 71, 0.18);
 }
 
 .useful-links-form-actions {
-  grid-column: 1 / -1;
+  grid-column: 4 / 5;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
+}
+
+.useful-links-form-actions button {
+  min-height: 44px;
+  border-radius: 12px;
+  padding: 0 18px;
 }
 
 .useful-links-grid {
@@ -653,19 +677,30 @@
 
 .useful-link-card {
   position: relative;
-  border: 1px solid #ccd7ea;
+  border: 1px solid #c9ae82;
   border-radius: 14px;
   padding: 12px;
-  background: linear-gradient(168deg, #ffffff 0%, #f6f9ff 100%);
-  box-shadow: 0 10px 20px rgba(35, 59, 96, 0.08);
+  background: linear-gradient(170deg, rgba(250, 243, 227, 0.96) 0%, rgba(243, 232, 206, 0.96) 100%);
+  box-shadow: 0 12px 18px rgba(81, 59, 34, 0.14);
   display: grid;
-  gap: 8px;
+  gap: 10px;
   min-height: 156px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.useful-link-card.openable {
+  cursor: pointer;
 }
 
 .useful-link-card:hover {
-  border-color: #b8cae8;
-  box-shadow: 0 14px 24px rgba(35, 59, 96, 0.12);
+  border-color: #b69362;
+  box-shadow: 0 16px 24px rgba(81, 59, 34, 0.2);
+  transform: translateY(-2px);
+}
+
+.useful-link-card.openable:focus-visible {
+  outline: 2px solid #b67947;
+  outline-offset: 2px;
 }
 
 .useful-link-card-head {
@@ -681,16 +716,20 @@
 
 .useful-link-card-copy h3 {
   margin: 0;
-  color: #152842;
-  font-size: 1rem;
-  line-height: 1.24;
+  color: #3a2d1e;
+  font-size: 1.65rem;
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  word-break: break-word;
 }
 
 .useful-link-domain {
-  margin: 4px 0 0;
-  color: #41618c;
-  font-size: 0.8rem;
+  margin: 6px 0 0;
+  color: #4a6a97;
+  font-size: 1rem;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .useful-link-card-actions {
@@ -704,59 +743,71 @@
 .useful-link-card .drag-handle {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
-  border-color: #b7c9e6;
-  background: #eff4ff;
-  color: #5474a0;
+  border-radius: 11px;
+  border: 1px solid #c7ac81;
+  background: rgba(248, 235, 204, 0.92);
+  color: #7b6243;
 }
 
 .useful-link-card .drag-handle:hover {
-  border-color: #9bb4dc;
-  background: #e7efff;
+  border-color: #b58f5d;
+  background: rgba(247, 227, 188, 0.96);
+  color: #6c5232;
 }
 
 .useful-link-open-btn,
 .useful-link-edit-btn {
   min-height: 34px;
-  padding: 0 10px;
+  padding: 0 11px;
   font-size: 0.78rem;
+  border: 1px solid #c8a97b;
+  background: rgba(248, 235, 204, 0.72);
+  color: #5a452e;
+}
+
+.useful-link-open-btn:hover,
+.useful-link-edit-btn:hover {
+  border-color: #b38d5b;
+  background: rgba(247, 227, 188, 0.9);
 }
 
 .useful-link-delete-btn.icon-button {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  border: 1px solid #e7b7b1;
-  background: #fff3f2;
-  color: #bf4c3f;
+  border: 1px solid #d7a49d;
+  background: rgba(255, 238, 235, 0.72);
+  color: #b84f40;
 }
 
 .useful-link-delete-btn.icon-button:hover {
-  border-color: #dc9a92;
-  background: #ffe8e5;
+  border-color: #c4877f;
+  background: #ffe6df;
 }
 
 .useful-link-url {
   margin: 0;
-  color: #375478;
-  font-size: 0.82rem;
-  line-height: 1.35;
+  color: #3d5b84;
+  font-size: 0.78rem;
+  line-height: 1.4;
   overflow-wrap: anywhere;
+  max-width: 100%;
+  word-break: break-word;
 }
 
 .useful-link-description {
-  margin: 0;
-  color: #405671;
-  font-size: 0.88rem;
-  line-height: 1.35;
+  margin: 2px 0 0;
+  color: #5f4d36;
+  font-size: 1.02rem;
+  line-height: 1.3;
 }
 
 .useful-links-empty {
-  border: 1px dashed #bfd0e8;
+  border: 1px dashed #bea071;
   border-radius: 14px;
   padding: 20px;
-  color: #5f7290;
-  background: #f7fbff;
+  color: #6a583f;
+  background: rgba(250, 242, 225, 0.9);
 }
 
 .useful-links-edit-modal {
@@ -777,6 +828,18 @@
 @media (max-width: 900px) {
   .useful-links-form {
     grid-template-columns: 1fr;
+  }
+
+  .useful-links-form-actions {
+    grid-column: 1 / -1;
+  }
+
+  .useful-links-form-actions button {
+    width: 100%;
+  }
+
+  .useful-link-card-copy h3 {
+    font-size: 1.45rem;
   }
 }
 
