@@ -214,87 +214,80 @@ function UsefulLinksPage({
                   onDrop={() => handleSwapUsefulLinkSortOrder(sortedLinks, dragLinkId, link.id)}
                 >
                   <div className="useful-link-card-head">
+                    <div className="useful-link-card-topbar">
+                      <div className="useful-link-card-actions-left">
+                        <button
+                          type="button"
+                          className="secondary useful-link-edit-btn"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openEditModal(link);
+                          }}
+                        >
+                          {t("usefulLinks.actions.edit")}
+                        </button>
+                      </div>
+                      <div className="useful-link-card-actions-right">
+                        {isMobileReorderActive && (
+                          <div className="reorder-mobile-controls">
+                            <button
+                              type="button"
+                              className="reorder-mobile-btn"
+                              aria-label={t("usefulLinks.aria.moveUp", { title: link.title })}
+                              disabled={!previousLink}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleMobileMove(link.id, -1);
+                              }}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              className="reorder-mobile-btn"
+                              aria-label={t("usefulLinks.aria.moveDown", { title: link.title })}
+                              disabled={!nextLink}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleMobileMove(link.id, 1);
+                              }}
+                            >
+                              ↓
+                            </button>
+                          </div>
+                        )}
+                        {!isMobileLayout && (
+                          <button
+                            type="button"
+                            className={`drag-handle${isReorderEnabled && !isMobileLayout ? "" : " disabled"}`}
+                            aria-label={t("usefulLinks.aria.drag", { title: link.title })}
+                            onClick={(event) => event.stopPropagation()}
+                            onPointerDown={(event) => onLinkHandlePointerDown(link.id, event)}
+                            onPointerMove={onLinkHandlePointerMove}
+                            onPointerUp={onLinkHandlePointerUp}
+                            onPointerCancel={onLinkHandlePointerUp}
+                          >
+                            ⠿
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="icon-button useful-link-delete-btn"
+                          aria-label={t("usefulLinks.aria.delete", { title: link.title })}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onDeleteLink(link);
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
                     <div className="useful-link-card-copy">
                       <h3>{link.title}</h3>
                       <p className="useful-link-domain">{domainLabel}</p>
                     </div>
-                    <div className="useful-link-card-actions">
-                      {isMobileReorderActive && (
-                        <div className="reorder-mobile-controls">
-                          <button
-                            type="button"
-                            className="reorder-mobile-btn"
-                            aria-label={t("usefulLinks.aria.moveUp", { title: link.title })}
-                            disabled={!previousLink}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleMobileMove(link.id, -1);
-                            }}
-                          >
-                            ↑
-                          </button>
-                          <button
-                            type="button"
-                            className="reorder-mobile-btn"
-                            aria-label={t("usefulLinks.aria.moveDown", { title: link.title })}
-                            disabled={!nextLink}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleMobileMove(link.id, 1);
-                            }}
-                          >
-                            ↓
-                          </button>
-                        </div>
-                      )}
-                      {!isMobileLayout && (
-                        <button
-                          type="button"
-                          className={`drag-handle${isReorderEnabled && !isMobileLayout ? "" : " disabled"}`}
-                          aria-label={t("usefulLinks.aria.drag", { title: link.title })}
-                          onClick={(event) => event.stopPropagation()}
-                          onPointerDown={(event) => onLinkHandlePointerDown(link.id, event)}
-                          onPointerMove={onLinkHandlePointerMove}
-                          onPointerUp={onLinkHandlePointerUp}
-                          onPointerCancel={onLinkHandlePointerUp}
-                        >
-                          ⠿
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className="secondary useful-link-open-btn"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openExternalLink(link.url);
-                        }}
-                      >
-                        {t("usefulLinks.actions.open")}
-                      </button>
-                      <button
-                        type="button"
-                        className="secondary useful-link-edit-btn"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openEditModal(link);
-                        }}
-                      >
-                        {t("usefulLinks.actions.edit")}
-                      </button>
-                      <button
-                        type="button"
-                        className="icon-button useful-link-delete-btn"
-                        aria-label={t("usefulLinks.aria.delete", { title: link.title })}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onDeleteLink(link);
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
                   </div>
-                  <p className="useful-link-url">{link.url}</p>
                   {link.description && <p className="useful-link-description">{link.description}</p>}
                 </article>
               );

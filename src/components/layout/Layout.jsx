@@ -58,7 +58,6 @@ function Layout({ user, onSignOut, preferences, calendarEvents = [], children })
   }, [calendarEvents]);
   const navLinks = [
     { label: t("layout.nav.dashboard"), path: "/" },
-    { label: t("layout.nav.usefulLinks"), path: "/useful-links" },
     { label: t("layout.nav.classes"), path: "/classes" },
     { label: t("layout.nav.attendance"), path: "/attendance" },
     { label: t("layout.nav.gradebook"), path: "/assessments" },
@@ -67,6 +66,7 @@ function Layout({ user, onSignOut, preferences, calendarEvents = [], children })
     { label: t("layout.nav.timer"), path: "/timer" },
     { label: t("layout.nav.randomPicker"), path: "/random" },
     { label: t("layout.nav.runningRecords"), path: "/running-records" },
+    { label: t("layout.nav.usefulLinks"), path: "/useful-links" },
   ];
   const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
 
