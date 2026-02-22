@@ -66,6 +66,7 @@ function Layout({ user, onSignOut, preferences, calendarEvents = [], children })
     { label: t("layout.nav.timer"), path: "/timer" },
     { label: t("layout.nav.randomPicker"), path: "/random" },
     { label: t("layout.nav.runningRecords"), path: "/running-records" },
+    { label: t("layout.nav.usefulLinks"), path: "/useful-links" },
   ];
   const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
 

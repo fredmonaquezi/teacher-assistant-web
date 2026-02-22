@@ -44,6 +44,7 @@
     },
     "nav": {
       "dashboard": "Dashboard",
+      "usefulLinks": "Useful Links",
       "classes": "Classes",
       "attendance": "Attendance",
       "gradebook": "Gradebook",
@@ -96,6 +97,7 @@
   "dashboard": {
     "tiles": {
       "classes": "Classes",
+      "usefulLinks": "Useful Links",
       "attendance": "Attendance",
       "gradebook": "Gradebook",
       "rubrics": "Rubrics",
@@ -104,6 +106,37 @@
       "timer": "Timer",
       "runningRecords": "Running Records",
       "calendar": "Calendar"
+    }
+  },
+  "usefulLinks": {
+    "title": "Useful Links",
+    "subtitle": "Save your most-used teaching links in one place.",
+    "empty": "No links saved yet. Add your first one above.",
+    "actions": {
+      "open": "Open",
+      "edit": "Edit"
+    },
+    "form": {
+      "titleLabel": "Link title",
+      "titlePlaceholder": "District Portal",
+      "urlLabel": "Secure URL",
+      "urlPlaceholder": "https://example.com",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Quick note about this link",
+      "addButton": "Add Link",
+      "saveButton": "Save Changes"
+    },
+    "editModal": {
+      "title": "Edit Link"
+    },
+    "confirm": {
+      "delete": "Delete \"{{title}}\"?"
+    },
+    "aria": {
+      "drag": "Drag {{title}}",
+      "moveUp": "Move {{title}} up",
+      "moveDown": "Move {{title}} down",
+      "delete": "Delete {{title}}"
     }
   },
   "classes": {

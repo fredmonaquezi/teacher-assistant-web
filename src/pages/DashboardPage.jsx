@@ -12,6 +12,7 @@ const TILES = [
   { labelKey: "dashboard.tiles.timer", path: "/timer", accent: "#c36f4b", icon: "timer", iconTilt: -1, iconX: -0.5, iconY: -0.3, iconStroke: 1.88, wobbleMs: 990 },
   { labelKey: "dashboard.tiles.runningRecords", path: "/running-records", accent: "#69885f", icon: "records", iconTilt: 0.9, iconX: 0.4, iconY: -0.5, iconStroke: 1.78, wobbleMs: 940 },
   { labelKey: "dashboard.tiles.calendar", path: "/calendar", accent: "#6384b5", icon: "calendar", iconTilt: -0.5, iconX: -0.4, iconY: -0.4, iconStroke: 1.86, wobbleMs: 1000 },
+  { labelKey: "dashboard.tiles.usefulLinks", path: "/useful-links", accent: "#4e8d7a", icon: "links", iconTilt: 0.4, iconX: 0.2, iconY: -0.4, iconStroke: 1.78, wobbleMs: 960 },
 ];
 
 function DashboardPage() {

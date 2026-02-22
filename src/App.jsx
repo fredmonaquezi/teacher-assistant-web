@@ -33,6 +33,7 @@ const StudentDetailPage = lazy(() => import("./pages/StudentDetailPage"));
 const SubjectDetailPage = lazy(() => import("./pages/SubjectDetailPage"));
 const TimerPage = lazy(() => import("./pages/TimerPage"));
 const UnitDetailPage = lazy(() => import("./pages/UnitDetailPage"));
+const UsefulLinksPage = lazy(() => import("./pages/UsefulLinksPage"));
 
 function RouteFallback() {
   const { t } = useTranslation();
@@ -53,6 +54,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     calendarDiaryEntries,
     calendarEvents,
     calendarTablesReady,
+    usefulLinks,
     attendanceSessions,
     attendanceEntries,
     assessments,
@@ -133,6 +135,10 @@ function TeacherWorkspace({ user, onSignOut }) {
     handleDeleteCalendarDiaryEntry,
     handleCreateCalendarEvent,
     handleDeleteCalendarEvent,
+    handleCreateUsefulLink,
+    handleUpdateUsefulLink,
+    handleDeleteUsefulLink,
+    handleSwapUsefulLinkSortOrder,
     handleAddConstraint,
     handleDeleteConstraint,
     handleGenerateGroups,
@@ -414,6 +420,19 @@ function TeacherWorkspace({ user, onSignOut }) {
                 handleDeleteCalendarDiaryEntry={handleDeleteCalendarDiaryEntry}
                 handleCreateCalendarEvent={handleCreateCalendarEvent}
                 handleDeleteCalendarEvent={handleDeleteCalendarEvent}
+              />
+            }
+          />
+          <Route
+            path="/useful-links"
+            element={
+              <UsefulLinksPage
+                formError={formError}
+                usefulLinks={usefulLinks}
+                handleCreateUsefulLink={handleCreateUsefulLink}
+                handleUpdateUsefulLink={handleUpdateUsefulLink}
+                handleDeleteUsefulLink={handleDeleteUsefulLink}
+                handleSwapUsefulLinkSortOrder={handleSwapUsefulLinkSortOrder}
               />
             }
           />

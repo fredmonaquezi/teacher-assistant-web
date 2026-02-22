@@ -89,6 +89,14 @@ function TileIcon({ kind }) {
           <circle cx="17" cy="13.5" r="1" />
         </svg>
       );
+    case "links":
+      return (
+        <svg viewBox="0 0 24 24" className="tile-icon" aria-hidden="true">
+          <path d="M14.8 7.5h2.4a4 4 0 1 1 0 8h-2.4" />
+          <path d="M9.2 16.5H6.8a4 4 0 1 1 0-8h2.4" />
+          <path d="M8.8 12h6.4" />
+        </svg>
+      );
     default:
       return null;
   }
