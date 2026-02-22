@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import AuthForm from "./AuthForm";
+import i18n from "../../i18n";
 
 const authMocks = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
@@ -25,8 +26,12 @@ vi.mock("../../supabaseClient", () => ({
   },
 }));
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.clearAllMocks();
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem("teacher-assistant.language", "en");
+  }
+  await i18n.changeLanguage("en");
 });
 
 afterEach(() => {
@@ -72,4 +77,22 @@ test("shows error when sign up fails", async () => {
   await waitFor(() =>
     expect(screen.getByText("Password should be at least 8 characters.")).toBeTruthy()
   );
+});
+
+test("allows changing language on login screen", async () => {
+  render(<AuthForm onSuccess={vi.fn()} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "PT-BR" }));
+
+  await waitFor(() => {
+    expect(screen.getByRole("button", { name: "Entrar" })).toBeTruthy();
+  });
+  expect(screen.getByLabelText("E-mail")).toBeTruthy();
+
+  fireEvent.click(screen.getByRole("button", { name: "EN" }));
+
+  await waitFor(() => {
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeTruthy();
+  });
+  expect(screen.getByLabelText("Email")).toBeTruthy();
 });

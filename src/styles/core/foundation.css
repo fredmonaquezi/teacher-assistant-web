@@ -524,6 +524,14 @@ body {
   margin: 0;
 }
 
+.auth-language-toggle {
+  width: min(220px, 100%);
+}
+
+.auth-language-toggle button {
+  min-height: 32px;
+}
+
 .auth-form {
   gap: 12px;
 }

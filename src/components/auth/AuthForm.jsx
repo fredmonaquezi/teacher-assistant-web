@@ -10,7 +10,7 @@ const GOOGLE_IDENTITY_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 const getGoogleIdentityApi = () => globalThis.google?.accounts?.id;
 
 function AuthForm({ onSuccess }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState("signin");
@@ -146,6 +146,24 @@ function AuthForm({ onSuccess }) {
         <div className="auth-badge" aria-hidden="true">🎓</div>
         <h1>{t("auth.title")}</h1>
         <p className="muted">{t("auth.subtitle")}</p>
+        <div className="language-toggle auth-language-toggle" aria-label={t("common.language.label")}>
+          <button
+            type="button"
+            className={i18n.language === "en" ? "active" : ""}
+            onClick={() => i18n.changeLanguage("en")}
+            disabled={loading}
+          >
+            {t("common.language.en")}
+          </button>
+          <button
+            type="button"
+            className={i18n.language === "pt-BR" ? "active" : ""}
+            onClick={() => i18n.changeLanguage("pt-BR")}
+            disabled={loading}
+          >
+            {t("common.language.ptBR")}
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="stack auth-form">
