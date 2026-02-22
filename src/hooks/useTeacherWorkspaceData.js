@@ -13,6 +13,8 @@ function useTeacherWorkspaceData(userId) {
     calendarEvents,
     setCalendarEvents,
     calendarTablesReady,
+    usefulLinks,
+    setUsefulLinks,
     attendanceSessions,
     attendanceEntries,
     setAttendanceEntries,
@@ -41,6 +43,7 @@ function useTeacherWorkspaceData(userId) {
     refreshRubricData,
     refreshGroupData,
     refreshCalendarData,
+    refreshUsefulLinksData,
   } = useWorkspaceReads(userId);
 
   const [seedingRubrics, setSeedingRubrics] = useState(false);
@@ -148,6 +151,10 @@ function useTeacherWorkspaceData(userId) {
     handleDeleteCalendarDiaryEntry,
     handleCreateCalendarEvent,
     handleDeleteCalendarEvent,
+    handleCreateUsefulLink,
+    handleUpdateUsefulLink,
+    handleDeleteUsefulLink,
+    handleSwapUsefulLinkSortOrder,
     handleAddConstraint,
     handleDeleteConstraint,
     handleGenerateGroups,
@@ -158,6 +165,8 @@ function useTeacherWorkspaceData(userId) {
     setAttendanceEntries,
     setCalendarDiaryEntries,
     setCalendarEvents,
+    usefulLinks,
+    setUsefulLinks,
     assessmentEntries,
     setAssessmentEntries,
     assessments,
@@ -193,6 +202,7 @@ function useTeacherWorkspaceData(userId) {
     refreshRubricData,
     refreshGroupData,
     refreshCalendarData,
+    refreshUsefulLinksData,
   });
 
   return {
@@ -203,6 +213,7 @@ function useTeacherWorkspaceData(userId) {
     calendarDiaryEntries,
     calendarEvents,
     calendarTablesReady,
+    usefulLinks,
     attendanceSessions,
     attendanceEntries,
     assessments,
@@ -252,6 +263,7 @@ function useTeacherWorkspaceData(userId) {
     refreshRubricData,
     refreshGroupData,
     refreshCalendarData,
+    refreshUsefulLinksData,
     handleCreateClass,
     handleCreateStudent,
     handleUpdateStudent,
@@ -290,6 +302,10 @@ function useTeacherWorkspaceData(userId) {
     handleDeleteCalendarDiaryEntry,
     handleCreateCalendarEvent,
     handleDeleteCalendarEvent,
+    handleCreateUsefulLink,
+    handleUpdateUsefulLink,
+    handleDeleteUsefulLink,
+    handleSwapUsefulLinkSortOrder,
     handleAddConstraint,
     handleDeleteConstraint,
     handleGenerateGroups,

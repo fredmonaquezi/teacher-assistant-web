@@ -44,6 +44,7 @@
     },
     "nav": {
       "dashboard": "Painel",
+      "usefulLinks": "Links Úteis",
       "classes": "Turmas",
       "attendance": "Presença",
       "gradebook": "Notas",
@@ -96,6 +97,7 @@
   "dashboard": {
     "tiles": {
       "classes": "Turmas",
+      "usefulLinks": "Links Úteis",
       "attendance": "Presença",
       "gradebook": "Notas",
       "rubrics": "Rubricas",
@@ -104,6 +106,37 @@
       "timer": "Cronômetro",
       "runningRecords": "Registros de Leitura",
       "calendar": "Calendário"
+    }
+  },
+  "usefulLinks": {
+    "title": "Links Úteis",
+    "subtitle": "Salve os links mais usados da sua rotina em um só lugar.",
+    "empty": "Nenhum link salvo ainda. Adicione o primeiro acima.",
+    "actions": {
+      "open": "Abrir",
+      "edit": "Editar"
+    },
+    "form": {
+      "titleLabel": "Título do link",
+      "titlePlaceholder": "Portal da Escola",
+      "urlLabel": "URL segura",
+      "urlPlaceholder": "https://exemplo.com",
+      "descriptionLabel": "Descrição (opcional)",
+      "descriptionPlaceholder": "Nota rápida sobre este link",
+      "addButton": "Adicionar Link",
+      "saveButton": "Salvar Alterações"
+    },
+    "editModal": {
+      "title": "Editar Link"
+    },
+    "confirm": {
+      "delete": "Excluir \"{{title}}\"?"
+    },
+    "aria": {
+      "drag": "Arrastar {{title}}",
+      "moveUp": "Mover {{title}} para cima",
+      "moveDown": "Mover {{title}} para baixo",
+      "delete": "Excluir {{title}}"
     }
   },
   "classes": {

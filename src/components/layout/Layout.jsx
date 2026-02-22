@@ -58,6 +58,7 @@ function Layout({ user, onSignOut, preferences, calendarEvents = [], children })
   }, [calendarEvents]);
   const navLinks = [
     { label: t("layout.nav.dashboard"), path: "/" },
+    { label: t("layout.nav.usefulLinks"), path: "/useful-links" },
     { label: t("layout.nav.classes"), path: "/classes" },
     { label: t("layout.nav.attendance"), path: "/attendance" },
     { label: t("layout.nav.gradebook"), path: "/assessments" },

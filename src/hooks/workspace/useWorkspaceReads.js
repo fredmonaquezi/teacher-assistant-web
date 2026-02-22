@@ -7,6 +7,7 @@ import { loadAttendanceWorkspaceRows } from "./readers/attendanceLoader";
 import { loadCalendarWorkspaceRows } from "./readers/calendarLoader";
 import { loadCoreWorkspaceRows } from "./readers/coreLoader";
 import { loadGroupWorkspaceRows } from "./readers/groupLoader";
+import { loadLinkWorkspaceRows } from "./readers/linkLoader";
 import { loadRubricWorkspaceRows } from "./readers/rubricLoader";
 
 const attendanceQueryKeyForUser = (userId) => ["workspace", "attendance", userId || "anonymous"];
@@ -14,6 +15,7 @@ const assessmentQueryKeyForUser = (userId) => ["workspace", "assessment", userId
 const rubricQueryKeyForUser = (userId) => ["workspace", "rubric", userId || "anonymous"];
 const groupQueryKeyForUser = (userId) => ["workspace", "group", userId || "anonymous"];
 const calendarQueryKeyForUser = (userId) => ["workspace", "calendar", userId || "anonymous"];
+const linkQueryKeyForUser = (userId) => ["workspace", "link", userId || "anonymous"];
 
 const EMPTY_ATTENDANCE_ROWS = {
   sessionRows: [],
@@ -47,6 +49,10 @@ const EMPTY_CALENDAR_ROWS = {
   tablesReady: true,
 };
 
+const EMPTY_LINK_ROWS = {
+  linkRows: [],
+};
+
 function useWorkspaceReads(userId) {
   const queryClient = useQueryClient();
   const attendanceQueryKey = attendanceQueryKeyForUser(userId);
@@ -54,6 +60,7 @@ function useWorkspaceReads(userId) {
   const rubricQueryKey = rubricQueryKeyForUser(userId);
   const groupQueryKey = groupQueryKeyForUser(userId);
   const calendarQueryKey = calendarQueryKeyForUser(userId);
+  const linkQueryKey = linkQueryKeyForUser(userId);
 
   const [profilePreferences, setProfilePreferences] = useState(() => {
     try {
@@ -192,6 +199,20 @@ function useWorkspaceReads(userId) {
     };
   };
 
+  const loadLinkRows = async () => {
+    if (!userId) {
+      return EMPTY_LINK_ROWS;
+    }
+
+    const linkResult = await loadLinkWorkspaceRows(supabase);
+    const firstError = [linkResult.errors.linkError].find(Boolean);
+    if (firstError) {
+      throw firstError;
+    }
+
+    return linkResult.rows;
+  };
+
   const { data: attendanceRows = EMPTY_ATTENDANCE_ROWS } = useQuery({
     queryKey: attendanceQueryKey,
     queryFn: loadAttendanceRows,
@@ -232,6 +253,14 @@ function useWorkspaceReads(userId) {
     staleTime: 30_000,
   });
 
+  const { data: linkRows = EMPTY_LINK_ROWS } = useQuery({
+    queryKey: linkQueryKey,
+    queryFn: loadLinkRows,
+    enabled: false,
+    initialData: EMPTY_LINK_ROWS,
+    staleTime: 30_000,
+  });
+
   const attendanceSessions = attendanceRows.sessionRows;
   const attendanceEntries = attendanceRows.entryRows;
 
@@ -253,6 +282,7 @@ function useWorkspaceReads(userId) {
   const calendarDiaryEntries = calendarRows.diaryRows;
   const calendarEvents = calendarRows.eventRows;
   const calendarTablesReady = calendarRows.tablesReady;
+  const usefulLinks = linkRows.linkRows;
 
   const setAttendanceEntries = (updater) => {
     queryClient.setQueryData(attendanceQueryKey, (currentRows) => {
@@ -311,6 +341,17 @@ function useWorkspaceReads(userId) {
       return {
         ...safeRows,
         eventRows: Array.isArray(nextEventRows) ? nextEventRows : safeRows.eventRows,
+      };
+    });
+  };
+
+  const setUsefulLinks = (updater) => {
+    queryClient.setQueryData(linkQueryKey, (currentRows) => {
+      const safeRows = currentRows || EMPTY_LINK_ROWS;
+      const nextLinkRows = typeof updater === "function" ? updater(safeRows.linkRows) : updater;
+      return {
+        ...safeRows,
+        linkRows: Array.isArray(nextLinkRows) ? nextLinkRows : safeRows.linkRows,
       };
     });
   };
@@ -395,6 +436,20 @@ function useWorkspaceReads(userId) {
     }
   };
 
+  const refreshUsefulLinksData = async () => {
+    try {
+      await queryClient.fetchQuery({
+        queryKey: linkQueryKey,
+        queryFn: loadLinkRows,
+        staleTime: 0,
+      });
+      return true;
+    } catch (error) {
+      setFormError(error?.message || "Failed to load useful links.");
+      return false;
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     setFormError("");
@@ -406,6 +461,7 @@ function useWorkspaceReads(userId) {
         refreshAssessmentData(),
         refreshRubricData(),
         refreshGroupData(),
+        refreshUsefulLinksData(),
       ]);
       await refreshCalendarData();
     } finally {
@@ -432,6 +488,8 @@ function useWorkspaceReads(userId) {
     calendarEvents,
     setCalendarEvents,
     calendarTablesReady,
+    usefulLinks,
+    setUsefulLinks,
     attendanceSessions,
     attendanceEntries,
     setAttendanceEntries,
@@ -460,6 +518,7 @@ function useWorkspaceReads(userId) {
     refreshRubricData,
     refreshGroupData,
     refreshCalendarData,
+    refreshUsefulLinksData,
   };
 }
 
