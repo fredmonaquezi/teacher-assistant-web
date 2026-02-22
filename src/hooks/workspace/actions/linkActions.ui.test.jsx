@@ -1,6 +1,12 @@
 import { expect, test, vi } from "vitest";
 import createLinkActions from "./linkActions";
 
+vi.mock("../../../supabaseClient", () => ({
+  supabase: {
+    from: vi.fn(),
+  },
+}));
+
 test("rejects link creation when URL is not https", async () => {
   const setFormError = vi.fn();
   const actions = createLinkActions({
