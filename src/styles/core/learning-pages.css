@@ -544,7 +544,7 @@
   border-color: #c9ad82;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .random-result-actions {
     display: grid;
     grid-template-columns: 1fr;

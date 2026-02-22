@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
+import i18n from "../i18n";
 import RunningRecordsPage from "./RunningRecordsPage";
 
 test("keeps create modal open on failed save and deletes selected record", async () => {
@@ -49,15 +50,15 @@ test("keeps create modal open on failed save and deletes selected record", async
     />
   );
 
-  fireEvent.click(screen.getByRole("button", { name: "+ New Record" }));
-  const saveButton = screen.getByRole("button", { name: "Save" });
+  fireEvent.click(screen.getByRole("button", { name: i18n.t("runningRecords.newRecord") }));
+  const saveButton = screen.getByRole("button", { name: i18n.t("common.actions.save") });
   fireEvent.submit(saveButton.closest("form"));
 
   await waitFor(() => expect(handleCreateRunningRecord).toHaveBeenCalledTimes(1));
-  expect(screen.getByRole("heading", { name: "New Running Record" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: i18n.t("runningRecords.modal.newTitle") })).toBeTruthy();
 
   fireEvent.click(screen.getByRole("button", { name: /Ana Silva/i }));
-  fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+  fireEvent.click(screen.getByRole("button", { name: i18n.t("common.actions.delete") }));
 
   await waitFor(() => expect(handleDeleteRunningRecord).toHaveBeenCalledWith("record-1"));
 });

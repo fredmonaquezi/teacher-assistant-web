@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import CalendarDayDetailModal from "./CalendarDayDetailModal";
+import i18n from "../../i18n";
 
 test("opens add flows and deletes diary/event entries from day modal", () => {
   const setShowDayDetail = vi.fn();
@@ -46,13 +47,13 @@ test("opens add flows and deletes diary/event entries from day modal", () => {
     />
   );
 
-  fireEvent.click(screen.getByRole("button", { name: "+ Add Entry" }));
+  fireEvent.click(screen.getByRole("button", { name: i18n.t("calendar.dayDetail.addEntry") }));
   expect(openNewEntryForm).toHaveBeenCalledTimes(1);
 
-  fireEvent.click(screen.getByRole("button", { name: "+ Add Event" }));
+  fireEvent.click(screen.getByRole("button", { name: i18n.t("calendar.dayDetail.addEvent") }));
   expect(openNewEventForm).toHaveBeenCalledTimes(1);
 
-  fireEvent.click(screen.getByRole("button", { name: "Delete diary entry" }));
+  fireEvent.click(screen.getByRole("button", { name: i18n.t("calendar.aria.deleteDiaryEntry") }));
   expect(handleDeleteDiaryEntry).toHaveBeenCalledWith("diary-1");
 
   const eventCard = screen.getByText("Exam Day").closest("article");

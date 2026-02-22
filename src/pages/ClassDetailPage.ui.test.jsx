@@ -2,6 +2,7 @@ import { useState } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { expect, test, vi } from "vitest";
+import i18n from "../i18n";
 import ClassDetailPage from "./ClassDetailPage";
 
 function createNoopDragHook() {
@@ -78,11 +79,11 @@ test("keeps add-student modal open when create student mutation fails", async ()
     </MemoryRouter>
   );
 
-  fireEvent.click(screen.getAllByRole("button", { name: "+ Add Student" })[0]);
+  fireEvent.click(screen.getAllByRole("button", { name: i18n.t("classDetail.students.addStudent") })[0]);
   fireEvent.change(screen.getByPlaceholderText("Maya"), { target: { value: "Ana" } });
   fireEvent.change(screen.getByPlaceholderText("Lopez"), { target: { value: "Silva" } });
-  fireEvent.click(screen.getByRole("button", { name: "Add" }));
+  fireEvent.click(screen.getByRole("button", { name: i18n.t("common.actions.add") }));
 
   await waitFor(() => expect(handleCreateStudent).toHaveBeenCalledTimes(1));
-  expect(screen.getByRole("heading", { name: "Add Student" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: i18n.t("classDetail.addStudent.title") })).toBeTruthy();
 });

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
+import i18n from "../i18n";
 import RubricsPage from "./RubricsPage";
 
 afterEach(() => {
@@ -40,11 +41,11 @@ test("keeps add-category modal open when category mutation fails", async () => {
   );
 
   fireEvent.click(screen.getByText("Writing Rubric"));
-  fireEvent.click(screen.getByRole("button", { name: "rubrics.addCategory" }));
-  fireEvent.change(screen.getByPlaceholderText("rubrics.modal.categoryNamePlaceholder"), {
+  fireEvent.click(screen.getByRole("button", { name: i18n.t("rubrics.addCategory") }));
+  fireEvent.change(screen.getByPlaceholderText(i18n.t("rubrics.modal.categoryNamePlaceholder")), {
     target: { value: "Analysis" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "common.actions.add" }));
+  fireEvent.click(screen.getByRole("button", { name: i18n.t("common.actions.add") }));
 
   await waitFor(() =>
     expect(handleCreateRubricCategory).toHaveBeenCalledWith({
@@ -53,5 +54,5 @@ test("keeps add-category modal open when category mutation fails", async () => {
       sortOrder: 0,
     })
   );
-  expect(screen.getByRole("heading", { name: "rubrics.modal.newCategoryTitle" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: i18n.t("rubrics.modal.newCategoryTitle") })).toBeTruthy();
 });
