@@ -74,9 +74,17 @@
     "subtitle": "Entre para sincronizar seus dados em todos os dispositivos.",
     "email": "E-mail",
     "password": "Senha",
+    "newPassword": "Nova senha",
+    "confirmPassword": "Confirmar nova senha",
     "working": "Processando...",
     "createAccount": "Criar conta",
     "signIn": "Entrar",
+    "forgotPassword": "Esqueceu a senha?",
+    "forgotPasswordHelp": "Informe seu e-mail e enviaremos um link para redefinir sua senha.",
+    "sendResetLink": "Enviar link de redefinição",
+    "resetPassword": "Redefinir senha",
+    "resetPasswordHelp": "Escolha sua nova senha para concluir a recuperação da conta.",
+    "backToSignIn": "Voltar para entrar",
     "or": "ou",
     "createWithGoogle": "Criar conta com Google",
     "signInWithGoogle": "Entrar com Google",
@@ -84,10 +92,14 @@
     "alreadyHaveAccount": "Já tem uma conta? Entrar",
     "newHere": "Novo por aqui? Criar uma conta",
     "success": {
-      "checkEmail": "Verifique seu e-mail para confirmar sua conta e depois entre."
+      "checkEmail": "Verifique seu e-mail para confirmar sua conta e depois entre.",
+      "resetEmailSent": "Verifique seu e-mail para o link de redefinição de senha.",
+      "passwordUpdated": "Senha atualizada. Entre com sua nova senha."
     },
     "errors": {
       "generic": "Algo deu errado. Tente novamente.",
+      "passwordLength": "A senha deve ter pelo menos {{count}} caracteres.",
+      "passwordMismatch": "A confirmação da senha não corresponde.",
       "googleMissingClientId": "O login Google está ativado, mas VITE_GOOGLE_CLIENT_ID está ausente.",
       "googleLoadFailed": "Falha ao carregar o login Google. Atualize e tente novamente.",
       "googleMissingCredential": "O Google não retornou uma credencial de login.",

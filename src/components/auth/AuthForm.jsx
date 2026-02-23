@@ -6,18 +6,46 @@ import { supabase } from "../../supabaseClient";
 
 const { enableGoogleAuth, googleClientId } = loadAuthEnv();
 const GOOGLE_IDENTITY_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
+const AUTH_MODES = {
+  SIGN_IN: "signin",
+  SIGN_UP: "signup",
+  FORGOT_PASSWORD: "forgot",
+  RESET_PASSWORD: "reset",
+};
+const MIN_PASSWORD_LENGTH = 6;
 
 const getGoogleIdentityApi = () => globalThis.google?.accounts?.id;
+const getPasswordResetRedirect = () => {
+  if (typeof window === "undefined") return undefined;
+  return new URL("/reset-password", window.location.origin).toString();
+};
 
-function AuthForm({ onSuccess }) {
+function AuthForm({ onSuccess, forcedMode, onPasswordResetComplete }) {
   const { t, i18n } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState("signin");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [mode, setMode] = useState(AUTH_MODES.SIGN_IN);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoaded, setGoogleLoaded] = useState(false);
   const googleButtonRef = useRef(null);
+  const isSignIn = mode === AUTH_MODES.SIGN_IN;
+  const isSignUp = mode === AUTH_MODES.SIGN_UP;
+  const isForgotPassword = mode === AUTH_MODES.FORGOT_PASSWORD;
+  const isResetPassword = mode === AUTH_MODES.RESET_PASSWORD;
+
+  useEffect(() => {
+    if (forcedMode) {
+      setMode(forcedMode);
+      return;
+    }
+
+    if (mode === AUTH_MODES.RESET_PASSWORD) {
+      setMode(AUTH_MODES.SIGN_IN);
+    }
+  }, [forcedMode, mode]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -25,19 +53,46 @@ function AuthForm({ onSuccess }) {
     setLoading(true);
 
     try {
-      if (mode === "signup") {
+      if (isSignUp) {
         const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
         });
         if (signUpError) throw signUpError;
         onSuccess(t("auth.success.checkEmail"));
-      } else {
+      } else if (isSignIn) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (signInError) throw signInError;
+      } else if (isForgotPassword) {
+        const redirectTo = getPasswordResetRedirect();
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+          ...(redirectTo ? { redirectTo } : {}),
+        });
+        if (resetError) throw resetError;
+        onSuccess(t("auth.success.resetEmailSent"));
+        setMode(AUTH_MODES.SIGN_IN);
+      } else if (isResetPassword) {
+        if (newPassword.length < MIN_PASSWORD_LENGTH) {
+          throw new Error(t("auth.errors.passwordLength", { count: MIN_PASSWORD_LENGTH }));
+        }
+        if (newPassword !== confirmPassword) {
+          throw new Error(t("auth.errors.passwordMismatch"));
+        }
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: newPassword,
+        });
+        if (updateError) throw updateError;
+        setNewPassword("");
+        setConfirmPassword("");
+        onSuccess(t("auth.success.passwordUpdated"));
+        if (onPasswordResetComplete) {
+          await onPasswordResetComplete();
+        } else {
+          setMode(AUTH_MODES.SIGN_IN);
+        }
       }
     } catch (err) {
       setError(err.message || t("auth.errors.generic"));
@@ -89,7 +144,15 @@ function AuthForm({ onSuccess }) {
   }, [t]);
 
   useEffect(() => {
-    if (!enableGoogleAuth || !googleLoaded || !googleClientId || !googleButtonRef.current) return undefined;
+    if (
+      !enableGoogleAuth ||
+      !googleLoaded ||
+      !googleClientId ||
+      !googleButtonRef.current ||
+      (!isSignIn && !isSignUp)
+    ) {
+      return undefined;
+    }
 
     const googleIdentity = getGoogleIdentityApi();
     if (!googleIdentity) return undefined;
@@ -129,7 +192,7 @@ function AuthForm({ onSuccess }) {
       theme: "outline",
       size: "large",
       shape: "pill",
-      text: mode === "signup" ? "signup_with" : "signin_with",
+      text: isSignUp ? "signup_with" : "signin_with",
       logo_alignment: "left",
       width: buttonWidth,
     });
@@ -138,7 +201,7 @@ function AuthForm({ onSuccess }) {
       googleButtonElement.replaceChildren();
       googleIdentity.cancel();
     };
-  }, [googleLoaded, mode, t]);
+  }, [googleLoaded, isSignIn, isSignUp, t]);
 
   return (
     <div className="card auth-card">
@@ -167,43 +230,111 @@ function AuthForm({ onSuccess }) {
       </div>
 
       <form onSubmit={handleSubmit} className="stack auth-form">
-        <label className="stack">
-          <span>{t("auth.email")}</span>
-          <input
-            className="auth-input"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </label>
+        {(isSignIn || isSignUp || isForgotPassword) && (
+          <label className="stack">
+            <span>{t("auth.email")}</span>
+            <input
+              className="auth-input"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </label>
+        )}
 
-        <label className="stack">
-          <span>{t("auth.password")}</span>
-          <input
-            className="auth-input"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
-        </label>
+        {(isSignIn || isSignUp) && (
+          <label className="stack">
+            <span>{t("auth.password")}</span>
+            <input
+              className="auth-input"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+          </label>
+        )}
+
+        {isForgotPassword && <p className="auth-hint">{t("auth.forgotPasswordHelp")}</p>}
+
+        {isResetPassword && (
+          <>
+            <p className="auth-hint">{t("auth.resetPasswordHelp")}</p>
+            <label className="stack">
+              <span>{t("auth.newPassword")}</span>
+              <input
+                className="auth-input"
+                type="password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                required
+              />
+            </label>
+            <label className="stack">
+              <span>{t("auth.confirmPassword")}</span>
+              <input
+                className="auth-input"
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                required
+              />
+            </label>
+          </>
+        )}
 
         {error && <div className="error">{error}</div>}
 
+        {isSignIn && (
+          <button
+            type="button"
+            className="auth-link"
+            disabled={loading}
+            onClick={() => {
+              setError("");
+              setMode(AUTH_MODES.FORGOT_PASSWORD);
+            }}
+          >
+            {t("auth.forgotPassword")}
+          </button>
+        )}
+
         <button type="submit" className="auth-submit" disabled={loading}>
-          {loading ? t("auth.working") : mode === "signup" ? t("auth.createAccount") : t("auth.signIn")}
+          {loading
+            ? t("auth.working")
+            : isSignUp
+              ? t("auth.createAccount")
+              : isForgotPassword
+                ? t("auth.sendResetLink")
+                : isResetPassword
+                  ? t("auth.resetPassword")
+                  : t("auth.signIn")}
         </button>
+
+        {isForgotPassword && (
+          <button
+            type="button"
+            className="auth-link"
+            disabled={loading}
+            onClick={() => {
+              setError("");
+              setMode(AUTH_MODES.SIGN_IN);
+            }}
+          >
+            {t("auth.backToSignIn")}
+          </button>
+        )}
       </form>
 
-      {enableGoogleAuth && (
+      {enableGoogleAuth && (isSignIn || isSignUp) && (
         <div className="auth-google-wrap" aria-live="polite">
           <div className="auth-divider" aria-hidden="true">
             <span>{t("auth.or")}</span>
           </div>
           <div className="auth-google-panel">
             <p className="auth-google-label">
-              {mode === "signup" ? t("auth.createWithGoogle") : t("auth.signInWithGoogle")}
+              {isSignUp ? t("auth.createWithGoogle") : t("auth.signInWithGoogle")}
             </p>
             <div ref={googleButtonRef} className="auth-google-button" />
           </div>
@@ -211,16 +342,18 @@ function AuthForm({ onSuccess }) {
         </div>
       )}
 
-      <button
-        type="button"
-        className="auth-switch"
-        disabled={loading}
-        onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-      >
-        {mode === "signup"
-          ? t("auth.alreadyHaveAccount")
-          : t("auth.newHere")}
-      </button>
+      {(isSignIn || isSignUp) && (
+        <button
+          type="button"
+          className="auth-switch"
+          disabled={loading}
+          onClick={() => setMode(isSignUp ? AUTH_MODES.SIGN_IN : AUTH_MODES.SIGN_UP)}
+        >
+          {isSignUp
+            ? t("auth.alreadyHaveAccount")
+            : t("auth.newHere")}
+        </button>
+      )}
     </div>
   );
 }

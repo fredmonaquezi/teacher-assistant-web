@@ -19,7 +19,7 @@ function TimerOverlay({
 
   return (
     <div className="timer-overlay">
-      <div className="timer-overlay-card">
+      <div className={`timer-overlay-card${timerChecklist.length > 0 ? " has-checklist" : ""}`}>
         <div className="timer-visual">
           <div className="timer-hourglass-wrap">
             <svg className="timer-hourglass" viewBox="0 0 220 300" aria-hidden="true">
@@ -99,22 +99,24 @@ function TimerOverlay({
             </svg>
           </div>
 
-          <div className="timer-readout">
-            <div className="timer-big">{formatTimer(timerRemainingSeconds)}</div>
-            <div className="muted">{timerTimeRemaining()}</div>
-            <div className="timer-progress-label">
-              {Math.round(clampedProgress * 100)}% remaining
-            </div>
-            <div className="timer-progress-strip" aria-hidden="true">
-              <span style={{ width: `${clampedProgress * 100}%` }} />
-            </div>
-            <div className="timer-controls">
-              <button type="button" className="timer-stop" onClick={stopTimer}>
-                Stop
-              </button>
-              <button type="button" className="timer-minimize" onClick={() => setTimerIsExpanded(false)}>
-                Minimize
-              </button>
+          <div className={`timer-readout${timerChecklist.length > 0 ? " has-checklist" : ""}`}>
+            <div className="timer-readout-main">
+              <div className="timer-big">{formatTimer(timerRemainingSeconds)}</div>
+              <div className="muted">{timerTimeRemaining()}</div>
+              <div className="timer-progress-label">
+                {Math.round(clampedProgress * 100)}% remaining
+              </div>
+              <div className="timer-progress-strip" aria-hidden="true">
+                <span style={{ width: `${clampedProgress * 100}%` }} />
+              </div>
+              <div className="timer-controls">
+                <button type="button" className="timer-stop" onClick={stopTimer}>
+                  Stop
+                </button>
+                <button type="button" className="timer-minimize" onClick={() => setTimerIsExpanded(false)}>
+                  Minimize
+                </button>
+              </div>
             </div>
             {timerChecklist.length > 0 && (
               <div className="timer-checklist">
