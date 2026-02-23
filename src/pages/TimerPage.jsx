@@ -38,17 +38,45 @@ function readStoredSeconds() {
   }
 }
 
+function readStoredChecklistText() {
+  try {
+    const raw = localStorage.getItem(TIMER_PREFS_KEY);
+    if (!raw) return "";
+    const parsed = JSON.parse(raw);
+    return typeof parsed?.checklistText === "string" ? parsed.checklistText : "";
+  } catch {
+    return "";
+  }
+}
+
+function parseChecklist(rawChecklist) {
+  if (typeof rawChecklist !== "string" || rawChecklist.trim().length === 0) {
+    return [];
+  }
+
+  return rawChecklist
+    .split("\n")
+    .map((line) => line.replace(/^\s*(?:[-*]\s*|\d+\s*[-.):]\s*)/, "").trim())
+    .filter(Boolean)
+    .slice(0, 15);
+}
+
 function TimerPage({ startTimerSeconds }) {
   const { t } = useTranslation();
   const [customMinutes, setCustomMinutes] = useState(readStoredMinutes);
   const [customSeconds, setCustomSeconds] = useState(readStoredSeconds);
+  const [customChecklistText, setCustomChecklistText] = useState(readStoredChecklistText);
 
   useEffect(() => {
     localStorage.setItem(
       TIMER_PREFS_KEY,
-      JSON.stringify({ minutes: customMinutes, seconds: customSeconds })
+      JSON.stringify({
+        minutes: customMinutes,
+        seconds: customSeconds,
+        checklistText: customChecklistText,
+      })
     );
-  }, [customMinutes, customSeconds]);
+  }, [customMinutes, customSeconds, customChecklistText]);
 
   const totalCustomSeconds = customMinutes * 60 + customSeconds;
 
@@ -123,11 +151,26 @@ function TimerPage({ startTimerSeconds }) {
             </label>
           </div>
 
+          <label className="stack timer-checklist-input">
+            <span>{t("timer.custom.todoLabel")}</span>
+            <textarea
+              value={customChecklistText}
+              onChange={(event) => setCustomChecklistText(event.target.value)}
+              placeholder={t("timer.custom.todoPlaceholder")}
+              rows={5}
+            />
+            <small className="muted">{t("timer.custom.todoHint")}</small>
+          </label>
+
           <button
             type="button"
             className="timer-start-btn"
             disabled={totalCustomSeconds === 0}
-            onClick={() => startTimerSeconds(totalCustomSeconds)}
+            onClick={() =>
+              startTimerSeconds(totalCustomSeconds, {
+                checklist: parseChecklist(customChecklistText),
+              })
+            }
           >
             {t("timer.custom.start")}
           </button>

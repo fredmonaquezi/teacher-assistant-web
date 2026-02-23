@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 function TimerOverlay({
   timerProgress,
   timerRemainingSeconds,
@@ -5,7 +7,9 @@ function TimerOverlay({
   timerTimeRemaining,
   stopTimer,
   setTimerIsExpanded,
+  timerChecklist,
 }) {
+  const { t } = useTranslation();
   const clampedProgress = Math.max(0, Math.min(1, timerProgress));
   const topSandHeight = 108 * clampedProgress;
   const topSandY = 150 - topSandHeight;
@@ -15,7 +19,7 @@ function TimerOverlay({
 
   return (
     <div className="timer-overlay">
-      <div className="timer-overlay-card">
+      <div className={`timer-overlay-card${timerChecklist.length > 0 ? " has-checklist" : ""}`}>
         <div className="timer-visual">
           <div className="timer-hourglass-wrap">
             <svg className="timer-hourglass" viewBox="0 0 220 300" aria-hidden="true">
@@ -95,23 +99,35 @@ function TimerOverlay({
             </svg>
           </div>
 
-          <div className="timer-readout">
-            <div className="timer-big">{formatTimer(timerRemainingSeconds)}</div>
-            <div className="muted">{timerTimeRemaining()}</div>
-            <div className="timer-progress-label">
-              {Math.round(clampedProgress * 100)}% remaining
+          <div className={`timer-readout${timerChecklist.length > 0 ? " has-checklist" : ""}`}>
+            <div className="timer-readout-main">
+              <div className="timer-big">{formatTimer(timerRemainingSeconds)}</div>
+              <div className="muted">{timerTimeRemaining()}</div>
+              <div className="timer-progress-label">
+                {Math.round(clampedProgress * 100)}% remaining
+              </div>
+              <div className="timer-progress-strip" aria-hidden="true">
+                <span style={{ width: `${clampedProgress * 100}%` }} />
+              </div>
+              <div className="timer-controls">
+                <button type="button" className="timer-stop" onClick={stopTimer}>
+                  Stop
+                </button>
+                <button type="button" className="timer-minimize" onClick={() => setTimerIsExpanded(false)}>
+                  Minimize
+                </button>
+              </div>
             </div>
-            <div className="timer-progress-strip" aria-hidden="true">
-              <span style={{ width: `${clampedProgress * 100}%` }} />
-            </div>
-            <div className="timer-controls">
-              <button type="button" className="timer-stop" onClick={stopTimer}>
-                Stop
-              </button>
-              <button type="button" className="timer-minimize" onClick={() => setTimerIsExpanded(false)}>
-                Minimize
-              </button>
-            </div>
+            {timerChecklist.length > 0 && (
+              <div className="timer-checklist">
+                <h4>{t("timer.runtime.todoTitle")}</h4>
+                <ol>
+                  {timerChecklist.map((item, index) => (
+                    <li key={`${index}-${item}`}>{item}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -126,7 +142,9 @@ function MiniTimer({
   formatTimer,
   setTimerIsExpanded,
   stopTimer,
+  timerChecklist,
 }) {
+  const { t } = useTranslation();
   return (
     <div className="mini-timer">
       <div className="mini-timer-ring">
@@ -147,6 +165,11 @@ function MiniTimer({
       <div className="mini-timer-info">
         <span className="muted">Timer Running</span>
         <strong>{formatTimer(timerRemainingSeconds)}</strong>
+        {timerChecklist.length > 0 && (
+          <span className="mini-timer-checklist-summary">
+            {t("timer.runtime.todoSummary", { count: timerChecklist.length })}
+          </span>
+        )}
       </div>
       <div className="mini-timer-actions">
         <button type="button" onClick={() => setTimerIsExpanded(true)}>
@@ -183,6 +206,7 @@ function TimerRuntimeOverlays({ timer }) {
     timerProgress,
     timerProgressColor,
     timerRemainingSeconds,
+    timerChecklist,
     formatTimer,
     timerTimeRemaining,
     stopTimer,
@@ -200,6 +224,7 @@ function TimerRuntimeOverlays({ timer }) {
           timerTimeRemaining={timerTimeRemaining}
           stopTimer={stopTimer}
           setTimerIsExpanded={setTimerIsExpanded}
+          timerChecklist={timerChecklist}
         />
       )}
       {timerIsRunning && !timerIsExpanded && (
@@ -210,6 +235,7 @@ function TimerRuntimeOverlays({ timer }) {
           formatTimer={formatTimer}
           setTimerIsExpanded={setTimerIsExpanded}
           stopTimer={stopTimer}
+          timerChecklist={timerChecklist}
         />
       )}
       {timerShowTimesUp && (

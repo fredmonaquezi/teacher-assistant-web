@@ -74,9 +74,17 @@
     "subtitle": "Sign in to sync your data across devices.",
     "email": "Email",
     "password": "Password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
     "working": "Working...",
     "createAccount": "Create account",
     "signIn": "Sign in",
+    "forgotPassword": "Forgot password?",
+    "forgotPasswordHelp": "Enter your account email and we will send a password reset link.",
+    "sendResetLink": "Send reset link",
+    "resetPassword": "Reset password",
+    "resetPasswordHelp": "Choose your new password to finish account recovery.",
+    "backToSignIn": "Back to sign in",
     "or": "or",
     "createWithGoogle": "Create account with Google",
     "signInWithGoogle": "Sign in with Google",
@@ -84,10 +92,14 @@
     "alreadyHaveAccount": "Already have an account? Sign in",
     "newHere": "New here? Create an account",
     "success": {
-      "checkEmail": "Check your email to confirm your account, then sign in."
+      "checkEmail": "Check your email to confirm your account, then sign in.",
+      "resetEmailSent": "Check your email for a password reset link.",
+      "passwordUpdated": "Password updated. Sign in with your new password."
     },
     "errors": {
       "generic": "Something went wrong. Try again.",
+      "passwordLength": "Password should have at least {{count}} characters.",
+      "passwordMismatch": "Password confirmation does not match.",
       "googleMissingClientId": "Google auth is enabled, but VITE_GOOGLE_CLIENT_ID is missing.",
       "googleLoadFailed": "Failed to load Google sign-in. Refresh and try again.",
       "googleMissingCredential": "Google did not return a login credential.",
@@ -371,7 +383,15 @@
       "hint": "Set your exact countdown length",
       "minutes": "Minutes",
       "seconds": "Seconds",
+      "todoLabel": "To-do list for students",
+      "todoPlaceholder": "1) Open your book\n2) Write a short story\n3) Check your partner's work",
+      "todoHint": "Add one instruction per line. It will appear during the countdown.",
       "start": "▶ Start Custom Timer"
+    },
+    "runtime": {
+      "todoTitle": "Student To-Do List",
+      "todoSummary_one": "{{count}} instruction",
+      "todoSummary_other": "{{count}} instructions"
     }
   },
   "calendar": {

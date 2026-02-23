@@ -7,6 +7,8 @@ const authMocks = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
   signUp: vi.fn(),
   signInWithIdToken: vi.fn(),
+  resetPasswordForEmail: vi.fn(),
+  updateUser: vi.fn(),
 }));
 
 vi.mock("../../config/env", () => ({
@@ -22,6 +24,8 @@ vi.mock("../../supabaseClient", () => ({
       signInWithPassword: authMocks.signInWithPassword,
       signUp: authMocks.signUp,
       signInWithIdToken: authMocks.signInWithIdToken,
+      resetPasswordForEmail: authMocks.resetPasswordForEmail,
+      updateUser: authMocks.updateUser,
     },
   },
 }));
@@ -95,4 +99,50 @@ test("allows changing language on login screen", async () => {
     expect(screen.getByRole("button", { name: "Sign in" })).toBeTruthy();
   });
   expect(screen.getByLabelText("Email")).toBeTruthy();
+});
+
+test("sends password reset email from forgot password flow", async () => {
+  authMocks.resetPasswordForEmail.mockResolvedValue({ error: null });
+  const onSuccess = vi.fn();
+
+  render(<AuthForm onSuccess={onSuccess} />);
+
+  fireEvent.change(screen.getByLabelText("Email"), {
+    target: { value: "teacher@example.com" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Forgot password?" }));
+  fireEvent.click(screen.getByRole("button", { name: "Send reset link" }));
+
+  await waitFor(() =>
+    expect(authMocks.resetPasswordForEmail).toHaveBeenCalledWith("teacher@example.com", {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+  );
+  expect(onSuccess).toHaveBeenCalledWith("Check your email for a password reset link.");
+});
+
+test("updates password in forced recovery mode", async () => {
+  authMocks.updateUser.mockResolvedValue({ error: null });
+  const onSuccess = vi.fn();
+  const onPasswordResetComplete = vi.fn();
+
+  render(
+    <AuthForm
+      onSuccess={onSuccess}
+      forcedMode="reset"
+      onPasswordResetComplete={onPasswordResetComplete}
+    />
+  );
+
+  fireEvent.change(screen.getByLabelText("New password"), {
+    target: { value: "betterSecret123" },
+  });
+  fireEvent.change(screen.getByLabelText("Confirm new password"), {
+    target: { value: "betterSecret123" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Reset password" }));
+
+  await waitFor(() => expect(authMocks.updateUser).toHaveBeenCalledWith({ password: "betterSecret123" }));
+  expect(onSuccess).toHaveBeenCalledWith("Password updated. Sign in with your new password.");
+  expect(onPasswordResetComplete).toHaveBeenCalled();
 });

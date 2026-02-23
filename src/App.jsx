@@ -34,6 +34,18 @@ const SubjectDetailPage = lazy(() => import("./pages/SubjectDetailPage"));
 const TimerPage = lazy(() => import("./pages/TimerPage"));
 const UnitDetailPage = lazy(() => import("./pages/UnitDetailPage"));
 const UsefulLinksPage = lazy(() => import("./pages/UsefulLinksPage"));
+const PASSWORD_RECOVERY_PATH = "/reset-password";
+
+function getInitialAuthMode() {
+  if (typeof window === "undefined") return "signin";
+
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const searchParams = new URLSearchParams(window.location.search);
+  const isRecoveryLink =
+    hashParams.get("type") === "recovery" || searchParams.get("type") === "recovery";
+
+  return isRecoveryLink ? "reset" : "signin";
+}
 
 function RouteFallback() {
   const { t } = useTranslation();
@@ -458,6 +470,7 @@ function TeacherWorkspace({ user, onSignOut }) {
 function App() {
   const [user, setUser] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
+  const [authMode, setAuthMode] = useState(getInitialAuthMode);
 
   useEffect(() => {
     let isMounted = true;
@@ -471,10 +484,20 @@ function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setAuthMode("reset");
+        setStatusMessage("");
+      }
+
       if (!session) {
         queryClient.clear();
       }
+
+      if (event === "SIGNED_OUT") {
+        setAuthMode("signin");
+      }
+
       if (isMounted) setUser(session?.user ?? null);
     });
 
@@ -489,13 +512,29 @@ function App() {
     queryClient.clear();
   };
 
+  const handlePasswordResetComplete = async () => {
+    await supabase.auth.signOut();
+    queryClient.clear();
+    setAuthMode("signin");
+    if (typeof window !== "undefined") {
+      const nextPath = window.location.pathname === PASSWORD_RECOVERY_PATH ? "/" : window.location.pathname;
+      window.history.replaceState({}, document.title, nextPath);
+    }
+  };
+
+  const showRecovery = authMode === "reset";
+
   return (
     <div className="page">
       {statusMessage && <div className="status">{statusMessage}</div>}
-      {user ? (
+      {user && !showRecovery ? (
         <TeacherWorkspace user={user} onSignOut={handleSignOut} />
       ) : (
-        <AuthForm onSuccess={setStatusMessage} />
+        <AuthForm
+          onSuccess={setStatusMessage}
+          forcedMode={showRecovery ? "reset" : undefined}
+          onPasswordResetComplete={handlePasswordResetComplete}
+        />
       )}
     </div>
   );
