@@ -18,6 +18,29 @@ function genderOptionLabelKey(option) {
   return "preferNotToSay";
 }
 
+function compareStudentsAlphabetically(studentA, studentB) {
+  const firstNameA = (studentA.first_name || "").trim();
+  const firstNameB = (studentB.first_name || "").trim();
+  const firstNameComparison = firstNameA.localeCompare(firstNameB, undefined, {
+    sensitivity: "base",
+  });
+  if (firstNameComparison !== 0) return firstNameComparison;
+
+  const lastNameA = (studentA.last_name || "").trim();
+  const lastNameB = (studentB.last_name || "").trim();
+  const lastNameComparison = lastNameA.localeCompare(lastNameB, undefined, {
+    sensitivity: "base",
+  });
+  if (lastNameComparison !== 0) return lastNameComparison;
+
+  const createdAtA = studentA.created_at || "";
+  const createdAtB = studentB.created_at || "";
+  const createdAtComparison = createdAtA.localeCompare(createdAtB);
+  if (createdAtComparison !== 0) return createdAtComparison;
+
+  return String(studentA.id || "").localeCompare(String(studentB.id || ""));
+}
+
 function ClassQuickIcon({ kind }) {
   switch (kind) {
     case "random":
@@ -110,7 +133,9 @@ function ClassDetailPage({
   const ReorderModeToggle = ReorderModeToggleComponent;
   const classItem = classes.find((item) => item.id === classId);
   const classSubjects = subjects.filter((subject) => subject.class_id === classId);
-  const classStudents = students.filter((student) => student.class_id === classId);
+  const classStudents = students
+    .filter((student) => student.class_id === classId)
+    .sort(compareStudentsAlphabetically);
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [addStudentError, setAddStudentError] = useState("");

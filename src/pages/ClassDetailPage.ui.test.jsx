@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import i18n from "../i18n";
 import ClassDetailPage from "./ClassDetailPage";
 
@@ -19,7 +19,11 @@ function ReorderModeToggleStub() {
   return null;
 }
 
-function ClassDetailHarness({ handleCreateStudent }) {
+afterEach(() => {
+  cleanup();
+});
+
+function ClassDetailHarness({ handleCreateStudent, students = [] }) {
   const [subjectForm, setSubjectForm] = useState({ name: "", description: "", sortOrder: "" });
   const [studentForm, setStudentForm] = useState({
     firstName: "",
@@ -39,7 +43,7 @@ function ClassDetailHarness({ handleCreateStudent }) {
       formError=""
       classes={[{ id: "class-1", name: "Class A", grade_level: "Year 5", school_year: "2026" }]}
       subjects={[]}
-      students={[]}
+      students={students}
       assessments={[]}
       assessmentEntries={[]}
       attendanceSessions={[]}
@@ -86,4 +90,35 @@ test("keeps add-student modal open when create student mutation fails", async ()
 
   await waitFor(() => expect(handleCreateStudent).toHaveBeenCalledTimes(1));
   expect(screen.getByRole("heading", { name: i18n.t("classDetail.addStudent.title") })).toBeTruthy();
+});
+
+test("renders students in alphabetical order in class view", () => {
+  render(
+    <MemoryRouter initialEntries={["/classes/class-1"]}>
+      <Routes>
+        <Route
+          path="/classes/:classId"
+          element={
+            <ClassDetailHarness
+              handleCreateStudent={vi.fn()}
+              students={[
+                { id: "s3", class_id: "class-1", first_name: "Zoe", last_name: "Anders", gender: "Female" },
+                { id: "s2", class_id: "class-1", first_name: "Ana", last_name: "Brown", gender: "Female" },
+                { id: "s1", class_id: "class-1", first_name: "Ana", last_name: "Alves", gender: "Female" },
+              ]}
+            />
+          }
+        />
+      </Routes>
+    </MemoryRouter>
+  );
+
+  const studentsPanel = document.querySelector(".class-students-panel");
+  if (!studentsPanel) {
+    throw new Error("Students panel was not rendered.");
+  }
+  const nameNodes = studentsPanel.querySelectorAll(".student-card-link strong");
+  const renderedNames = Array.from(nameNodes).map((node) => node.textContent.trim());
+
+  expect(renderedNames).toEqual(["Ana Alves", "Ana Brown", "Zoe Anders"]);
 });
