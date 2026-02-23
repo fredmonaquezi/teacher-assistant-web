@@ -38,7 +38,13 @@ const PASSWORD_RECOVERY_PATH = "/reset-password";
 
 function getInitialAuthMode() {
   if (typeof window === "undefined") return "signin";
-  return window.location.pathname === PASSWORD_RECOVERY_PATH ? "reset" : "signin";
+
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const searchParams = new URLSearchParams(window.location.search);
+  const isRecoveryLink =
+    hashParams.get("type") === "recovery" || searchParams.get("type") === "recovery";
+
+  return isRecoveryLink ? "reset" : "signin";
 }
 
 function RouteFallback() {
@@ -510,8 +516,9 @@ function App() {
     await supabase.auth.signOut();
     queryClient.clear();
     setAuthMode("signin");
-    if (typeof window !== "undefined" && window.location.pathname === PASSWORD_RECOVERY_PATH) {
-      window.history.replaceState({}, document.title, "/");
+    if (typeof window !== "undefined") {
+      const nextPath = window.location.pathname === PASSWORD_RECOVERY_PATH ? "/" : window.location.pathname;
+      window.history.replaceState({}, document.title, nextPath);
     }
   };
 
