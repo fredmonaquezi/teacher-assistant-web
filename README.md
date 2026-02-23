@@ -35,6 +35,7 @@ cp .env.example .env.local
 VITE_SUPABASE_URL="https://<project-ref>.supabase.co"
 VITE_SUPABASE_ANON_KEY="<anon-or-publishable-key>"
 VITE_ENABLE_GOOGLE_AUTH="false"
+VITE_PUBLIC_APP_URL="http://localhost:5173"
 VITE_GOOGLE_CLIENT_ID="<google-web-client-id>.apps.googleusercontent.com"
 ```
 
@@ -70,6 +71,7 @@ Notes:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_ENABLE_GOOGLE_AUTH`
+- `VITE_PUBLIC_APP_URL` (set to your production app URL so auth email links use your domain)
 - `VITE_GOOGLE_CLIENT_ID` (only if Google auth enabled)
 4. Redeploy.
 

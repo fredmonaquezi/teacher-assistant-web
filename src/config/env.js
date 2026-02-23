@@ -47,6 +47,28 @@ function readBooleanEnv(name, defaultValue = false) {
   return ["1", "true", "yes", "on"].includes(raw.toLowerCase());
 }
 
+function isLocalHostName(hostname) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0";
+}
+
+function readOptionalPublicAppUrl() {
+  const value = readEnv("VITE_PUBLIC_APP_URL");
+  if (!value) return "";
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(value);
+  } catch {
+    throw new Error("VITE_PUBLIC_APP_URL is invalid. Expected a full URL like https://yourdomain.com.");
+  }
+
+  if (parsedUrl.protocol !== "https:" && !isLocalHostName(parsedUrl.hostname)) {
+    throw new Error("VITE_PUBLIC_APP_URL must use HTTPS for non-local environments.");
+  }
+
+  return parsedUrl.toString();
+}
+
 export function loadSupabaseClientEnv() {
   const supabaseUrl = readEnv("VITE_SUPABASE_URL");
   const supabaseAnonKey = readEnv("VITE_SUPABASE_ANON_KEY");
@@ -67,9 +89,7 @@ export function loadSupabaseClientEnv() {
   }
 
   const isLocalHost =
-    parsedUrl.hostname === "localhost" ||
-    parsedUrl.hostname === "127.0.0.1" ||
-    parsedUrl.hostname === "0.0.0.0";
+    isLocalHostName(parsedUrl.hostname);
   if (parsedUrl.protocol !== "https:" && !isLocalHost) {
     throw new Error("VITE_SUPABASE_URL must use HTTPS for non-local environments.");
   }
@@ -89,9 +109,11 @@ export function loadSupabaseClientEnv() {
 export function loadAuthEnv() {
   const enableGoogleAuth = readBooleanEnv("VITE_ENABLE_GOOGLE_AUTH", false);
   const googleClientId = readEnv("VITE_GOOGLE_CLIENT_ID");
+  const publicAppUrl = readOptionalPublicAppUrl();
 
   return {
     enableGoogleAuth,
     googleClientId,
+    publicAppUrl,
   };
 }

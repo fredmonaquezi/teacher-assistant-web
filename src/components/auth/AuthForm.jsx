@@ -4,7 +4,7 @@ import { loadAuthEnv } from "../../config/env";
 import "../../i18n";
 import { supabase } from "../../supabaseClient";
 
-const { enableGoogleAuth, googleClientId } = loadAuthEnv();
+const { enableGoogleAuth, googleClientId, publicAppUrl } = loadAuthEnv();
 const GOOGLE_IDENTITY_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 const AUTH_MODES = {
   SIGN_IN: "signin",
@@ -15,9 +15,21 @@ const AUTH_MODES = {
 const MIN_PASSWORD_LENGTH = 6;
 
 const getGoogleIdentityApi = () => globalThis.google?.accounts?.id;
-const getPasswordResetRedirect = () => {
+const getRedirectBaseUrl = () => {
+  if (publicAppUrl) return publicAppUrl;
   if (typeof window === "undefined") return undefined;
-  return new URL("/reset-password", window.location.origin).toString();
+  return window.location.origin;
+};
+
+const getAuthRedirectUrl = (pathname = "/") => {
+  const baseUrl = getRedirectBaseUrl();
+  if (!baseUrl) return undefined;
+  return new URL(pathname, baseUrl).toString();
+};
+
+const getSignUpEmailRedirect = () => getAuthRedirectUrl("/");
+const getPasswordResetRedirect = () => {
+  return getAuthRedirectUrl("/reset-password");
 };
 
 function AuthForm({ onSuccess, forcedMode, onPasswordResetComplete }) {
@@ -54,9 +66,11 @@ function AuthForm({ onSuccess, forcedMode, onPasswordResetComplete }) {
 
     try {
       if (isSignUp) {
+        const emailRedirectTo = getSignUpEmailRedirect();
         const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
+          ...(emailRedirectTo ? { options: { emailRedirectTo } } : {}),
         });
         if (signUpError) throw signUpError;
         onSuccess(t("auth.success.checkEmail"));
