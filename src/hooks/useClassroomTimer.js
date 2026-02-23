@@ -8,6 +8,7 @@ function useClassroomTimer() {
   const [timerTotalSeconds, setTimerTotalSeconds] = useState(0);
   const [timerRemainingSeconds, setTimerRemainingSeconds] = useState(0);
   const [timerShowTimesUp, setTimerShowTimesUp] = useState(false);
+  const [timerChecklist, setTimerChecklist] = useState([]);
 
   const stopTimerInterval = useCallback(() => {
     if (timerIntervalRef.current) {
@@ -50,18 +51,25 @@ function useClassroomTimer() {
     setTimerIsExpanded(false);
     setTimerTotalSeconds(0);
     setTimerRemainingSeconds(0);
+    setTimerChecklist([]);
   }, [stopTimerInterval, stopTimerSound]);
 
   const dismissTimesUpAndReset = () => {
     resetTimer();
   };
 
-  const startTimerSeconds = (seconds) => {
+  const startTimerSeconds = (seconds, options = {}) => {
     resetTimer();
     if (!Number.isFinite(seconds) || seconds <= 0) return;
+    const checklist = Array.isArray(options.checklist)
+      ? options.checklist
+          .filter((item) => typeof item === "string" && item.trim().length > 0)
+          .map((item) => item.trim())
+      : [];
     setTimerShowTimesUp(false);
     setTimerTotalSeconds(seconds);
     setTimerRemainingSeconds(seconds);
+    setTimerChecklist(checklist);
     setTimerIsRunning(true);
     setTimerIsExpanded(true);
   };
@@ -122,6 +130,7 @@ function useClassroomTimer() {
     timerIsExpanded,
     timerRemainingSeconds,
     timerShowTimesUp,
+    timerChecklist,
     timerProgress,
     timerProgressColor,
     setTimerIsExpanded,

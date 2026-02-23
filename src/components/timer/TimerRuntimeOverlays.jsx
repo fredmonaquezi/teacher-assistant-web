@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 function TimerOverlay({
   timerProgress,
   timerRemainingSeconds,
@@ -5,7 +7,9 @@ function TimerOverlay({
   timerTimeRemaining,
   stopTimer,
   setTimerIsExpanded,
+  timerChecklist,
 }) {
+  const { t } = useTranslation();
   const clampedProgress = Math.max(0, Math.min(1, timerProgress));
   const topSandHeight = 108 * clampedProgress;
   const topSandY = 150 - topSandHeight;
@@ -112,6 +116,16 @@ function TimerOverlay({
                 Minimize
               </button>
             </div>
+            {timerChecklist.length > 0 && (
+              <div className="timer-checklist">
+                <h4>{t("timer.runtime.todoTitle")}</h4>
+                <ol>
+                  {timerChecklist.map((item, index) => (
+                    <li key={`${index}-${item}`}>{item}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -126,7 +140,9 @@ function MiniTimer({
   formatTimer,
   setTimerIsExpanded,
   stopTimer,
+  timerChecklist,
 }) {
+  const { t } = useTranslation();
   return (
     <div className="mini-timer">
       <div className="mini-timer-ring">
@@ -147,6 +163,11 @@ function MiniTimer({
       <div className="mini-timer-info">
         <span className="muted">Timer Running</span>
         <strong>{formatTimer(timerRemainingSeconds)}</strong>
+        {timerChecklist.length > 0 && (
+          <span className="mini-timer-checklist-summary">
+            {t("timer.runtime.todoSummary", { count: timerChecklist.length })}
+          </span>
+        )}
       </div>
       <div className="mini-timer-actions">
         <button type="button" onClick={() => setTimerIsExpanded(true)}>
@@ -183,6 +204,7 @@ function TimerRuntimeOverlays({ timer }) {
     timerProgress,
     timerProgressColor,
     timerRemainingSeconds,
+    timerChecklist,
     formatTimer,
     timerTimeRemaining,
     stopTimer,
@@ -200,6 +222,7 @@ function TimerRuntimeOverlays({ timer }) {
           timerTimeRemaining={timerTimeRemaining}
           stopTimer={stopTimer}
           setTimerIsExpanded={setTimerIsExpanded}
+          timerChecklist={timerChecklist}
         />
       )}
       {timerIsRunning && !timerIsExpanded && (
@@ -210,6 +233,7 @@ function TimerRuntimeOverlays({ timer }) {
           formatTimer={formatTimer}
           setTimerIsExpanded={setTimerIsExpanded}
           stopTimer={stopTimer}
+          timerChecklist={timerChecklist}
         />
       )}
       {timerShowTimesUp && (

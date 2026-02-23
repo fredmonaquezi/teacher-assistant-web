@@ -372,7 +372,15 @@
       "hint": "Defina exatamente o tempo da contagem regressiva",
       "minutes": "Minutos",
       "seconds": "Segundos",
+      "todoLabel": "Lista de tarefas para os alunos",
+      "todoPlaceholder": "1) Abra o livro\n2) Escreva uma história curta\n3) Revise o trabalho com seu colega",
+      "todoHint": "Adicione uma instrução por linha. Ela aparecerá durante a contagem.",
       "start": "▶ Iniciar Cronômetro Personalizado"
+    },
+    "runtime": {
+      "todoTitle": "Lista de Tarefas dos Alunos",
+      "todoSummary_one": "{{count}} instrução",
+      "todoSummary_other": "{{count}} instruções"
     }
   },
   "calendar": {

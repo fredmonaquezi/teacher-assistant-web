@@ -371,7 +371,15 @@
       "hint": "Set your exact countdown length",
       "minutes": "Minutes",
       "seconds": "Seconds",
+      "todoLabel": "To-do list for students",
+      "todoPlaceholder": "1) Open your book\n2) Write a short story\n3) Check your partner's work",
+      "todoHint": "Add one instruction per line. It will appear during the countdown.",
       "start": "▶ Start Custom Timer"
+    },
+    "runtime": {
+      "todoTitle": "Student To-Do List",
+      "todoSummary_one": "{{count}} instruction",
+      "todoSummary_other": "{{count}} instructions"
     }
   },
   "calendar": {
