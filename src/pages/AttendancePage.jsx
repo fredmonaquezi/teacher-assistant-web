@@ -10,6 +10,7 @@ import {
 import { enUS, ptBR } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import {
   getAttendanceRate,
   getAttendanceRateColor,
@@ -36,6 +37,7 @@ const AttendancePage = ({
   const isClassLockedByQuery = Boolean(classId);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [deletingSessionId, setDeletingSessionId] = useState("");
+  const [sessionToDelete, setSessionToDelete] = useState(null);
   const [activeClassId, setActiveClassId] = useState(() => {
     if (classId) return classId;
     if (typeof window === "undefined") return "";
@@ -111,15 +113,20 @@ const AttendancePage = ({
     }
   };
 
-  const handleDeleteSession = async (sessionId) => {
-    if (!sessionId || deletingSessionId) return;
-    if (!window.confirm(t("attendance.confirm.deleteSession"))) return;
-    setDeletingSessionId(sessionId);
+  const requestDeleteSession = (session) => {
+    if (!session?.id || deletingSessionId) return;
+    setSessionToDelete(session);
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete?.id || deletingSessionId) return;
+    setDeletingSessionId(sessionToDelete.id);
     setFormError("");
     try {
-      await handleDeleteAttendanceSession(sessionId);
+      await handleDeleteAttendanceSession(sessionToDelete.id);
     } finally {
       setDeletingSessionId("");
+      setSessionToDelete(null);
     }
   };
 
@@ -220,7 +227,7 @@ const AttendancePage = ({
                         className={`icon-button ${deletingSessionId === session.id ? "button-with-spinner" : ""}`}
                         onClick={(event) => {
                           event.preventDefault();
-                          handleDeleteSession(session.id);
+                          requestDeleteSession(session);
                         }}
                         aria-label={t("attendance.aria.deleteSession")}
                         disabled={Boolean(deletingSessionId)}
@@ -319,6 +326,15 @@ const AttendancePage = ({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(sessionToDelete)}
+        title={t("common.actions.delete")}
+        description={t("attendance.confirm.deleteSession")}
+        onCancel={() => setSessionToDelete(null)}
+        onConfirm={confirmDeleteSession}
+        confirmDisabled={Boolean(deletingSessionId)}
+      />
     </>
   );
 };

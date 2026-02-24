@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
 function GroupsPage({
   formError,
@@ -25,6 +26,7 @@ function GroupsPage({
 }) {
   const { t } = useTranslation();
   const [showAdvancedHelp, setShowAdvancedHelp] = useState(false);
+  const [constraintToDelete, setConstraintToDelete] = useState(null);
   const [searchParams] = useSearchParams();
   const classId = searchParams.get("classId") || "";
 
@@ -410,7 +412,7 @@ function GroupsPage({
                         <button
                           type="button"
                           className="link danger separation-delete-btn"
-                          onClick={() => handleDeleteConstraint(constraint.id)}
+                          onClick={() => setConstraintToDelete(constraint)}
                         >
                           {t("common.actions.delete")}
                         </button>
@@ -428,6 +430,17 @@ function GroupsPage({
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={Boolean(constraintToDelete)}
+        title={t("common.actions.delete")}
+        description="Delete this separation rule?"
+        onCancel={() => setConstraintToDelete(null)}
+        onConfirm={async () => {
+          if (!constraintToDelete?.id) return;
+          await handleDeleteConstraint(constraintToDelete.id);
+          setConstraintToDelete(null);
+        }}
+      />
     </>
   );
 }

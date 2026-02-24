@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import i18n from "../i18n";
 import RunningRecordsPage from "./RunningRecordsPage";
@@ -59,6 +59,8 @@ test("keeps create modal open on failed save and deletes selected record", async
 
   fireEvent.click(screen.getByRole("button", { name: /Ana Silva/i }));
   fireEvent.click(screen.getByRole("button", { name: i18n.t("common.actions.delete") }));
+  const deleteDialog = await screen.findByRole("dialog", { name: i18n.t("common.actions.delete") });
+  fireEvent.click(within(deleteDialog).getByRole("button", { name: i18n.t("common.actions.delete") }));
 
   await waitFor(() => expect(handleDeleteRunningRecord).toHaveBeenCalledWith("record-1"));
 });

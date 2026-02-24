@@ -178,7 +178,6 @@ function createCoreActions({
   };
 
   const handleDeleteClass = async (classId) => {
-    if (!window.confirm("Delete this class and all related data?")) return;
     await runMutation({
       setFormError,
       execute: () => supabase.from("classes").delete().eq("id", classId),
@@ -308,7 +307,6 @@ function createCoreActions({
 
   const handleDeleteRunningRecord = async (recordId) => {
     if (!recordId) return;
-    if (!window.confirm("Delete this running record?")) return;
     await runMutation({
       setFormError,
       execute: () => supabase.from("running_records").delete().eq("id", recordId),

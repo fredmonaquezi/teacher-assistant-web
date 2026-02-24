@@ -52,7 +52,6 @@ function createGroupActions({
 
   const handleDeleteConstraint = async (constraintId) => {
     if (!constraintId) return;
-    if (!window.confirm("Delete this separation rule?")) return;
     await runMutation({
       setFormError,
       execute: () => supabase.from("group_constraints").delete().eq("id", constraintId),

@@ -8,8 +8,6 @@ afterEach(() => {
 });
 
 test("keeps add-category modal open when category mutation fails", async () => {
-  vi.spyOn(window, "confirm").mockReturnValue(true);
-
   const handleCreateRubricCategory = vi.fn().mockResolvedValue(false);
 
   render(

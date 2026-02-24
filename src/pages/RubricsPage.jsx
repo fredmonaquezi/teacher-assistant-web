@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
 function RubricsPage({
   formError,
@@ -29,6 +30,7 @@ function RubricsPage({
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [deleteAllConfirmText, setDeleteAllConfirmText] = useState("");
   const [deletingAllRubrics, setDeletingAllRubrics] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [newTemplateForm, setNewTemplateForm] = useState({
     title: "",
     gradeBand: "",
@@ -162,7 +164,6 @@ function RubricsPage({
   };
 
   const handleDeleteTemplate = async (rubricId) => {
-    if (!window.confirm(t("rubrics.confirm.deleteTemplate"))) return;
     const deleted = await handleDeleteRubricTemplate(rubricId);
     if (!deleted) return;
     if (selectedTemplate?.id === rubricId) setSelectedTemplate(null);
@@ -197,7 +198,6 @@ function RubricsPage({
   };
 
   const handleDeleteCategory = async (categoryId) => {
-    if (!window.confirm(t("rubrics.confirm.deleteCategory"))) return;
     await handleDeleteRubricCategory(categoryId);
   };
 
@@ -218,9 +218,30 @@ function RubricsPage({
   };
 
   const handleDeleteCriterion = async (criterionId) => {
-    if (!window.confirm(t("rubrics.confirm.deleteCriterion"))) return;
     await handleDeleteRubricCriterion(criterionId);
   };
+
+  const confirmDeleteTarget = async () => {
+    if (!deleteTarget?.id) return;
+
+    if (deleteTarget.kind === "template") {
+      await handleDeleteTemplate(deleteTarget.id);
+    } else if (deleteTarget.kind === "category") {
+      await handleDeleteCategory(deleteTarget.id);
+    } else if (deleteTarget.kind === "criterion") {
+      await handleDeleteCriterion(deleteTarget.id);
+    }
+
+    setDeleteTarget(null);
+  };
+
+  const deleteTargetDescription = deleteTarget
+    ? deleteTarget.kind === "template"
+      ? t("rubrics.confirm.deleteTemplate")
+      : deleteTarget.kind === "category"
+        ? t("rubrics.confirm.deleteCategory")
+        : t("rubrics.confirm.deleteCriterion")
+    : "";
 
   const handleUpdateCriterion = async () => {
     if (!editingCriterion?.id) return;
@@ -308,7 +329,7 @@ function RubricsPage({
                           className="icon-button"
                           onClick={(event) => {
                             event.stopPropagation();
-                            handleDeleteTemplate(template.id);
+                            setDeleteTarget({ kind: "template", id: template.id });
                           }}
                           aria-label={t("rubrics.aria.deleteTemplate")}
                         >
@@ -493,7 +514,7 @@ function RubricsPage({
                         <button
                           type="button"
                           className="icon-button"
-                          onClick={() => handleDeleteCategory(category.id)}
+                          onClick={() => setDeleteTarget({ kind: "category", id: category.id })}
                         >
                           ✕
                         </button>
@@ -521,7 +542,7 @@ function RubricsPage({
                                 <button
                                   type="button"
                                   className="icon-button"
-                                  onClick={() => handleDeleteCriterion(criterion.id)}
+                                  onClick={() => setDeleteTarget({ kind: "criterion", id: criterion.id })}
                                 >
                                   ✕
                                 </button>
@@ -690,6 +711,14 @@ function RubricsPage({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t("common.actions.delete")}
+        description={deleteTargetDescription}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteTarget}
+      />
     </>
   );
 }

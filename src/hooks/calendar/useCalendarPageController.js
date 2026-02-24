@@ -76,6 +76,7 @@ function useCalendarPageController({
   const [showNewEvent, setShowNewEvent] = useState(false);
   const [newEntry, setNewEntry] = useState(createEmptyDiaryEntry());
   const [newEvent, setNewEvent] = useState(createEmptyEvent());
+  const [deleteRequest, setDeleteRequest] = useState(null);
 
   const activeClassLabel = classOptions.find((option) => option.id === effectiveClassId)?.label || "";
 
@@ -215,8 +216,7 @@ function useCalendarPageController({
 
   const handleDeleteDiaryEntry = async (entryId) => {
     if (!entryId) return;
-    if (!window.confirm(t("calendar.confirm.deleteDiaryEntry"))) return;
-    await handleDeleteCalendarDiaryEntry(entryId);
+    setDeleteRequest({ kind: "diary", id: entryId });
   };
 
   const openEditDiaryEntry = (entry) => {
@@ -319,8 +319,21 @@ function useCalendarPageController({
 
   const handleDeleteEvent = async (eventId) => {
     if (!eventId) return;
-    if (!window.confirm(t("calendar.confirm.deleteEvent"))) return;
-    await handleDeleteCalendarEvent(eventId);
+    setDeleteRequest({ kind: "event", id: eventId });
+  };
+
+  const closeDeleteRequest = () => {
+    setDeleteRequest(null);
+  };
+
+  const confirmDeleteRequest = async () => {
+    if (!deleteRequest?.id) return;
+    if (deleteRequest.kind === "diary") {
+      await handleDeleteCalendarDiaryEntry(deleteRequest.id);
+    } else if (deleteRequest.kind === "event") {
+      await handleDeleteCalendarEvent(deleteRequest.id);
+    }
+    setDeleteRequest(null);
   };
 
   const calendarSetupMessage = t("calendar.setupMessage");
@@ -387,6 +400,9 @@ function useCalendarPageController({
     handleUpdateDiaryEntry,
     handleCreateEvent,
     handleDeleteEvent,
+    deleteRequest,
+    closeDeleteRequest,
+    confirmDeleteRequest,
     classes,
     subjects,
     units,

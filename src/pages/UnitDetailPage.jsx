@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import ReorderModeToggle from "../components/common/ReorderModeToggle";
 import { useHandleDrag } from "../hooks/useHandleDrag";
 import { useReorderMode } from "../hooks/useReorderMode";
@@ -370,159 +371,142 @@ function UnitDetailPage({
         </div>
       )}
 
-        {showDeleteAssessmentAlert && (
+      <ConfirmDialog
+        open={showDeleteAssessmentAlert}
+        title={t("unitDetail.deleteAssessment.title")}
+        description={
+          assessmentToDelete
+            ? t("unitDetail.deleteAssessment.description", { title: assessmentToDelete.title })
+            : ""
+        }
+        onCancel={() => {
+          setShowDeleteAssessmentAlert(false);
+          setAssessmentToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (assessmentToDelete?.id) {
+            await handleDeleteAssessment(assessmentToDelete.id);
+          }
+          setShowDeleteAssessmentAlert(false);
+          setAssessmentToDelete(null);
+        }}
+      />
+
+      {showCopyCriteriaFlow && (
         <div className="modal-overlay">
-          <div className="modal-card">
-            <h3>{t("unitDetail.deleteAssessment.title")}</h3>
-            <p className="muted">
-              {assessmentToDelete
-                ? t("unitDetail.deleteAssessment.description", { title: assessmentToDelete.title })
-                : ""}
-            </p>
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => {
-                  setShowDeleteAssessmentAlert(false);
-                  setAssessmentToDelete(null);
-                }}
-              >
-                {t("common.actions.cancel")}
-              </button>
-              <button
-                type="button"
-                className="danger"
-                onClick={async () => {
-                  if (assessmentToDelete?.id) {
-                    await handleDeleteAssessment(assessmentToDelete.id);
-                  }
-                  setShowDeleteAssessmentAlert(false);
-                  setAssessmentToDelete(null);
-                }}
-              >
-                {t("common.actions.delete")}
-              </button>
-            </div>
+          <div className="modal-card copy-criteria-modal">
+            {copyStep === "subject" && (
+              <>
+                <h3>{t("unitDetail.copy.subjectStepTitle")}</h3>
+                <label className="stack">
+                  <span>{t("unitDetail.copy.subject")}</span>
+                  <select
+                    value={copySourceSubjectId}
+                    onChange={(event) => {
+                      setCopySourceSubjectId(event.target.value);
+                      setCopySourceUnitId("");
+                    }}
+                  >
+                    <option value="">{t("unitDetail.copy.selectSubject")}</option>
+                    {subjectsInClass.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => setShowCopyCriteriaFlow(false)}
+                  >
+                    {t("common.actions.cancel")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!copySourceSubjectId}
+                    onClick={() => setCopyStep("unit")}
+                  >
+                    {t("common.actions.next")}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {copyStep === "unit" && (
+              <>
+                <h3>{t("unitDetail.copy.unitStepTitle")}</h3>
+                <label className="stack">
+                  <span>{t("unitDetail.copy.unit")}</span>
+                  <select
+                    value={copySourceUnitId}
+                    onChange={(event) => setCopySourceUnitId(event.target.value)}
+                  >
+                    <option value="">{t("unitDetail.copy.selectUnit")}</option>
+                    {sourceUnits.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="modal-actions">
+                  <button type="button" className="secondary" onClick={() => setCopyStep("subject")}>
+                    {t("common.actions.back")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!copySourceUnitId}
+                    onClick={() => setCopyStep("confirm")}
+                  >
+                    {t("common.actions.next")}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {copyStep === "confirm" && (
+              <>
+                <h3>{t("unitDetail.copy.confirmTitle")}</h3>
+                <p className="muted">
+                  {t("unitDetail.copy.confirmDescription", { count: sourceAssessments.length })}
+                </p>
+                {sourceAssessments.length > 0 && (
+                  <ul className="list">
+                    {sourceAssessments.slice(0, 8).map((item) => (
+                      <li key={item.id}>{item.title}</li>
+                    ))}
+                    {sourceAssessments.length > 8 && (
+                      <li className="muted">{t("unitDetail.copy.moreCount", { count: sourceAssessments.length - 8 })}</li>
+                    )}
+                  </ul>
+                )}
+                <div className="modal-actions">
+                  <button type="button" className="secondary" onClick={() => setCopyStep("unit")}>
+                    {t("common.actions.back")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!copySourceUnitId}
+                    onClick={async () => {
+                      await handleCopyAssessmentsFromUnit(
+                        copySourceUnitId,
+                        unitId,
+                        subject?.id,
+                        subject?.class_id
+                      );
+                      setShowCopyCriteriaFlow(false);
+                    }}
+                  >
+                    {t("unitDetail.copy.copy")}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
-        )}
-
-        {showCopyCriteriaFlow && (
-          <div className="modal-overlay">
-            <div className="modal-card copy-criteria-modal">
-              {copyStep === "subject" && (
-                <>
-                  <h3>{t("unitDetail.copy.subjectStepTitle")}</h3>
-                  <label className="stack">
-                    <span>{t("unitDetail.copy.subject")}</span>
-                    <select
-                      value={copySourceSubjectId}
-                      onChange={(event) => {
-                        setCopySourceSubjectId(event.target.value);
-                        setCopySourceUnitId("");
-                      }}
-                    >
-                      <option value="">{t("unitDetail.copy.selectSubject")}</option>
-                      {subjectsInClass.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="modal-actions">
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => setShowCopyCriteriaFlow(false)}
-                    >
-                      {t("common.actions.cancel")}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!copySourceSubjectId}
-                      onClick={() => setCopyStep("unit")}
-                    >
-                      {t("common.actions.next")}
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {copyStep === "unit" && (
-                <>
-                  <h3>{t("unitDetail.copy.unitStepTitle")}</h3>
-                  <label className="stack">
-                    <span>{t("unitDetail.copy.unit")}</span>
-                    <select
-                      value={copySourceUnitId}
-                      onChange={(event) => setCopySourceUnitId(event.target.value)}
-                    >
-                      <option value="">{t("unitDetail.copy.selectUnit")}</option>
-                      {sourceUnits.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="modal-actions">
-                    <button type="button" className="secondary" onClick={() => setCopyStep("subject")}>
-                      {t("common.actions.back")}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!copySourceUnitId}
-                      onClick={() => setCopyStep("confirm")}
-                    >
-                      {t("common.actions.next")}
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {copyStep === "confirm" && (
-                <>
-                  <h3>{t("unitDetail.copy.confirmTitle")}</h3>
-                  <p className="muted">
-                    {t("unitDetail.copy.confirmDescription", { count: sourceAssessments.length })}
-                  </p>
-                  {sourceAssessments.length > 0 && (
-                    <ul className="list">
-                      {sourceAssessments.slice(0, 8).map((item) => (
-                        <li key={item.id}>{item.title}</li>
-                      ))}
-                      {sourceAssessments.length > 8 && (
-                        <li className="muted">{t("unitDetail.copy.moreCount", { count: sourceAssessments.length - 8 })}</li>
-                      )}
-                    </ul>
-                  )}
-                  <div className="modal-actions">
-                    <button type="button" className="secondary" onClick={() => setCopyStep("unit")}>
-                      {t("common.actions.back")}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!copySourceUnitId}
-                      onClick={async () => {
-                        await handleCopyAssessmentsFromUnit(
-                          copySourceUnitId,
-                          unitId,
-                          subject?.id,
-                          subject?.class_id
-                        );
-                        setShowCopyCriteriaFlow(false);
-                      }}
-                    >
-                      {t("unitDetail.copy.copy")}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+      )}
     </>
   );
 }

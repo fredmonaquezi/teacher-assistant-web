@@ -3,6 +3,7 @@ import CalendarDiaryEntryModal from "../components/calendar/CalendarDiaryEntryMo
 import CalendarEntryDetailModal from "../components/calendar/CalendarEntryDetailModal";
 import CalendarEventModal from "../components/calendar/CalendarEventModal";
 import CalendarMainPanel from "../components/calendar/CalendarMainPanel";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 import useCalendarPageController from "../hooks/calendar/useCalendarPageController";
 
@@ -76,6 +77,9 @@ const CalendarPage = ({
     handleUpdateDiaryEntry,
     handleCreateEvent,
     handleDeleteEvent,
+    deleteRequest,
+    closeDeleteRequest,
+    confirmDeleteRequest,
   } = useCalendarPageController({
     setFormError,
     classOptions,
@@ -193,6 +197,18 @@ const CalendarPage = ({
         submitLabel={t("calendar.actions.saveChanges")}
         calendarTablesReady={calendarTablesReady}
         resetSubjectOnClassChange={true}
+      />
+
+      <ConfirmDialog
+        open={Boolean(deleteRequest)}
+        title={t("common.actions.delete")}
+        description={
+          deleteRequest?.kind === "diary"
+            ? t("calendar.confirm.deleteDiaryEntry")
+            : t("calendar.confirm.deleteEvent")
+        }
+        onCancel={closeDeleteRequest}
+        onConfirm={confirmDeleteRequest}
       />
     </>
   );

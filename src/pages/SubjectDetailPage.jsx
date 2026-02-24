@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import ReorderModeToggle from "../components/common/ReorderModeToggle";
 import { useHandleDrag } from "../hooks/useHandleDrag";
 import { useReorderMode } from "../hooks/useReorderMode";
@@ -281,43 +282,22 @@ function SubjectDetailPage({
         </div>
       )}
 
-      {showDeleteUnitAlert && (
-        <div className="modal-overlay">
-          <div className="modal-card">
-            <h3>{t("subjectDetail.delete.title")}</h3>
-            <p className="muted">
-              {unitToDelete
-                ? t("subjectDetail.delete.description", { name: unitToDelete.name })
-                : ""}
-            </p>
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => {
-                  setShowDeleteUnitAlert(false);
-                  setUnitToDelete(null);
-                }}
-              >
-                {t("common.actions.cancel")}
-              </button>
-              <button
-                type="button"
-                className="danger"
-                onClick={async () => {
-                  if (unitToDelete?.id) {
-                    await handleDeleteUnit(unitToDelete.id);
-                  }
-                  setShowDeleteUnitAlert(false);
-                  setUnitToDelete(null);
-                }}
-              >
-                {t("common.actions.delete")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={showDeleteUnitAlert}
+        title={t("subjectDetail.delete.title")}
+        description={unitToDelete ? t("subjectDetail.delete.description", { name: unitToDelete.name }) : ""}
+        onCancel={() => {
+          setShowDeleteUnitAlert(false);
+          setUnitToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (unitToDelete?.id) {
+            await handleDeleteUnit(unitToDelete.id);
+          }
+          setShowDeleteUnitAlert(false);
+          setUnitToDelete(null);
+        }}
+      />
     </>
   );
 }

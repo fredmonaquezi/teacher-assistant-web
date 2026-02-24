@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import ReorderModeToggle from "../components/common/ReorderModeToggle";
 import { useHandleDrag } from "../hooks/useHandleDrag";
 import { useReorderMode } from "../hooks/useReorderMode";
@@ -46,6 +47,7 @@ function UsefulLinksPage({
   const [createForm, setCreateForm] = useState(EMPTY_FORM);
   const [editingLinkId, setEditingLinkId] = useState("");
   const [editForm, setEditForm] = useState(EMPTY_FORM);
+  const [linkToDelete, setLinkToDelete] = useState(null);
   const [dragLinkId, setDragLinkId] = useState(null);
   const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderMode();
   const isMobileReorderActive = isMobileLayout && isReorderMode;
@@ -101,9 +103,13 @@ function UsefulLinksPage({
 
   const onDeleteLink = async (link) => {
     if (!link?.id) return;
-    const didConfirm = window.confirm(t("usefulLinks.confirm.delete", { title: link.title || "" }));
-    if (!didConfirm) return;
-    await handleDeleteUsefulLink(link.id);
+    setLinkToDelete(link);
+  };
+
+  const confirmDeleteLink = async () => {
+    if (!linkToDelete?.id) return;
+    await handleDeleteUsefulLink(linkToDelete.id);
+    setLinkToDelete(null);
   };
 
   const handleMobileMove = async (linkId, direction) => {
@@ -339,6 +345,14 @@ function UsefulLinksPage({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(linkToDelete)}
+        title={t("common.actions.delete")}
+        description={t("usefulLinks.confirm.delete", { title: linkToDelete?.title || "" })}
+        onCancel={() => setLinkToDelete(null)}
+        onConfirm={confirmDeleteLink}
+      />
     </>
   );
 }

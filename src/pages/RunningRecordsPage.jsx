@@ -3,6 +3,7 @@ import { format, parseISO } from "date-fns";
 import { enUS, ptBR } from "date-fns/locale";
 import { DayPicker } from "react-day-picker";
 import { useTranslation } from "react-i18next";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
 function RunningRecordsPage({
   formError,
@@ -26,6 +27,7 @@ function RunningRecordsPage({
   const [sortBy, setSortBy] = useState("date_desc");
   const [selectedDateRange, setSelectedDateRange] = useState("all");
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [recordToDelete, setRecordToDelete] = useState(null);
 
   const classLookup = useMemo(() => {
     const map = new Map();
@@ -266,6 +268,13 @@ function RunningRecordsPage({
       `running-records-${format(new Date(), "yyyyMMdd")}.json`,
       "application/json;charset=utf-8;"
     );
+  };
+
+  const confirmDeleteRecord = async () => {
+    if (!recordToDelete?.id) return;
+    await handleDeleteRunningRecord(recordToDelete.id);
+    setRecordToDelete(null);
+    setSelectedRecord(null);
   };
 
   return (
@@ -710,10 +719,7 @@ function RunningRecordsPage({
               <button
                 type="button"
                 className="danger"
-                onClick={async () => {
-                  await handleDeleteRunningRecord(selectedRecord.id);
-                  setSelectedRecord(null);
-                }}
+                onClick={() => setRecordToDelete(selectedRecord)}
               >
                 {t("common.actions.delete")}
               </button>
@@ -721,6 +727,14 @@ function RunningRecordsPage({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(recordToDelete)}
+        title={t("common.actions.delete")}
+        description="Delete this running record?"
+        onCancel={() => setRecordToDelete(null)}
+        onConfirm={confirmDeleteRecord}
+      />
     </>
   );
 }

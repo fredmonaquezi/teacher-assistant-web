@@ -81,7 +81,6 @@ test("creates a useful link from the add form", async () => {
 });
 
 test("edits and deletes a useful link", async () => {
-  vi.spyOn(window, "confirm").mockReturnValue(true);
   const handleUpdateUsefulLink = vi.fn().mockResolvedValue(true);
   const handleDeleteUsefulLink = vi.fn().mockResolvedValue(true);
 
@@ -122,6 +121,8 @@ test("edits and deletes a useful link", async () => {
       name: i18n.t("usefulLinks.aria.delete", { title: "District Portal" }),
     })
   );
+  const deleteDialog = await screen.findByRole("dialog", { name: i18n.t("common.actions.delete") });
+  fireEvent.click(within(deleteDialog).getByRole("button", { name: i18n.t("common.actions.delete") }));
 
   await waitFor(() => expect(handleDeleteUsefulLink).toHaveBeenCalledWith("link-1"));
 });

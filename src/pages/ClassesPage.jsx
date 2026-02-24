@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import ReorderModeToggle from "../components/common/ReorderModeToggle";
 import { useHandleDrag } from "../hooks/useHandleDrag";
 import { useReorderMode } from "../hooks/useReorderMode";
@@ -19,6 +20,7 @@ function ClassesPage({
 }) {
   const { t } = useTranslation();
   const [showAddClass, setShowAddClass] = useState(false);
+  const [classToDelete, setClassToDelete] = useState(null);
   const [dragClassId, setDragClassId] = useState(null);
   const navigate = useNavigate();
   const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderMode();
@@ -165,7 +167,7 @@ function ClassesPage({
                         className="icon-button"
                         onClick={(event) => {
                           event.stopPropagation();
-                          handleDeleteClass(item.id);
+                          setClassToDelete(item);
                         }}
                         aria-label={t("classes.aria.delete", { name: item.name })}
                       >
@@ -243,6 +245,22 @@ function ClassesPage({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(classToDelete)}
+        title={t("common.actions.delete")}
+        description={
+          classToDelete
+            ? `Delete "${classToDelete.name}" and all related data?`
+            : ""
+        }
+        onCancel={() => setClassToDelete(null)}
+        onConfirm={async () => {
+          if (!classToDelete?.id) return;
+          await handleDeleteClass(classToDelete.id);
+          setClassToDelete(null);
+        }}
+      />
     </>
   );
 }

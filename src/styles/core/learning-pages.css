@@ -374,6 +374,35 @@
   gap: 12px;
 }
 
+.confirm-dialog {
+  width: min(500px, 92vw);
+  border-radius: 20px;
+  border: 1px solid #c9ab7e;
+  background: linear-gradient(180deg, #fdf1d9 0%, #f5e6c5 100%);
+  box-shadow: 0 24px 46px rgba(74, 53, 29, 0.24);
+  gap: 14px;
+}
+
+.confirm-dialog h3 {
+  margin: 0;
+  font-size: 1.65rem;
+  line-height: 1.05;
+}
+
+.confirm-dialog .muted {
+  margin: 0;
+}
+
+.confirm-dialog .confirm-dialog-actions {
+  margin-top: 2px;
+}
+
+.confirm-dialog .confirm-dialog-actions button {
+  min-height: 46px;
+  min-width: 106px;
+  border-radius: 14px;
+}
+
 .student-edit-modal {
   width: min(760px, 94vw);
   border-radius: 20px;
