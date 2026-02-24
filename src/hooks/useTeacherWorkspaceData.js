@@ -15,6 +15,10 @@ function useTeacherWorkspaceData(userId) {
     calendarTablesReady,
     usefulLinks,
     setUsefulLinks,
+    randomPickerCustomCategories,
+    setRandomPickerCustomCategories,
+    randomPickerRotationRows,
+    setRandomPickerRotationRows,
     attendanceSessions,
     attendanceEntries,
     setAttendanceEntries,
@@ -44,6 +48,7 @@ function useTeacherWorkspaceData(userId) {
     refreshGroupData,
     refreshCalendarData,
     refreshUsefulLinksData,
+    refreshRandomPickerData,
   } = useWorkspaceReads(userId);
 
   const [seedingRubrics, setSeedingRubrics] = useState(false);
@@ -155,6 +160,10 @@ function useTeacherWorkspaceData(userId) {
     handleUpdateUsefulLink,
     handleDeleteUsefulLink,
     handleSwapUsefulLinkSortOrder,
+    handleCreateRandomPickerCustomCategory,
+    handleDeleteRandomPickerCustomCategory,
+    handleSetRandomPickerRotationUsedStudents,
+    handleImportLegacyRandomPickerState,
     handleAddConstraint,
     handleDeleteConstraint,
     handleGenerateGroups,
@@ -167,6 +176,10 @@ function useTeacherWorkspaceData(userId) {
     setCalendarEvents,
     usefulLinks,
     setUsefulLinks,
+    randomPickerCustomCategories,
+    setRandomPickerCustomCategories,
+    randomPickerRotationRows,
+    setRandomPickerRotationRows,
     assessmentEntries,
     setAssessmentEntries,
     assessments,
@@ -203,6 +216,7 @@ function useTeacherWorkspaceData(userId) {
     refreshGroupData,
     refreshCalendarData,
     refreshUsefulLinksData,
+    refreshRandomPickerData,
   });
 
   return {
@@ -214,6 +228,8 @@ function useTeacherWorkspaceData(userId) {
     calendarEvents,
     calendarTablesReady,
     usefulLinks,
+    randomPickerCustomCategories,
+    randomPickerRotationRows,
     attendanceSessions,
     attendanceEntries,
     assessments,
@@ -306,6 +322,10 @@ function useTeacherWorkspaceData(userId) {
     handleUpdateUsefulLink,
     handleDeleteUsefulLink,
     handleSwapUsefulLinkSortOrder,
+    handleCreateRandomPickerCustomCategory,
+    handleDeleteRandomPickerCustomCategory,
+    handleSetRandomPickerRotationUsedStudents,
+    handleImportLegacyRandomPickerState,
     handleAddConstraint,
     handleDeleteConstraint,
     handleGenerateGroups,

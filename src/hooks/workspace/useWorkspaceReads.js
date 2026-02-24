@@ -8,6 +8,7 @@ import { loadCalendarWorkspaceRows } from "./readers/calendarLoader";
 import { loadCoreWorkspaceRows } from "./readers/coreLoader";
 import { loadGroupWorkspaceRows } from "./readers/groupLoader";
 import { loadLinkWorkspaceRows } from "./readers/linkLoader";
+import { loadRandomPickerWorkspaceRows } from "./readers/randomPickerLoader";
 import { loadRubricWorkspaceRows } from "./readers/rubricLoader";
 
 const attendanceQueryKeyForUser = (userId) => ["workspace", "attendance", userId || "anonymous"];
@@ -16,6 +17,7 @@ const rubricQueryKeyForUser = (userId) => ["workspace", "rubric", userId || "ano
 const groupQueryKeyForUser = (userId) => ["workspace", "group", userId || "anonymous"];
 const calendarQueryKeyForUser = (userId) => ["workspace", "calendar", userId || "anonymous"];
 const linkQueryKeyForUser = (userId) => ["workspace", "link", userId || "anonymous"];
+const randomPickerQueryKeyForUser = (userId) => ["workspace", "random-picker", userId || "anonymous"];
 
 const EMPTY_ATTENDANCE_ROWS = {
   sessionRows: [],
@@ -53,6 +55,11 @@ const EMPTY_LINK_ROWS = {
   linkRows: [],
 };
 
+const EMPTY_RANDOM_PICKER_ROWS = {
+  customCategoryRows: [],
+  rotationRows: [],
+};
+
 function useWorkspaceReads(userId) {
   const queryClient = useQueryClient();
   const attendanceQueryKey = attendanceQueryKeyForUser(userId);
@@ -61,6 +68,7 @@ function useWorkspaceReads(userId) {
   const groupQueryKey = groupQueryKeyForUser(userId);
   const calendarQueryKey = calendarQueryKeyForUser(userId);
   const linkQueryKey = linkQueryKeyForUser(userId);
+  const randomPickerQueryKey = randomPickerQueryKeyForUser(userId);
 
   const [profilePreferences, setProfilePreferences] = useState(() => {
     try {
@@ -213,6 +221,28 @@ function useWorkspaceReads(userId) {
     return linkResult.rows;
   };
 
+  const loadRandomPickerRows = async () => {
+    if (!userId) {
+      return EMPTY_RANDOM_PICKER_ROWS;
+    }
+
+    const randomPickerResult = await loadRandomPickerWorkspaceRows(supabase);
+    const firstError = [
+      randomPickerResult.errors.customCategoryError && !randomPickerResult.missing.customCategoryMissing
+        ? randomPickerResult.errors.customCategoryError
+        : null,
+      randomPickerResult.errors.rotationError && !randomPickerResult.missing.rotationMissing
+        ? randomPickerResult.errors.rotationError
+        : null,
+    ].find(Boolean);
+
+    if (firstError) {
+      throw firstError;
+    }
+
+    return randomPickerResult.rows;
+  };
+
   const { data: attendanceRows = EMPTY_ATTENDANCE_ROWS } = useQuery({
     queryKey: attendanceQueryKey,
     queryFn: loadAttendanceRows,
@@ -261,6 +291,14 @@ function useWorkspaceReads(userId) {
     staleTime: 30_000,
   });
 
+  const { data: randomPickerRows = EMPTY_RANDOM_PICKER_ROWS } = useQuery({
+    queryKey: randomPickerQueryKey,
+    queryFn: loadRandomPickerRows,
+    enabled: false,
+    initialData: EMPTY_RANDOM_PICKER_ROWS,
+    staleTime: 30_000,
+  });
+
   const attendanceSessions = attendanceRows.sessionRows;
   const attendanceEntries = attendanceRows.entryRows;
 
@@ -283,6 +321,8 @@ function useWorkspaceReads(userId) {
   const calendarEvents = calendarRows.eventRows;
   const calendarTablesReady = calendarRows.tablesReady;
   const usefulLinks = linkRows.linkRows;
+  const randomPickerCustomCategories = randomPickerRows.customCategoryRows;
+  const randomPickerRotationRows = randomPickerRows.rotationRows;
 
   const setAttendanceEntries = (updater) => {
     queryClient.setQueryData(attendanceQueryKey, (currentRows) => {
@@ -352,6 +392,32 @@ function useWorkspaceReads(userId) {
       return {
         ...safeRows,
         linkRows: Array.isArray(nextLinkRows) ? nextLinkRows : safeRows.linkRows,
+      };
+    });
+  };
+
+  const setRandomPickerCustomCategories = (updater) => {
+    queryClient.setQueryData(randomPickerQueryKey, (currentRows) => {
+      const safeRows = currentRows || EMPTY_RANDOM_PICKER_ROWS;
+      const nextCustomCategoryRows =
+        typeof updater === "function" ? updater(safeRows.customCategoryRows) : updater;
+      return {
+        ...safeRows,
+        customCategoryRows: Array.isArray(nextCustomCategoryRows)
+          ? nextCustomCategoryRows
+          : safeRows.customCategoryRows,
+      };
+    });
+  };
+
+  const setRandomPickerRotationRows = (updater) => {
+    queryClient.setQueryData(randomPickerQueryKey, (currentRows) => {
+      const safeRows = currentRows || EMPTY_RANDOM_PICKER_ROWS;
+      const nextRotationRows =
+        typeof updater === "function" ? updater(safeRows.rotationRows) : updater;
+      return {
+        ...safeRows,
+        rotationRows: Array.isArray(nextRotationRows) ? nextRotationRows : safeRows.rotationRows,
       };
     });
   };
@@ -450,6 +516,20 @@ function useWorkspaceReads(userId) {
     }
   };
 
+  const refreshRandomPickerData = async () => {
+    try {
+      await queryClient.fetchQuery({
+        queryKey: randomPickerQueryKey,
+        queryFn: loadRandomPickerRows,
+        staleTime: 0,
+      });
+      return true;
+    } catch (error) {
+      setFormError(error?.message || "Failed to load random picker data.");
+      return false;
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     setFormError("");
@@ -462,6 +542,7 @@ function useWorkspaceReads(userId) {
         refreshRubricData(),
         refreshGroupData(),
         refreshUsefulLinksData(),
+        refreshRandomPickerData(),
       ]);
       await refreshCalendarData();
     } finally {
@@ -490,6 +571,10 @@ function useWorkspaceReads(userId) {
     calendarTablesReady,
     usefulLinks,
     setUsefulLinks,
+    randomPickerCustomCategories,
+    setRandomPickerCustomCategories,
+    randomPickerRotationRows,
+    setRandomPickerRotationRows,
     attendanceSessions,
     attendanceEntries,
     setAttendanceEntries,
@@ -519,6 +604,7 @@ function useWorkspaceReads(userId) {
     refreshGroupData,
     refreshCalendarData,
     refreshUsefulLinksData,
+    refreshRandomPickerData,
   };
 }
 

@@ -67,6 +67,8 @@ function TeacherWorkspace({ user, onSignOut }) {
     calendarEvents,
     calendarTablesReady,
     usefulLinks,
+    randomPickerCustomCategories,
+    randomPickerRotationRows,
     attendanceSessions,
     attendanceEntries,
     assessments,
@@ -151,6 +153,10 @@ function TeacherWorkspace({ user, onSignOut }) {
     handleUpdateUsefulLink,
     handleDeleteUsefulLink,
     handleSwapUsefulLinkSortOrder,
+    handleCreateRandomPickerCustomCategory,
+    handleDeleteRandomPickerCustomCategory,
+    handleSetRandomPickerRotationUsedStudents,
+    handleImportLegacyRandomPickerState,
     handleAddConstraint,
     handleDeleteConstraint,
     handleGenerateGroups,
@@ -289,6 +295,7 @@ function TeacherWorkspace({ user, onSignOut }) {
             element={
               <GroupsPage
                 formError={formError}
+                loading={loading}
                 classOptions={classOptions}
                 students={students}
                 groups={groups}
@@ -312,7 +319,19 @@ function TeacherWorkspace({ user, onSignOut }) {
           />
           <Route
             path="/random"
-            element={<RandomPickerPage formError={formError} classOptions={classOptions} students={students} />}
+            element={
+              <RandomPickerPage
+                formError={formError}
+                classOptions={classOptions}
+                students={students}
+                randomPickerCustomCategories={randomPickerCustomCategories}
+                randomPickerRotationRows={randomPickerRotationRows}
+                handleCreateRandomPickerCustomCategory={handleCreateRandomPickerCustomCategory}
+                handleDeleteRandomPickerCustomCategory={handleDeleteRandomPickerCustomCategory}
+                handleSetRandomPickerRotationUsedStudents={handleSetRandomPickerRotationUsedStudents}
+                handleImportLegacyRandomPickerState={handleImportLegacyRandomPickerState}
+              />
+            }
           />
           <Route
             path="/rubrics"
