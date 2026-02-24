@@ -218,6 +218,50 @@ export function generateGroups(
     available = shuffleArray(available);
   }
 
+  if (options.balanceGender) {
+    const targetGroupCount = Math.max(1, Math.ceil(studentList.length / size));
+    const groupsDraft = Array.from({ length: targetGroupCount }, () => []);
+    let attempts = 0;
+
+    while (available.length > 0 && attempts < maxAttempts) {
+      let assignedThisRound = 0;
+
+      for (const group of groupsDraft) {
+        if (available.length === 0) break;
+        if (group.length >= size) continue;
+        attempts += 1;
+
+        const candidate = pickBestStudent(available, group, constraintSet, options, abilityByStudentId);
+        if (!candidate) continue;
+
+        group.push(candidate);
+        available = available.filter((student) => student.id !== candidate.id);
+        assignedThisRound += 1;
+      }
+
+      if (assignedThisRound === 0) break;
+    }
+
+    const finalized = groupsDraft.filter((group) => group.length > 0);
+
+    while (available.length > 0 && attempts < maxAttempts) {
+      attempts += 1;
+      const group = [];
+
+      while (group.length < size && available.length > 0 && attempts < maxAttempts) {
+        const candidate = pickBestStudent(available, group, constraintSet, options, abilityByStudentId);
+        if (!candidate) break;
+        group.push(candidate);
+        available = available.filter((student) => student.id !== candidate.id);
+      }
+
+      if (group.length === 0) break;
+      finalized.push(group);
+    }
+
+    return finalized;
+  }
+
   const groupsDraft = [];
   let attempts = 0;
 
