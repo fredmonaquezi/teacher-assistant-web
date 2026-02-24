@@ -342,7 +342,6 @@ function GroupsPage({
                         <span>
                           {student.first_name} {student.last_name}
                         </span>
-                        {student.needs_help && <span className="group-need">✋</span>}
                       </div>
                     ))}
                   </div>

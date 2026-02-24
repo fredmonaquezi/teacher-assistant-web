@@ -418,11 +418,6 @@
   background: linear-gradient(180deg, #fdf5e3 0%, #f5e8cb 100%);
 }
 
-.group-need {
-  margin-left: auto;
-  color: #f59e0b;
-}
-
 .rubric-criteria-list li:last-child {
   border-bottom: none;
 }
