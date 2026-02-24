@@ -106,7 +106,6 @@ function TimerPage({ startTimerSeconds }) {
                 {preset.icon}
               </div>
               <div className="timer-preset-label">{t("timer.presetLabel", { count: preset.minutes })}</div>
-              <div className="timer-preset-sub">{t("timer.presetSub", { count: preset.minutes })}</div>
             </button>
           ))}
         </div>
