@@ -121,6 +121,7 @@ function TeacherWorkspace({ user, onSignOut }) {
     handleCreateAttendanceSessionForDate,
     handleDeleteAttendanceSession,
     handleUpdateAssessmentEntry,
+    handleSetAssessmentEntryScore,
     handleEnsureAssessmentEntries,
     handleUpdateAssessmentNotes,
     handleCreateRunningRecord,
@@ -270,6 +271,7 @@ function TeacherWorkspace({ user, onSignOut }) {
                 students={students}
                 assessments={assessments}
                 assessmentEntries={assessmentEntries}
+                handleSetAssessmentEntryScore={handleSetAssessmentEntryScore}
               />
             }
           />

@@ -29,6 +29,34 @@ function createAssessmentActions({
     });
   };
 
+  const handleSetAssessmentEntryScore = async (assessmentId, studentId, score) => {
+    if (!assessmentId || !studentId) return false;
+    const existingEntry = assessmentEntries.find(
+      (entry) => entry.assessment_id === assessmentId && entry.student_id === studentId
+    );
+
+    if (existingEntry?.id) {
+      return handleUpdateAssessmentEntry(existingEntry.id, { score });
+    }
+
+    return runMutation({
+      setFormError,
+      execute: () =>
+        supabase
+          .from("assessment_entries")
+          .upsert(
+            {
+              assessment_id: assessmentId,
+              student_id: studentId,
+              score,
+            },
+            { onConflict: "assessment_id,student_id" }
+          ),
+      refresh: refreshAssessmentData,
+      fallbackErrorMessage: "Failed to save assessment score.",
+    });
+  };
+
   const handleCreateAssessmentForUnit = async (event, unitId, subjectId, classId, formValues = null) => {
     event.preventDefault();
     setFormError("");
@@ -243,6 +271,7 @@ function createAssessmentActions({
 
   return {
     handleUpdateAssessmentEntry,
+    handleSetAssessmentEntryScore,
     handleCreateAssessmentForUnit,
     handleDeleteAssessment,
     handleCopyAssessmentsFromUnit,
