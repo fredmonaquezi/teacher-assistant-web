@@ -283,8 +283,19 @@
       "unitNoAssessments": "This unit has no assessments yet.",
       "classNoStudents": "This class has no students yet."
     },
+    "inlineEditor": {
+      "title": "Edit Grade",
+      "student": "Student",
+      "assessment": "Assessment",
+      "score": "Score",
+      "maxScore": "Max score: {{max}}",
+      "save": "Save Grade",
+      "saveFailed": "Could not save the grade. Try again.",
+      "invalidScore": "Enter a valid score (0 or more)."
+    },
     "aria": {
-      "openAssessmentForStudent": "Open {{assessmentTitle}} for {{studentName}}"
+      "openAssessment": "Open assessment {{assessmentTitle}}",
+      "editAssessmentForStudent": "Edit grade for {{studentName}} in {{assessmentTitle}}"
     }
   },
   "assessmentDetail": {

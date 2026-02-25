@@ -284,8 +284,19 @@
       "unitNoAssessments": "Esta unidade ainda não possui avaliações.",
       "classNoStudents": "Esta turma ainda não possui alunos."
     },
+    "inlineEditor": {
+      "title": "Editar Nota",
+      "student": "Aluno",
+      "assessment": "Avaliação",
+      "score": "Nota",
+      "maxScore": "Nota máxima: {{max}}",
+      "save": "Salvar Nota",
+      "saveFailed": "Não foi possível salvar a nota. Tente novamente.",
+      "invalidScore": "Informe uma nota válida (0 ou mais)."
+    },
     "aria": {
-      "openAssessmentForStudent": "Abrir {{assessmentTitle}} para {{studentName}}"
+      "openAssessment": "Abrir avaliação {{assessmentTitle}}",
+      "editAssessmentForStudent": "Editar nota de {{studentName}} em {{assessmentTitle}}"
     }
   },
   "assessmentDetail": {

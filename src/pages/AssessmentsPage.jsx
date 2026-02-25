@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate } from "react-router-dom";
 import { averageFromPercents, getAssessmentMaxScore, performanceColor, scoreToPercent } from "../utils/assessmentMetrics";
@@ -25,6 +25,7 @@ const AssessmentsPage = ({
   students = [],
   assessments = [],
   assessmentEntries = [],
+  handleSetAssessmentEntryScore,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -32,6 +33,10 @@ const AssessmentsPage = ({
   const [selectedClassId, setSelectedClassId] = useState("");
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [selectedUnitId, setSelectedUnitId] = useState("");
+  const [activeGradeEditor, setActiveGradeEditor] = useState(null);
+  const [gradeValue, setGradeValue] = useState("");
+  const [gradeSaveError, setGradeSaveError] = useState("");
+  const [isSavingGrade, setIsSavingGrade] = useState(false);
 
   const selectedClass = sortedClasses.find((item) => item.id === selectedClassId) || null;
   const subjectsForClass = useMemo(
@@ -91,16 +96,100 @@ const AssessmentsPage = ({
   const unitAverage = averageFromPercents(unitPercents);
   const unitAverageColor = performanceColor(unitAverage);
 
+  const activeAssessment = useMemo(() => {
+    if (!activeGradeEditor) return null;
+    return assessmentsForUnit.find((item) => item.id === activeGradeEditor.assessmentId) || null;
+  }, [activeGradeEditor, assessmentsForUnit]);
+
+  const activeStudent = useMemo(() => {
+    if (!activeGradeEditor) return null;
+    return studentsForClass.find((item) => item.id === activeGradeEditor.studentId) || null;
+  }, [activeGradeEditor, studentsForClass]);
+
+  const resetGradeEditor = useCallback(() => {
+    setActiveGradeEditor(null);
+    setGradeValue("");
+    setGradeSaveError("");
+  }, []);
+
   const pickClass = (classId) => {
+    resetGradeEditor();
     setSelectedClassId(classId);
     setSelectedSubjectId("");
     setSelectedUnitId("");
   };
 
   const pickSubject = (subjectId) => {
+    resetGradeEditor();
     setSelectedSubjectId(subjectId);
     setSelectedUnitId("");
   };
+
+  const closeGradeEditor = useCallback(() => {
+    if (isSavingGrade) return;
+    resetGradeEditor();
+  }, [isSavingGrade, resetGradeEditor]);
+
+  const openGradeEditor = (assessment, student, entry) => {
+    setActiveGradeEditor({
+      assessmentId: assessment.id,
+      studentId: student.id,
+    });
+    setGradeValue(
+      entry?.score === null || entry?.score === undefined ? "" : String(entry.score)
+    );
+    setGradeSaveError("");
+  };
+
+  useEffect(() => {
+    if (!activeGradeEditor) return;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closeGradeEditor();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeGradeEditor, closeGradeEditor]);
+
+  const submitGrade = async (event) => {
+    event.preventDefault();
+    if (!activeGradeEditor || typeof handleSetAssessmentEntryScore !== "function") return;
+
+    const normalizedValue = gradeValue.trim();
+    const parsedScore = normalizedValue === "" ? null : Number(normalizedValue);
+
+    if (
+      normalizedValue !== "" &&
+      (!Number.isFinite(parsedScore) || Number(parsedScore) < 0)
+    ) {
+      setGradeSaveError(t("assessments.inlineEditor.invalidScore"));
+      return;
+    }
+
+    setGradeSaveError("");
+    setIsSavingGrade(true);
+    const ok = await handleSetAssessmentEntryScore(
+      activeGradeEditor.assessmentId,
+      activeGradeEditor.studentId,
+      parsedScore
+    );
+    setIsSavingGrade(false);
+
+    if (ok) {
+      resetGradeEditor();
+      return;
+    }
+
+    setGradeSaveError(t("assessments.inlineEditor.saveFailed"));
+  };
+
+  const activePercent = scoreToPercent(
+    gradeValue.trim() === "" ? null : Number(gradeValue),
+    getAssessmentMaxScore(activeAssessment)
+  );
+  const activePercentColor =
+    activePercent === null ? "#7c6446" : performanceColor(activePercent);
 
   return (
     <>
@@ -175,7 +264,10 @@ const AssessmentsPage = ({
                     key={item.id}
                     type="button"
                     className={`gradebook-step-item ${selectedUnitId === item.id ? "active" : ""}`}
-                    onClick={() => setSelectedUnitId(item.id)}
+                    onClick={() => {
+                      resetGradeEditor();
+                      setSelectedUnitId(item.id);
+                    }}
                   >
                     <span>{item.name}</span>
                     <span>›</span>
@@ -223,7 +315,16 @@ const AssessmentsPage = ({
                       <th className="student-col">{t("assessments.table.student")}</th>
                       {assessmentsForUnit.map((assessment) => (
                         <th key={assessment.id} className="grade-col">
-                          {assessment.title}
+                          <button
+                            type="button"
+                            className="gradebook-assessment-link"
+                            onClick={() => navigate(`/assessments/${assessment.id}`)}
+                            aria-label={t("assessments.aria.openAssessment", {
+                              assessmentTitle: assessment.title,
+                            })}
+                          >
+                            {assessment.title}
+                          </button>
                         </th>
                       ))}
                       <th className="grade-col">{t("assessments.table.average")}</th>
@@ -267,8 +368,8 @@ const AssessmentsPage = ({
                                   type="button"
                                   className="gradebook-grade-cell"
                                   style={{ color: cellColor, background: cellBg }}
-                                  onClick={() => navigate(`/assessments/${assessment.id}`)}
-                                  aria-label={t("assessments.aria.openAssessmentForStudent", {
+                                  onClick={() => openGradeEditor(assessment, student, entry)}
+                                  aria-label={t("assessments.aria.editAssessmentForStudent", {
                                     assessmentTitle: assessment.title,
                                     studentName: `${student.first_name} ${student.last_name}`,
                                   })}
@@ -291,6 +392,58 @@ const AssessmentsPage = ({
           </>
         )}
       </section>
+
+      {activeGradeEditor && activeAssessment && activeStudent && (
+        <div className="modal-overlay" onClick={closeGradeEditor}>
+          <div
+            className="modal-card gradebook-grade-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("assessments.inlineEditor.title")}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3>{t("assessments.inlineEditor.title")}</h3>
+            <div className="gradebook-grade-modal-copy">
+              <p>
+                <span>{t("assessments.inlineEditor.student")}:</span>
+                <strong>{activeStudent.first_name} {activeStudent.last_name}</strong>
+              </p>
+              <p>
+                <span>{t("assessments.inlineEditor.assessment")}:</span>
+                <strong>{activeAssessment.title}</strong>
+              </p>
+            </div>
+            <form className="gradebook-grade-modal-form" onSubmit={submitGrade}>
+              <label className="stack">
+                <span>{t("assessments.inlineEditor.score")}</span>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={gradeValue}
+                  onChange={(event) => setGradeValue(event.target.value)}
+                  autoFocus
+                />
+              </label>
+              <div className="gradebook-grade-modal-meta">
+                <span>{t("assessments.inlineEditor.maxScore", { max: getAssessmentMaxScore(activeAssessment) })}</span>
+                <strong style={{ color: activePercentColor }}>
+                  {activePercent === null ? "—" : `${activePercent.toFixed(1)}%`}
+                </strong>
+              </div>
+              {gradeSaveError && <p className="error">{gradeSaveError}</p>}
+              <div className="modal-actions">
+                <button type="button" className="secondary" onClick={closeGradeEditor}>
+                  {t("common.actions.cancel")}
+                </button>
+                <button type="submit" disabled={isSavingGrade}>
+                  {t("assessments.inlineEditor.save")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 };
