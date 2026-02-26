@@ -1,4 +1,5 @@
-import { enUS, ptBR } from "date-fns/locale";
+import { enUS } from "date-fns/locale/en-US";
+import { ptBR } from "date-fns/locale/pt-BR";
 
 const capitalizeFirst = (value) => {
   if (typeof value !== "string" || value.length === 0) return value;
@@ -21,4 +22,3 @@ export function getDateLocale(language, options = {}) {
   }
   return enUS;
 }
-

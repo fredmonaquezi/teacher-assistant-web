@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { enUS, ptBR } from "date-fns/locale";
+import { enUS } from "date-fns/locale/en-US";
+import { ptBR } from "date-fns/locale/pt-BR";
 import { DayPicker } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import ConfirmDialog from "../components/common/ConfirmDialog";
@@ -41,15 +42,18 @@ function RunningRecordsPage({
     return map;
   }, [students]);
 
+  const unknownStudentLabel = t("runningRecords.unknownStudent");
+  const noClassLabel = t("runningRecords.noClass");
+
   const getStudentName = (studentId) => {
     const student = studentLookup.get(studentId);
-    return student ? `${student.first_name} ${student.last_name}` : t("runningRecords.unknownStudent");
+    return student ? `${student.first_name} ${student.last_name}` : unknownStudentLabel;
   };
 
   const classDisplayName = (classId) => {
-    if (!classId) return t("runningRecords.noClass");
+    if (!classId) return noClassLabel;
     const classItem = classLookup.get(classId);
-    if (!classItem) return t("runningRecords.noClass");
+    if (!classItem) return noClassLabel;
     if (!classItem.grade_level) return classItem.name;
     return `${classItem.name} (${classItem.grade_level})`;
   };
@@ -70,12 +74,17 @@ function RunningRecordsPage({
       }))
       .sort((a, b) => a.className.localeCompare(b.className));
   })();
-  const classOptions = classes
-    .map((classItem) => ({
-      id: classItem.id,
-      label: classItem.grade_level ? `${classItem.name} (${classItem.grade_level})` : classItem.name,
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+
+  const classOptions = useMemo(
+    () =>
+      classes
+        .map((classItem) => ({
+          id: classItem.id,
+          label: classItem.grade_level ? `${classItem.name} (${classItem.grade_level})` : classItem.name,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [classes]
+  );
 
   const isDateInRange = (recordDate, rangeKey) => {
     if (!recordDate || rangeKey === "all") return true;
@@ -116,30 +125,37 @@ function RunningRecordsPage({
   };
 
   const totalRecords = runningRecords.length;
-  const studentsAssessed = new Set(runningRecords.map((record) => record.student_id).filter(Boolean)).size;
-  const avgAccuracy = totalRecords
-    ? (
-        runningRecords.reduce((sum, record) => sum + Number(record.accuracy_pct || 0), 0) /
-        totalRecords
-      ).toFixed(1)
-    : "0.0";
+  const studentsAssessed = useMemo(
+    () => new Set(runningRecords.map((record) => record.student_id).filter(Boolean)).size,
+    [runningRecords]
+  );
+  const avgAccuracy = useMemo(
+    () =>
+      totalRecords
+        ? (
+            runningRecords.reduce((sum, record) => sum + Number(record.accuracy_pct || 0), 0) /
+            totalRecords
+          ).toFixed(1)
+        : "0.0",
+    [runningRecords, totalRecords]
+  );
 
-  const filteredRecords = (() => {
-    return runningRecords.filter((record) => {
-      const student = studentLookup.get(record.student_id);
-      if (selectedClassFilter && student?.class_id !== selectedClassFilter) return false;
-      if (selectedStudentFilter && record.student_id !== selectedStudentFilter) return false;
-      if (selectedLevelFilter && normalizeLevel(record.level) !== selectedLevelFilter) return false;
-      if (!isDateInRange(record.record_date, selectedDateRange)) return false;
-      if (searchText.trim()) {
-        const query = searchText.trim().toLowerCase();
-        const studentName = getStudentName(record.student_id).toLowerCase();
-        const textTitle = (record.text_title || "").toLowerCase();
-        if (!studentName.includes(query) && !textTitle.includes(query)) return false;
-      }
-      return true;
-    });
-  })();
+  const filteredRecords = runningRecords.filter((record) => {
+    const student = studentLookup.get(record.student_id);
+    if (selectedClassFilter && student?.class_id !== selectedClassFilter) return false;
+    if (selectedStudentFilter && record.student_id !== selectedStudentFilter) return false;
+    if (selectedLevelFilter && normalizeLevel(record.level) !== selectedLevelFilter) return false;
+    if (!isDateInRange(record.record_date, selectedDateRange)) return false;
+    if (searchText.trim()) {
+      const query = searchText.trim().toLowerCase();
+      const studentName = student
+        ? `${student.first_name} ${student.last_name}`.toLowerCase()
+        : unknownStudentLabel.toLowerCase();
+      const textTitle = (record.text_title || "").toLowerCase();
+      if (!studentName.includes(query) && !textTitle.includes(query)) return false;
+    }
+    return true;
+  });
 
   const sortedRecords = [...filteredRecords].sort((a, b) => {
     const dateA = new Date(`${a.record_date || "1970-01-01"}T00:00:00`).getTime();
@@ -158,6 +174,7 @@ function RunningRecordsPage({
         sortedRecords.length
       ).toFixed(1)
     : "0.0";
+
   const filteredLevelCounts = sortedRecords.reduce(
     (acc, record) => {
       const level = normalizeLevel(record.level);

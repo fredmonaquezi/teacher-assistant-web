@@ -61,13 +61,20 @@ function useStudentDetailData({
     [classes, student]
   );
 
-  const studentInitials = `${student?.first_name?.[0] || ""}${student?.last_name?.[0] || ""}`
-    .toUpperCase()
-    .trim() || "S";
+  const studentInitials = useMemo(
+    () =>
+      `${student?.first_name?.[0] || ""}${student?.last_name?.[0] || ""}`.toUpperCase().trim() ||
+      "S",
+    [student]
+  );
 
-  const classLabel = classItem
-    ? `${classItem.name}${classItem.grade_level ? ` (${classItem.grade_level})` : ""}`
-    : t("studentOverview.noClass");
+  const classLabel = useMemo(
+    () =>
+      classItem
+        ? `${classItem.name}${classItem.grade_level ? ` (${classItem.grade_level})` : ""}`
+        : t("studentOverview.noClass"),
+    [classItem, t]
+  );
 
   const records = useMemo(
     () =>
@@ -77,11 +84,18 @@ function useStudentDetailData({
     [runningRecords, studentId]
   );
 
-  const latestLevel = records.length ? normalizedLevel(records[0].level, t) : null;
+  const latestLevel = useMemo(
+    () => (records.length ? normalizedLevel(records[0].level, t) : null),
+    [records, t]
+  );
 
-  const avgAccuracy = records.length
-    ? records.reduce((sum, record) => sum + Number(record.accuracy_pct || 0), 0) / records.length
-    : 0;
+  const avgAccuracy = useMemo(
+    () =>
+      records.length
+        ? records.reduce((sum, record) => sum + Number(record.accuracy_pct || 0), 0) / records.length
+        : 0,
+    [records]
+  );
 
   const assessmentsForStudent = useMemo(
     () => assessmentEntries.filter((entry) => entry.student_id === studentId),
@@ -108,8 +122,9 @@ function useStudentDetailData({
     return map;
   }, [subjects]);
 
-  const overallAverage = averageFromPercents(
-    scoredAssessments.map((entry) => entryToPercent(entry, assessmentLookup))
+  const overallAverage = useMemo(
+    () => averageFromPercents(scoredAssessments.map((entry) => entryToPercent(entry, assessmentLookup))),
+    [scoredAssessments, assessmentLookup]
   );
 
   const attendanceForStudent = useMemo(
@@ -117,8 +132,14 @@ function useStudentDetailData({
     [attendanceEntries, studentId]
   );
 
-  const attendanceSummary = summarizeAttendanceEntries(attendanceForStudent);
-  const attendanceTotal = getAttendanceTotal(attendanceSummary);
+  const attendanceSummary = useMemo(
+    () => summarizeAttendanceEntries(attendanceForStudent),
+    [attendanceForStudent]
+  );
+  const attendanceTotal = useMemo(
+    () => getAttendanceTotal(attendanceSummary),
+    [attendanceSummary]
+  );
 
   const subjectsForClass = useMemo(
     () =>
@@ -234,11 +255,18 @@ function useStudentDetailData({
     [latestScoresByCriterion, criteriaLookup, categoryLookup, t]
   );
 
-  const activeDevelopmentHistory = activeDevelopmentCriterionId
-    ? studentScores.filter((score) => score.criterion_id === activeDevelopmentCriterionId)
-    : [];
+  const activeDevelopmentHistory = useMemo(
+    () =>
+      activeDevelopmentCriterionId
+        ? studentScores.filter((score) => score.criterion_id === activeDevelopmentCriterionId)
+        : [],
+    [activeDevelopmentCriterionId, studentScores]
+  );
 
-  const activeDevelopmentHistoryChronological = [...activeDevelopmentHistory].reverse();
+  const activeDevelopmentHistoryChronological = useMemo(
+    () => [...activeDevelopmentHistory].reverse(),
+    [activeDevelopmentHistory]
+  );
 
   const activeDevelopmentCriterion = activeDevelopmentCriterionId
     ? criteriaLookup.get(activeDevelopmentCriterionId)

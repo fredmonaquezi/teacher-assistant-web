@@ -10,7 +10,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { getDateLocale } from "../../utils/dateLocale";
@@ -78,70 +78,134 @@ function useCalendarPageController({
   const [newEvent, setNewEvent] = useState(createEmptyEvent());
   const [deleteRequest, setDeleteRequest] = useState(null);
 
-  const activeClassLabel = classOptions.find((option) => option.id === effectiveClassId)?.label || "";
-
-  const filteredDiaryEntries = effectiveClassId
-    ? calendarDiaryEntries.filter((entry) => entry.class_id === effectiveClassId)
-    : calendarDiaryEntries;
-
-  const filteredEvents = effectiveClassId
-    ? calendarEvents.filter((item) => item.class_id === effectiveClassId)
-    : calendarEvents;
-
-  const subjectOptionsForEntryClass = subjects.filter(
-    (subject) => subject.class_id === (newEntry.classId || effectiveClassId || null)
+  const activeClassLabel = useMemo(
+    () => classOptions.find((option) => option.id === effectiveClassId)?.label || "",
+    [classOptions, effectiveClassId]
   );
 
-  const unitOptionsForEntrySubject = units.filter((unit) => unit.subject_id === newEntry.subjectId);
-
-  const subjectOptionsForEditClass = subjects.filter(
-    (subject) =>
-      subject.class_id === (editEntryForm.classId || activeDiaryEntry?.class_id || effectiveClassId || null)
+  const filteredDiaryEntries = useMemo(
+    () =>
+      effectiveClassId
+        ? calendarDiaryEntries.filter((entry) => entry.class_id === effectiveClassId)
+        : calendarDiaryEntries,
+    [effectiveClassId, calendarDiaryEntries]
   );
 
-  const unitOptionsForEditSubject = units.filter((unit) => unit.subject_id === editEntryForm.subjectId);
+  const filteredEvents = useMemo(
+    () =>
+      effectiveClassId
+        ? calendarEvents.filter((item) => item.class_id === effectiveClassId)
+        : calendarEvents,
+    [effectiveClassId, calendarEvents]
+  );
 
-  const monthTitle = viewMode === "month"
-    ? format(anchorDate, "LLLL yyyy", { locale })
-    : format(anchorDate, "PPP", { locale });
+  const subjectOptionsForEntryClass = useMemo(
+    () =>
+      subjects.filter((subject) => subject.class_id === (newEntry.classId || effectiveClassId || null)),
+    [subjects, newEntry.classId, effectiveClassId]
+  );
 
-  const dayItems = filteredDiaryEntries
-    .filter((item) => item.entry_date === selectedDate)
-    .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""));
+  const unitOptionsForEntrySubject = useMemo(
+    () => units.filter((unit) => unit.subject_id === newEntry.subjectId),
+    [units, newEntry.subjectId]
+  );
 
-  const dayEvents = filteredEvents
-    .filter((item) => item.event_date === selectedDate)
-    .sort((a, b) => {
-      if (!!a.is_all_day !== !!b.is_all_day) return a.is_all_day ? -1 : 1;
-      return (a.start_time || "").localeCompare(b.start_time || "");
+  const subjectOptionsForEditClass = useMemo(
+    () =>
+      subjects.filter(
+        (subject) =>
+          subject.class_id ===
+          (editEntryForm.classId || activeDiaryEntry?.class_id || effectiveClassId || null)
+      ),
+    [subjects, editEntryForm.classId, activeDiaryEntry?.class_id, effectiveClassId]
+  );
+
+  const unitOptionsForEditSubject = useMemo(
+    () => units.filter((unit) => unit.subject_id === editEntryForm.subjectId),
+    [units, editEntryForm.subjectId]
+  );
+
+  const monthTitle = useMemo(
+    () =>
+      viewMode === "month"
+        ? format(anchorDate, "LLLL yyyy", { locale })
+        : format(anchorDate, "PPP", { locale }),
+    [viewMode, anchorDate, locale]
+  );
+
+  const diaryByDate = useMemo(() => {
+    const map = new Map();
+    filteredDiaryEntries.forEach((item) => {
+      if (!item?.entry_date) return;
+      if (!map.has(item.entry_date)) map.set(item.entry_date, []);
+      map.get(item.entry_date).push(item);
     });
+    for (const items of map.values()) {
+      items.sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""));
+    }
+    return map;
+  }, [filteredDiaryEntries]);
 
-  const upcomingEvents = filteredEvents
-    .filter((item) => item.event_date >= format(new Date(), "yyyy-MM-dd"))
-    .sort((a, b) => a.event_date.localeCompare(b.event_date))
-    .slice(0, 5);
+  const eventsByDate = useMemo(() => {
+    const map = new Map();
+    filteredEvents.forEach((item) => {
+      if (!item?.event_date) return;
+      if (!map.has(item.event_date)) map.set(item.event_date, []);
+      map.get(item.event_date).push(item);
+    });
+    for (const items of map.values()) {
+      items.sort((a, b) => {
+        if (!!a.is_all_day !== !!b.is_all_day) return a.is_all_day ? -1 : 1;
+        return (a.start_time || "").localeCompare(b.start_time || "");
+      });
+    }
+    return map;
+  }, [filteredEvents]);
 
-  const intervalDays =
-    viewMode === "month"
-      ? eachDayOfInterval({
-          start: startOfWeek(startOfMonth(anchorDate)),
-          end: endOfWeek(endOfMonth(anchorDate)),
-        })
-      : eachDayOfInterval({
-          start: startOfWeek(anchorDate),
-          end: endOfWeek(anchorDate),
-        });
+  const dayItems = useMemo(() => diaryByDate.get(selectedDate) || [], [diaryByDate, selectedDate]);
+  const dayEvents = useMemo(() => eventsByDate.get(selectedDate) || [], [eventsByDate, selectedDate]);
 
-  const weekdayLabels = eachDayOfInterval({
-    start: startOfWeek(new Date()),
-    end: endOfWeek(new Date()),
-  }).map((day) => format(day, "EEE", { locale }));
+  const upcomingEvents = useMemo(
+    () =>
+      filteredEvents
+        .filter((item) => item.event_date >= format(new Date(), "yyyy-MM-dd"))
+        .sort((a, b) => a.event_date.localeCompare(b.event_date))
+        .slice(0, 5),
+    [filteredEvents]
+  );
 
-  const diaryForDay = (dateObj) =>
-    filteredDiaryEntries.filter((item) => item.entry_date === format(dateObj, "yyyy-MM-dd"));
+  const intervalDays = useMemo(
+    () =>
+      viewMode === "month"
+        ? eachDayOfInterval({
+            start: startOfWeek(startOfMonth(anchorDate)),
+            end: endOfWeek(endOfMonth(anchorDate)),
+          })
+        : eachDayOfInterval({
+            start: startOfWeek(anchorDate),
+            end: endOfWeek(anchorDate),
+          }),
+    [viewMode, anchorDate]
+  );
 
-  const eventsForDay = (dateObj) =>
-    filteredEvents.filter((item) => item.event_date === format(dateObj, "yyyy-MM-dd"));
+  const weekdayLabels = useMemo(
+    () =>
+      eachDayOfInterval({
+        start: startOfWeek(new Date()),
+        end: endOfWeek(new Date()),
+      }).map((day) => format(day, "EEE", { locale })),
+    [locale]
+  );
+
+  const diaryForDay = useCallback(
+    (dateObj) => diaryByDate.get(format(dateObj, "yyyy-MM-dd")) || [],
+    [diaryByDate]
+  );
+
+  const eventsForDay = useCallback(
+    (dateObj) => eventsByDate.get(format(dateObj, "yyyy-MM-dd")) || [],
+    [eventsByDate]
+  );
 
   const mergeDateTime = (dateString, timeString) =>
     timeString ? `${dateString}T${timeString}:00` : null;
