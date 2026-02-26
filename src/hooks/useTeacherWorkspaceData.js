@@ -41,6 +41,9 @@ function useTeacherWorkspaceData(userId) {
     setFormError,
     classOptions,
     loadData,
+    ensureDataForPath,
+    invalidateWorkspaceDomains,
+    removeClassScopedWorkspaceData,
     refreshCoreData,
     refreshAttendanceData,
     refreshAssessmentData,
@@ -218,6 +221,8 @@ function useTeacherWorkspaceData(userId) {
     refreshCalendarData,
     refreshUsefulLinksData,
     refreshRandomPickerData,
+    invalidateWorkspaceDomains,
+    removeClassScopedWorkspaceData,
   });
 
   return {
@@ -274,6 +279,8 @@ function useTeacherWorkspaceData(userId) {
     groupsScrollTopRef,
     classOptions,
     loadData,
+    ensureDataForPath,
+    invalidateWorkspaceDomains,
     refreshCoreData,
     refreshAttendanceData,
     refreshAssessmentData,

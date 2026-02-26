@@ -1,6 +1,6 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import ReorderModeToggle from "./components/common/ReorderModeToggle";
 import Layout from "./components/layout/Layout";
 import TimerRuntimeOverlays from "./components/timer/TimerRuntimeOverlays";
@@ -38,6 +38,18 @@ function RouteFallback() {
       <p className="muted">{t("route.loadingPage")}</p>
     </section>
   );
+}
+
+function WorkspaceRouteDataLoader({ ensureDataForPath }) {
+  const location = useLocation();
+
+  useEffect(() => {
+    ensureDataForPath(location.pathname);
+    // Intentionally react to path changes only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  return null;
 }
 
 function TeacherWorkspaceApp({ user, onSignOut }) {
@@ -95,6 +107,7 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     isGeneratingGroups,
     groupsScrollTopRef,
     classOptions,
+    ensureDataForPath,
     handleCreateClass,
     handleCreateStudent,
     handleUpdateStudent,
@@ -152,6 +165,7 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
   return (
     <WorkspaceProvider value={workspace}>
       <BrowserRouter>
+        <WorkspaceRouteDataLoader ensureDataForPath={ensureDataForPath} />
         <Layout
           user={user}
           onSignOut={onSignOut}

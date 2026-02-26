@@ -3,6 +3,7 @@ import { runMutation } from "./mutationHelpers";
 
 function createCoreActions({
   classes,
+  students,
   subjects,
   units,
   classForm,
@@ -18,11 +19,12 @@ function createCoreActions({
   developmentScoreForm,
   setDevelopmentScoreForm,
   setFormError,
-  loadData,
   refreshCoreData,
   refreshAssessmentData,
   refreshRubricData,
   refreshGroupData,
+  invalidateWorkspaceDomains,
+  removeClassScopedWorkspaceData,
 }) {
   const refreshBySortTable = async (table) => {
     const tableRefreshers = {
@@ -42,7 +44,7 @@ function createCoreActions({
       await refreshFn();
       return;
     }
-    await loadData();
+    await refreshCoreData();
   };
 
   const handleCreateClass = async (event) => {
@@ -178,10 +180,25 @@ function createCoreActions({
   };
 
   const handleDeleteClass = async (classId) => {
+    const removedStudentIds = students
+      .filter((student) => student.class_id === classId)
+      .map((student) => student.id);
+
     await runMutation({
       setFormError,
       execute: () => supabase.from("classes").delete().eq("id", classId),
-      refresh: loadData,
+      refresh: async () => {
+        await refreshCoreData();
+        removeClassScopedWorkspaceData(classId, removedStudentIds);
+        await invalidateWorkspaceDomains([
+          "attendance",
+          "assessment",
+          "rubric",
+          "group",
+          "calendar",
+          "randomPicker",
+        ]);
+      },
       fallbackErrorMessage: "Failed to delete class.",
     });
   };
