@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { enUS, ptBR } from "date-fns/locale";
+import { enUS } from "date-fns/locale/en-US";
+import { ptBR } from "date-fns/locale/pt-BR";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { averageFromPercents, getAssessmentMaxScore, performanceColor, scoreToPercent } from "../utils/assessmentMetrics";

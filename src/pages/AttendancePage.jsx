@@ -7,7 +7,8 @@ import {
   isYesterday,
   parseISO,
 } from "date-fns";
-import { enUS, ptBR } from "date-fns/locale";
+import { enUS } from "date-fns/locale/en-US";
+import { ptBR } from "date-fns/locale/pt-BR";
 import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import ConfirmDialog from "../components/common/ConfirmDialog";
