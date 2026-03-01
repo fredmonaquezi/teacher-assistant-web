@@ -1,7 +1,39 @@
-import { useEffect, useState } from "react";
+import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+
+const INITIAL_VISIBLE_GROUP_CARDS = 24;
+const VISIBLE_GROUP_CARD_STEP = 24;
+
+const genderIcon = (gender) => {
+  const value = (gender || "").toLowerCase();
+  if (value.includes("female")) return "♀";
+  if (value.includes("male")) return "♂";
+  if (value.includes("non")) return "⚧";
+  return "•";
+};
+
+const genderColor = (gender) => {
+  const value = (gender || "").toLowerCase();
+  if (value.includes("female")) return "#ec4899";
+  if (value.includes("male")) return "#3b82f6";
+  if (value.includes("non")) return "#8b5cf6";
+  return "#94a3b8";
+};
+
+const gradientForGroup = (index) => {
+  const gradients = [
+    ["#f1dfbe", "#e7d0a6"],
+    ["#efe2c8", "#e4d3ad"],
+    ["#ead7b4", "#e0c596"],
+    ["#f0e3ca", "#e7d6b2"],
+    ["#ebddc1", "#dfcaa3"],
+    ["#f2e5cf", "#e7d7b7"],
+  ];
+  const pair = gradients[index % gradients.length];
+  return `linear-gradient(90deg, ${pair[0]}, ${pair[1]})`;
+};
 
 function GroupsPage({
   formError,
@@ -27,8 +59,14 @@ function GroupsPage({
   const { t } = useTranslation();
   const [showAdvancedHelp, setShowAdvancedHelp] = useState(false);
   const [constraintToDelete, setConstraintToDelete] = useState(null);
+  const [visibleGroupCardCount, setVisibleGroupCardCount] = useState(INITIAL_VISIBLE_GROUP_CARDS);
   const [searchParams] = useSearchParams();
   const classId = searchParams.get("classId") || "";
+  const deferredStudents = useDeferredValue(students);
+  const deferredGroups = useDeferredValue(groups);
+  const deferredGroupMembers = useDeferredValue(groupMembers);
+  const deferredGroupConstraints = useDeferredValue(groupConstraints);
+  const deferredClassOptions = useDeferredValue(classOptions);
 
   const openSeparationsModal = () => {
     if (typeof window !== "undefined") {
@@ -67,63 +105,107 @@ function GroupsPage({
   }, [classId, setGroupGenForm]);
 
   const activeClassId = classId || groupGenForm.classId;
-  const classStudents = activeClassId
-    ? students.filter((student) => student.class_id === activeClassId)
-    : [];
-  const classStudentIdSet = new Set(classStudents.map((student) => student.id));
-  const classConstraintList = activeClassId
-    ? groupConstraints.filter(
-        (constraint) =>
-          classStudentIdSet.has(constraint.student_a) && classStudentIdSet.has(constraint.student_b)
-      )
-    : groupConstraints;
-  const classGroups = activeClassId
-    ? groups.filter((group) => group.class_id === activeClassId)
-    : [];
-  const classGroupMembers = classGroups.length
-    ? groupMembers.filter((member) => classGroups.some((group) => group.id === member.group_id))
-    : [];
-
-  const grouped = classGroups.map((group) => {
-    const memberIds = classGroupMembers
-      .filter((member) => member.group_id === group.id)
-      .map((member) => member.student_id);
-    const members = classStudents.filter((student) => memberIds.includes(student.id));
-    return { group, members };
-  });
+  const studentsById = useMemo(
+    () => new Map(deferredStudents.map((student) => [student.id, student])),
+    [deferredStudents]
+  );
+  const classStudents = useMemo(
+    () =>
+      activeClassId ? deferredStudents.filter((student) => student.class_id === activeClassId) : [],
+    [activeClassId, deferredStudents]
+  );
+  const classStudentIdSet = useMemo(
+    () => new Set(classStudents.map((student) => student.id)),
+    [classStudents]
+  );
+  const classConstraintList = useMemo(
+    () =>
+      activeClassId
+        ? deferredGroupConstraints.filter(
+            (constraint) =>
+              classStudentIdSet.has(constraint.student_a) && classStudentIdSet.has(constraint.student_b)
+          )
+        : deferredGroupConstraints,
+    [activeClassId, classStudentIdSet, deferredGroupConstraints]
+  );
+  const constraintDisplayRows = useMemo(
+    () =>
+      classConstraintList.map((constraint) => ({
+        constraint,
+        studentA: studentsById.get(constraint.student_a) || null,
+        studentB: studentsById.get(constraint.student_b) || null,
+      })),
+    [classConstraintList, studentsById]
+  );
+  const classGroups = useMemo(
+    () => (activeClassId ? deferredGroups.filter((group) => group.class_id === activeClassId) : []),
+    [activeClassId, deferredGroups]
+  );
+  const classGroupIdSet = useMemo(
+    () => new Set(classGroups.map((group) => group.id)),
+    [classGroups]
+  );
+  const classGroupMembers = useMemo(
+    () =>
+      classGroups.length
+        ? deferredGroupMembers.filter((member) => classGroupIdSet.has(member.group_id))
+        : [],
+    [classGroupIdSet, classGroups.length, deferredGroupMembers]
+  );
+  const memberIdsByGroupId = useMemo(() => {
+    const map = new Map();
+    for (const member of classGroupMembers) {
+      if (!map.has(member.group_id)) {
+        map.set(member.group_id, []);
+      }
+      map.get(member.group_id).push(member.student_id);
+    }
+    return map;
+  }, [classGroupMembers]);
+  const grouped = useMemo(
+    () =>
+      classGroups.map((group) => {
+        const memberIds = memberIdsByGroupId.get(group.id) || [];
+        const members = memberIds
+          .map((studentId) => studentsById.get(studentId))
+          .filter((student) => student && classStudentIdSet.has(student.id));
+        return { group, members };
+      }),
+    [classGroups, classStudentIdSet, memberIdsByGroupId, studentsById]
+  );
+  const visibleGrouped = grouped.slice(0, visibleGroupCardCount);
+  const hasMoreGroups = visibleGrouped.length < grouped.length;
+  const groupsDataIsPending =
+    deferredStudents !== students ||
+    deferredGroups !== groups ||
+    deferredGroupMembers !== groupMembers ||
+    deferredGroupConstraints !== groupConstraints;
 
   const groupSize = Number(groupGenForm.size) || 4;
   const expectedGroupCount =
     classStudents.length > 0 ? Math.ceil(classStudents.length / groupSize) : 0;
+  const handleClassChange = useCallback(
+    (nextClassId) => {
+      startTransition(() => {
+        setGroupGenForm((prev) => ({ ...prev, classId: nextClassId }));
+        setVisibleGroupCardCount(INITIAL_VISIBLE_GROUP_CARDS);
+      });
+    },
+    [setGroupGenForm]
+  );
 
-  const genderIcon = (gender) => {
-    const value = (gender || "").toLowerCase();
-    if (value.includes("female")) return "♀";
-    if (value.includes("male")) return "♂";
-    if (value.includes("non")) return "⚧";
-    return "•";
-  };
-
-  const genderColor = (gender) => {
-    const value = (gender || "").toLowerCase();
-    if (value.includes("female")) return "#ec4899";
-    if (value.includes("male")) return "#3b82f6";
-    if (value.includes("non")) return "#8b5cf6";
-    return "#94a3b8";
-  };
-
-  const gradientForGroup = (index) => {
-    const gradients = [
-      ["#f1dfbe", "#e7d0a6"],
-      ["#efe2c8", "#e4d3ad"],
-      ["#ead7b4", "#e0c596"],
-      ["#f0e3ca", "#e7d6b2"],
-      ["#ebddc1", "#dfcaa3"],
-      ["#f2e5cf", "#e7d7b7"],
-    ];
-    const pair = gradients[index % gradients.length];
-    return `linear-gradient(90deg, ${pair[0]}, ${pair[1]})`;
-  };
+  const adjustGroupSize = useCallback(
+    (delta) => {
+      startTransition(() => {
+        setGroupGenForm((prev) => {
+          const currentSize = Number(prev.size) || 4;
+          const nextSize = Math.max(2, Math.min(10, currentSize + delta));
+          return { ...prev, size: String(nextSize) };
+        });
+      });
+    },
+    [setGroupGenForm]
+  );
 
   return (
     <>
@@ -151,12 +233,10 @@ function GroupsPage({
             {!classId && (
               <select
                 value={groupGenForm.classId}
-                onChange={(event) =>
-                  setGroupGenForm((prev) => ({ ...prev, classId: event.target.value }))
-                }
+                onChange={(event) => handleClassChange(event.target.value)}
               >
                 <option value="">{t("groups.settings.selectClass")}</option>
-                {classOptions.map((option) => (
+                {deferredClassOptions.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
                   </option>
@@ -173,24 +253,14 @@ function GroupsPage({
             <div className="groups-size-controls">
               <button
                 type="button"
-                onClick={() =>
-                  setGroupGenForm((prev) => ({
-                    ...prev,
-                    size: String(Math.max(2, groupSize - 1)),
-                  }))
-                }
+                onClick={() => adjustGroupSize(-1)}
                 disabled={groupSize <= 2}
               >
                 −
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  setGroupGenForm((prev) => ({
-                    ...prev,
-                    size: String(Math.min(10, groupSize + 1)),
-                  }))
-                }
+                onClick={() => adjustGroupSize(1)}
                 disabled={groupSize >= 10}
               >
                 +
@@ -327,7 +397,7 @@ function GroupsPage({
               <h3>{t("groups.results.title")}</h3>
             </div>
             <div className="groups-grid">
-              {grouped.map(({ group, members }, index) => (
+              {visibleGrouped.map(({ group, members }, index) => (
                 <div key={group.id} className="group-card">
                   <div className="group-card-header" style={{ background: gradientForGroup(index) }}>
                     <span>{t("groups.results.groupN", { number: index + 1 })}</span>
@@ -348,6 +418,25 @@ function GroupsPage({
                 </div>
               ))}
             </div>
+            <p className="muted">
+              {t("groups.resultsSummary", { shown: visibleGrouped.length, total: grouped.length })}
+              {groupsDataIsPending ? ` ${t("groups.updatingResults")}` : ""}
+            </p>
+            {hasMoreGroups && (
+              <button
+                type="button"
+                className="secondary"
+                onClick={() =>
+                  startTransition(() => {
+                    setVisibleGroupCardCount((current) =>
+                      Math.min(current + VISIBLE_GROUP_CARD_STEP, grouped.length)
+                    );
+                  })
+                }
+              >
+                {t("groups.showMore")}
+              </button>
+            )}
           </div>
         )}
       </section>
@@ -397,9 +486,7 @@ function GroupsPage({
             </div>
             {classConstraintList.length > 0 && (
               <ul className="list">
-                {classConstraintList.map((constraint) => {
-                  const studentA = students.find((item) => item.id === constraint.student_a);
-                  const studentB = students.find((item) => item.id === constraint.student_b);
+                {constraintDisplayRows.map(({ constraint, studentA, studentB }) => {
                   return (
                     <li key={constraint.id}>
                       <div className="list-row">

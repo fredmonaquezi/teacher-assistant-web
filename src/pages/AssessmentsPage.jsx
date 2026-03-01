@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate } from "react-router-dom";
 import { averageFromPercents, getAssessmentMaxScore, performanceColor, scoreToPercent } from "../utils/assessmentMetrics";
@@ -15,6 +15,9 @@ const scoreLabel = (score) => {
   }
   return Number(score).toFixed(1);
 };
+
+const INITIAL_VISIBLE_STUDENT_ROWS = 48;
+const VISIBLE_STUDENT_ROW_STEP = 48;
 
 const AssessmentsPage = ({
   formError,
@@ -37,6 +40,7 @@ const AssessmentsPage = ({
   const [gradeValue, setGradeValue] = useState("");
   const [gradeSaveError, setGradeSaveError] = useState("");
   const [isSavingGrade, setIsSavingGrade] = useState(false);
+  const [visibleStudentRowCount, setVisibleStudentRowCount] = useState(INITIAL_VISIBLE_STUDENT_ROWS);
 
   const selectedClass = sortedClasses.find((item) => item.id === selectedClassId) || null;
   const subjectsForClass = useMemo(
@@ -67,10 +71,12 @@ const AssessmentsPage = ({
     () => students.filter((item) => item.class_id === selectedClassId).sort(bySortThenName),
     [students, selectedClassId]
   );
+  const deferredAssessmentsForUnit = useDeferredValue(assessmentsForUnit);
+  const deferredStudentsForClass = useDeferredValue(studentsForClass);
 
   const assessmentById = useMemo(
-    () => new Map(assessmentsForUnit.map((item) => [item.id, item])),
-    [assessmentsForUnit]
+    () => new Map(deferredAssessmentsForUnit.map((item) => [item.id, item])),
+    [deferredAssessmentsForUnit]
   );
 
   const entryByAssessmentAndStudent = useMemo(() => {
@@ -83,7 +89,7 @@ const AssessmentsPage = ({
   }, [assessmentEntries]);
 
   const unitPercents = useMemo(() => {
-    const unitAssessmentIds = new Set(assessmentsForUnit.map((item) => item.id));
+    const unitAssessmentIds = new Set(deferredAssessmentsForUnit.map((item) => item.id));
     return assessmentEntries
       .filter((entry) => unitAssessmentIds.has(entry.assessment_id))
       .map((entry) => {
@@ -91,10 +97,56 @@ const AssessmentsPage = ({
         return scoreToPercent(entry.score, getAssessmentMaxScore(assessment));
       })
       .filter((value) => Number.isFinite(value));
-  }, [assessmentEntries, assessmentById, assessmentsForUnit]);
+  }, [assessmentEntries, assessmentById, deferredAssessmentsForUnit]);
 
   const unitAverage = averageFromPercents(unitPercents);
   const unitAverageColor = performanceColor(unitAverage);
+  const matrixIsPending =
+    deferredAssessmentsForUnit !== assessmentsForUnit ||
+    deferredStudentsForClass !== studentsForClass;
+
+  const studentMatrixRows = useMemo(
+    () =>
+      deferredStudentsForClass.map((student) => {
+        const cells = deferredAssessmentsForUnit.map((assessment) => {
+          const key = `${assessment.id}:${student.id}`;
+          const entry = entryByAssessmentAndStudent.get(key);
+          const percent = scoreToPercent(entry?.score, getAssessmentMaxScore(assessment));
+          const cellColor = percent === null ? "#7c6446" : performanceColor(percent);
+          const cellBg =
+            percent === null
+              ? "rgba(201, 164, 110, 0.18)"
+              : percent >= 70
+                ? "rgba(22, 163, 74, 0.12)"
+                : percent >= 50
+                  ? "rgba(234, 88, 12, 0.14)"
+                  : "rgba(220, 38, 38, 0.12)";
+
+          return {
+            assessment,
+            entry,
+            cellColor,
+            cellBg,
+          };
+        });
+
+        const studentAverage = averageFromPercents(
+          cells
+            .map((cell) => scoreToPercent(cell.entry?.score, getAssessmentMaxScore(cell.assessment)))
+            .filter((value) => Number.isFinite(value))
+        );
+
+        return {
+          student,
+          cells,
+          studentAverage,
+          studentAverageColor: performanceColor(studentAverage),
+        };
+      }),
+    [deferredAssessmentsForUnit, deferredStudentsForClass, entryByAssessmentAndStudent]
+  );
+  const visibleStudentRows = studentMatrixRows.slice(0, visibleStudentRowCount);
+  const hasMoreStudentRows = visibleStudentRows.length < studentMatrixRows.length;
 
   const activeAssessment = useMemo(() => {
     if (!activeGradeEditor) return null;
@@ -117,12 +169,14 @@ const AssessmentsPage = ({
     setSelectedClassId(classId);
     setSelectedSubjectId("");
     setSelectedUnitId("");
+    setVisibleStudentRowCount(INITIAL_VISIBLE_STUDENT_ROWS);
   };
 
   const pickSubject = (subjectId) => {
     resetGradeEditor();
     setSelectedSubjectId(subjectId);
     setSelectedUnitId("");
+    setVisibleStudentRowCount(INITIAL_VISIBLE_STUDENT_ROWS);
   };
 
   const closeGradeEditor = useCallback(() => {
@@ -267,6 +321,7 @@ const AssessmentsPage = ({
                     onClick={() => {
                       resetGradeEditor();
                       setSelectedUnitId(item.id);
+                      setVisibleStudentRowCount(INITIAL_VISIBLE_STUDENT_ROWS);
                     }}
                   >
                     <span>{item.name}</span>
@@ -284,13 +339,13 @@ const AssessmentsPage = ({
               <div className="stat-card gradebook-stat-card">
                 <div className="stat-label">{t("assessments.stats.students")}</div>
                 <div className="stat-value" style={{ color: "#8a5c34" }}>
-                  {studentsForClass.length}
+                  {deferredStudentsForClass.length}
                 </div>
               </div>
               <div className="stat-card gradebook-stat-card">
                 <div className="stat-label">{t("assessments.stats.assessments")}</div>
                 <div className="stat-value" style={{ color: "#9b6a3f" }}>
-                  {assessmentsForUnit.length}
+                  {deferredAssessmentsForUnit.length}
                 </div>
               </div>
               <div className="stat-card gradebook-stat-card">
@@ -304,16 +359,16 @@ const AssessmentsPage = ({
             <div className="gradebook-table-scroll">
               {loading ? (
                 <p className="muted">{t("assessments.loading")}</p>
-              ) : assessmentsForUnit.length === 0 ? (
+              ) : deferredAssessmentsForUnit.length === 0 ? (
                 <p className="muted">{t("assessments.empty.unitNoAssessments")}</p>
-              ) : studentsForClass.length === 0 ? (
+              ) : deferredStudentsForClass.length === 0 ? (
                 <p className="muted">{t("assessments.empty.classNoStudents")}</p>
               ) : (
                 <table className="gradebook-matrix-table">
                   <thead>
                     <tr>
                       <th className="student-col">{t("assessments.table.student")}</th>
-                      {assessmentsForUnit.map((assessment) => (
+                      {deferredAssessmentsForUnit.map((assessment) => (
                         <th key={assessment.id} className="grade-col">
                           <button
                             type="button"
@@ -331,64 +386,60 @@ const AssessmentsPage = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {studentsForClass.map((student) => {
-                      const studentPercents = assessmentsForUnit
-                        .map((assessment) => {
-                          const key = `${assessment.id}:${student.id}`;
-                          const entry = entryByAssessmentAndStudent.get(key);
-                          return scoreToPercent(entry?.score, getAssessmentMaxScore(assessment));
-                        })
-                        .filter((value) => Number.isFinite(value));
-                      const studentAverage = averageFromPercents(studentPercents);
-                      const studentAverageColor = performanceColor(studentAverage);
-
-                      return (
-                        <tr key={student.id}>
-                          <td className="student-col">
-                            {student.first_name} {student.last_name}
-                          </td>
-                          {assessmentsForUnit.map((assessment) => {
-                            const key = `${assessment.id}:${student.id}`;
-                            const entry = entryByAssessmentAndStudent.get(key);
-                            const percent = scoreToPercent(entry?.score, getAssessmentMaxScore(assessment));
-                            const cellColor =
-                              percent === null ? "#7c6446" : performanceColor(percent);
-                            const cellBg =
-                              percent === null
-                                ? "rgba(201, 164, 110, 0.18)"
-                                : percent >= 70
-                                ? "rgba(22, 163, 74, 0.12)"
-                                : percent >= 50
-                                    ? "rgba(234, 88, 12, 0.14)"
-                                    : "rgba(220, 38, 38, 0.12)";
-
-                            return (
-                              <td key={assessment.id} className="grade-col">
-                                <button
-                                  type="button"
-                                  className="gradebook-grade-cell"
-                                  style={{ color: cellColor, background: cellBg }}
-                                  onClick={() => openGradeEditor(assessment, student, entry)}
-                                  aria-label={t("assessments.aria.editAssessmentForStudent", {
-                                    assessmentTitle: assessment.title,
-                                    studentName: `${student.first_name} ${student.last_name}`,
-                                  })}
-                                >
-                                  {scoreLabel(entry?.score)}
-                                </button>
-                              </td>
-                            );
-                          })}
-                          <td className="grade-col gradebook-average-cell" style={{ color: studentAverageColor }}>
-                            {studentAverage.toFixed(1)}%
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {visibleStudentRows.map((row) => (
+                      <tr key={row.student.id}>
+                        <td className="student-col">
+                          {row.student.first_name} {row.student.last_name}
+                        </td>
+                        {row.cells.map((cell) => {
+                          return (
+                            <td key={cell.assessment.id} className="grade-col">
+                              <button
+                                type="button"
+                                className="gradebook-grade-cell"
+                                style={{ color: cell.cellColor, background: cell.cellBg }}
+                                onClick={() => openGradeEditor(cell.assessment, row.student, cell.entry)}
+                                aria-label={t("assessments.aria.editAssessmentForStudent", {
+                                  assessmentTitle: cell.assessment.title,
+                                  studentName: `${row.student.first_name} ${row.student.last_name}`,
+                                })}
+                              >
+                                {scoreLabel(cell.entry?.score)}
+                              </button>
+                            </td>
+                          );
+                        })}
+                        <td className="grade-col gradebook-average-cell" style={{ color: row.studentAverageColor }}>
+                          {row.studentAverage.toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               )}
             </div>
+            {!loading && deferredAssessmentsForUnit.length > 0 && deferredStudentsForClass.length > 0 && (
+              <p className="muted">
+                {t("assessments.resultsSummary", {
+                  shown: visibleStudentRows.length,
+                  total: deferredStudentsForClass.length,
+                })}
+                {matrixIsPending ? ` ${t("assessments.updatingTable")}` : ""}
+              </p>
+            )}
+            {hasMoreStudentRows && (
+              <button
+                type="button"
+                className="secondary"
+                onClick={() =>
+                  setVisibleStudentRowCount((current) =>
+                    Math.min(current + VISIBLE_STUDENT_ROW_STEP, studentMatrixRows.length)
+                  )
+                }
+              >
+                {t("assessments.showMoreRows")}
+              </button>
+            )}
           </>
         )}
       </section>

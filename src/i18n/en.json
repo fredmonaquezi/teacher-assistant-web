@@ -253,7 +253,10 @@
     "sessionDetail": {
       "notFoundTitle": "Session not found",
       "notFoundDescription": "Select a session from Attendance.",
-      "markAttendance": "Mark Attendance"
+      "markAttendance": "Mark Attendance",
+      "resultsSummary": "Showing {{shown}} of {{total}} students",
+      "showMore": "Show more students",
+      "updatingList": "(updating list...)"
     }
   },
   "assessments": {
@@ -273,6 +276,9 @@
       "student": "Student",
       "average": "Average"
     },
+    "resultsSummary": "Showing {{shown}} of {{total}} students",
+    "showMoreRows": "Show more students",
+    "updatingTable": "(updating table...)",
     "loading": "Loading gradebook...",
     "empty": {
       "noClasses": "No classes found.",
@@ -643,6 +649,7 @@
       "groupN": "Group {{number}}",
       "title": "Results"
     },
+    "resultsSummary": "Showing {{shown}} of {{total}} groups",
     "separations": {
       "add": "Add",
       "selectStudent": "Select student",
@@ -661,8 +668,10 @@
       "groups": "Groups",
       "students": "Students"
     },
+    "showMore": "Show more groups",
     "subtitle": "Create balanced groups with advanced option",
-    "title": "Smart Group Generator"
+    "title": "Smart Group Generator",
+    "updatingResults": "(updating groups...)"
   },
   "random": {
     "allClasses": "All classes",
@@ -868,6 +877,8 @@
     "newRecord": "New Record",
     "noClass": "No class",
     "noDate": "No date",
+    "resultsSummary": "Showing {{shown}} of {{total}} records",
+    "showMore": "Show more records",
     "stats": {
       "avgAccuracy": "Avg accuracy",
       "filteredAvg": "Filtered avg",
@@ -875,6 +886,7 @@
       "totalRecords": "Total records"
     },
     "title": "Running records",
+    "updatingResults": "(updating results...)",
     "unknownStudent": "Unknown student",
     "untitledText": "Untitled text"
   },
