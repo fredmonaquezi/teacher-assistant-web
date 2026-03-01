@@ -19,7 +19,7 @@ const STUDENTS = [
   },
 ];
 
-function renderPage(overrides = {}) {
+function renderPage(overrides = {}, route = "/random?classId=class-1") {
   const props = {
     formError: "",
     classOptions: CLASS_OPTIONS,
@@ -34,7 +34,7 @@ function renderPage(overrides = {}) {
   };
 
   render(
-    <MemoryRouter initialEntries={["/random?classId=class-1"]}>
+    <MemoryRouter initialEntries={[route]}>
       <Routes>
         <Route path="/random" element={<RandomPickerPage {...props} />} />
       </Routes>
@@ -144,4 +144,31 @@ test("deletes custom category in selected class scope", async () => {
     classId: "class-1",
     name: "Speaker",
   });
+});
+
+test("does not show students from deleted classes when all classes is selected", () => {
+  renderPage(
+    {
+      classOptions: [{ id: "class-1", label: "Class 1" }],
+      students: [
+        {
+          id: "student-1",
+          first_name: "Ada",
+          last_name: "Lovelace",
+          class_id: "class-1",
+        },
+        {
+          id: "student-orphan",
+          first_name: "Deleted",
+          last_name: "Student",
+          class_id: "deleted-class",
+        },
+      ],
+    },
+    "/random"
+  );
+
+  expect(screen.getByText("1 available")).toBeTruthy();
+  expect(screen.getByText("Ada Lovelace")).toBeTruthy();
+  expect(screen.queryByText("Deleted Student")).toBeNull();
 });

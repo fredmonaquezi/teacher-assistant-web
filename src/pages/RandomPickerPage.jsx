@@ -48,9 +48,19 @@ function RandomPickerPage({
   const [searchParams, setSearchParams] = useSearchParams();
   const classId = searchParams.get("classId") || "";
   const classLabel = classOptions.find((option) => option.id === classId)?.label;
-  const filteredStudents = classId
-    ? students.filter((student) => student.class_id === classId)
-    : students;
+  const validClassIds = useMemo(
+    () => new Set(classOptions.map((option) => option.id).filter(Boolean)),
+    [classOptions]
+  );
+  const filteredStudents = useMemo(
+    () =>
+      students.filter((student) => {
+        if (!validClassIds.has(student.class_id)) return false;
+        if (classId) return student.class_id === classId;
+        return true;
+      }),
+    [classId, students, validClassIds]
+  );
 
   const [selectedCategory, setSelectedCategory] = useState("Helper");
   const [showAddCategory, setShowAddCategory] = useState(false);

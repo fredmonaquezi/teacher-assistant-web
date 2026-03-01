@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useWorkspaceActions from "./workspace/useWorkspaceActions";
 import useWorkspaceReads from "./workspace/useWorkspaceReads";
 
@@ -119,12 +119,14 @@ function useTeacherWorkspaceData(userId) {
   const [groupsShowSeparations, setGroupsShowSeparations] = useState(false);
   const [isGeneratingGroups, setIsGeneratingGroups] = useState(false);
   const groupsScrollTopRef = useRef(0);
+  const orphanedStudentCleanupKeyRef = useRef("");
 
   const {
     handleCreateClass,
     handleCreateStudent,
     handleUpdateStudent,
     handleDeleteClass,
+    handleCleanupOrphanedStudents,
     handleUpdateSortOrder,
     handleSwapSortOrder,
     handleUpdateAttendanceEntry,
@@ -224,6 +226,41 @@ function useTeacherWorkspaceData(userId) {
     invalidateWorkspaceDomains,
     removeClassScopedWorkspaceData,
   });
+
+  const orphanedStudentIds = useMemo(() => {
+    const validClassIdSet = new Set(classes.map((classItem) => classItem.id).filter(Boolean));
+    return students
+      .filter((student) => student.class_id && !validClassIdSet.has(student.class_id))
+      .map((student) => student.id)
+      .filter(Boolean)
+      .sort();
+  }, [classes, students]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (typeof handleCleanupOrphanedStudents !== "function") return;
+
+    if (!orphanedStudentIds.length) {
+      orphanedStudentCleanupKeyRef.current = "";
+      return;
+    }
+
+    const nextCleanupKey = orphanedStudentIds.join(",");
+    if (orphanedStudentCleanupKeyRef.current === nextCleanupKey) return;
+
+    orphanedStudentCleanupKeyRef.current = nextCleanupKey;
+    let isCurrent = true;
+
+    void handleCleanupOrphanedStudents().then((didCleanup) => {
+      if (isCurrent && !didCleanup) {
+        orphanedStudentCleanupKeyRef.current = "";
+      }
+    });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [handleCleanupOrphanedStudents, loading, orphanedStudentIds]);
 
   return {
     profilePreferences,

@@ -1,6 +1,16 @@
 import { supabase } from "../../../supabaseClient";
 import { runMutation } from "./mutationHelpers";
 
+function collectOrphanedStudents(classes, students) {
+  const validClassIdSet = new Set(
+    classes.map((classItem) => classItem.id).filter(Boolean)
+  );
+
+  return students.filter(
+    (student) => student.class_id && !validClassIdSet.has(student.class_id)
+  );
+}
+
 function createCoreActions({
   classes,
   students,
@@ -186,7 +196,15 @@ function createCoreActions({
 
     await runMutation({
       setFormError,
-      execute: () => supabase.from("classes").delete().eq("id", classId),
+      execute: async () => {
+        const studentDeleteResult = await supabase.from("students").delete().eq("class_id", classId);
+        if (studentDeleteResult?.error) {
+          return { error: studentDeleteResult.error };
+        }
+
+        const classDeleteResult = await supabase.from("classes").delete().eq("id", classId);
+        return classDeleteResult?.error ? { error: classDeleteResult.error } : { data: true };
+      },
       refresh: async () => {
         await refreshCoreData();
         removeClassScopedWorkspaceData(classId, removedStudentIds);
@@ -200,6 +218,43 @@ function createCoreActions({
         ]);
       },
       fallbackErrorMessage: "Failed to delete class.",
+    });
+  };
+
+  const handleCleanupOrphanedStudents = async () => {
+    const orphanedStudents = collectOrphanedStudents(classes, students);
+    if (!orphanedStudents.length) return true;
+
+    const orphanedStudentIds = orphanedStudents.map((student) => student.id).filter(Boolean);
+    if (!orphanedStudentIds.length) return true;
+
+    const orphanedStudentIdsByClass = orphanedStudents.reduce((acc, student) => {
+      const classId = student.class_id;
+      if (!classId) return acc;
+      if (!acc.has(classId)) {
+        acc.set(classId, []);
+      }
+      acc.get(classId).push(student.id);
+      return acc;
+    }, new Map());
+
+    return runMutation({
+      setFormError,
+      execute: () => supabase.from("students").delete().in("id", orphanedStudentIds),
+      refresh: async () => {
+        await refreshCoreData();
+        orphanedStudentIdsByClass.forEach((studentIds, orphanedClassId) => {
+          removeClassScopedWorkspaceData(orphanedClassId, studentIds);
+        });
+        await invalidateWorkspaceDomains([
+          "attendance",
+          "assessment",
+          "rubric",
+          "group",
+          "randomPicker",
+        ]);
+      },
+      fallbackErrorMessage: "Failed to clean up orphaned students.",
     });
   };
 
@@ -487,6 +542,7 @@ function createCoreActions({
     handleCreateStudent,
     handleUpdateStudent,
     handleDeleteClass,
+    handleCleanupOrphanedStudents,
     handleUpdateSortOrder,
     handleSwapSortOrder,
     handleCreateRunningRecord,
