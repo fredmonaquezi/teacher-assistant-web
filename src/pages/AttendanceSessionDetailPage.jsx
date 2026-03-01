@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, startTransition, useCallback, useDeferredValue, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -48,11 +48,38 @@ function StatusIcon({ kind }) {
   );
 }
 
-function AttendanceEntryRow({ entry, student, handleUpdateAttendanceEntry }) {
+const INITIAL_VISIBLE_ATTENDANCE_ROWS = 64;
+const VISIBLE_ATTENDANCE_ROW_STEP = 64;
+
+const AttendanceEntryRow = memo(function AttendanceEntryRow({
+  entry,
+  student,
+  handleUpdateAttendanceEntry,
+}) {
   const { t } = useTranslation();
-  const [noteValue, setNoteValue] = useState(entry.note || "");
   const statusMeta = getAttendanceStatusMeta(entry.status);
   const statusColor = statusMeta.color;
+  const noteInputKey = `${entry.id}:${entry.note || ""}`;
+
+  const updateStatus = useCallback(
+    (statusValue) => {
+      startTransition(() => {
+        handleUpdateAttendanceEntry(entry.id, { status: statusValue });
+      });
+    },
+    [entry.id, handleUpdateAttendanceEntry]
+  );
+
+  const updateNote = useCallback(
+    (noteValue) => {
+      startTransition(() => {
+        handleUpdateAttendanceEntry(entry.id, {
+          note: noteValue.trim() || null,
+        });
+      });
+    },
+    [entry.id, handleUpdateAttendanceEntry]
+  );
 
   return (
     <div className="attendance-student-card">
@@ -81,7 +108,7 @@ function AttendanceEntryRow({ entry, student, handleUpdateAttendanceEntry }) {
                   ? { background: status.color, color: "#fff" }
                   : undefined
               }
-              onClick={() => handleUpdateAttendanceEntry(entry.id, { status: status.value })}
+              onClick={() => updateStatus(status.value)}
               aria-label={t(`attendance.status.${status.key}.label`)}
               title={t(`attendance.status.${status.key}.label`)}
             >
@@ -98,20 +125,25 @@ function AttendanceEntryRow({ entry, student, handleUpdateAttendanceEntry }) {
         <div className="attendance-note">
           <span className="muted">{t("attendance.note.label")}</span>
           <input
-            value={noteValue}
-            onChange={(event) => setNoteValue(event.target.value)}
-            onBlur={() =>
-              handleUpdateAttendanceEntry(entry.id, {
-                note: noteValue.trim() || null,
-              })
-            }
+            key={noteInputKey}
+            defaultValue={entry.note || ""}
+            onBlur={(event) => updateNote(event.target.value)}
             placeholder={t("attendance.note.placeholder")}
           />
         </div>
       )}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  if (prevProps.handleUpdateAttendanceEntry !== nextProps.handleUpdateAttendanceEntry) return false;
+  if (prevProps.entry.id !== nextProps.entry.id) return false;
+  if (prevProps.entry.status !== nextProps.entry.status) return false;
+  if ((prevProps.entry.note || "") !== (nextProps.entry.note || "")) return false;
+  if (prevProps.student.id !== nextProps.student.id) return false;
+  if (prevProps.student.first_name !== nextProps.student.first_name) return false;
+  if (prevProps.student.last_name !== nextProps.student.last_name) return false;
+  return true;
+});
 
 function AttendanceSessionDetailPage({
   attendanceSessions,
@@ -123,20 +155,43 @@ function AttendanceSessionDetailPage({
   const { t, i18n } = useTranslation();
   const { sessionId } = useParams();
   const locale = i18n.language === "pt-BR" ? ptBR : enUS;
-  const session = attendanceSessions.find((item) => item.id === sessionId);
-  const sessionEntries = attendanceEntries.filter((entry) => entry.session_id === sessionId);
-  const sessionClass = classes.find((classItem) => classItem.id === session?.class_id);
-  const sessionStudents = students
-    .filter((student) => student.class_id === session?.class_id)
-    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  const [visibleRowCount, setVisibleRowCount] = useState(INITIAL_VISIBLE_ATTENDANCE_ROWS);
+  const session = useMemo(
+    () => attendanceSessions.find((item) => item.id === sessionId),
+    [attendanceSessions, sessionId]
+  );
+  const sessionEntries = useMemo(
+    () => attendanceEntries.filter((entry) => entry.session_id === sessionId),
+    [attendanceEntries, sessionId]
+  );
+  const deferredSessionEntries = useDeferredValue(sessionEntries);
+  const sessionClass = useMemo(
+    () => classes.find((classItem) => classItem.id === session?.class_id),
+    [classes, session?.class_id]
+  );
+  const studentsById = useMemo(() => new Map(students.map((student) => [student.id, student])), [students]);
+  const rows = useMemo(
+    () =>
+      deferredSessionEntries
+        .map((entry) => ({
+          entry,
+          student: studentsById.get(entry.student_id) || null,
+        }))
+        .filter((row) => row.student && row.student.class_id === session?.class_id)
+        .sort((a, b) => {
+          const orderDiff = Number(a.student.sort_order ?? 0) - Number(b.student.sort_order ?? 0);
+          if (orderDiff !== 0) return orderDiff;
+          const aName = `${a.student.first_name || ""} ${a.student.last_name || ""}`.trim();
+          const bName = `${b.student.first_name || ""} ${b.student.last_name || ""}`.trim();
+          return aName.localeCompare(bName);
+        }),
+    [deferredSessionEntries, session?.class_id, studentsById]
+  );
+  const visibleRows = rows.slice(0, visibleRowCount);
+  const hasMoreRows = visibleRows.length < rows.length;
+  const listIsPending = deferredSessionEntries !== sessionEntries;
 
-  const entryMap = new Map(sessionEntries.map((entry) => [entry.student_id, entry]));
-  const rows = sessionStudents.map((student) => ({
-    student,
-    entry: entryMap.get(student.id),
-  }));
-
-  const counts = summarizeAttendanceEntries(sessionEntries);
+  const counts = summarizeAttendanceEntries(deferredSessionEntries);
   const summaryRate = getAttendanceRate(counts);
   const summaryColor = getAttendanceRateColor(summaryRate);
 
@@ -160,7 +215,7 @@ function AttendanceSessionDetailPage({
             </div>
             <div className="muted">
               {sessionClass ? sessionClass.name : t("attendance.classFallback")} •{" "}
-              {t("attendance.count.students", { count: sessionEntries.length })}
+              {t("attendance.count.students", { count: deferredSessionEntries.length })}
             </div>
           </div>
         </div>
@@ -197,15 +252,37 @@ function AttendanceSessionDetailPage({
 
       <div className="attendance-student-list">
         <h3>{t("attendance.sessionDetail.markAttendance")}</h3>
-        {rows.map(({ student, entry }) =>
-          entry ? (
-            <AttendanceEntryRow
-              key={`${entry.id}:${entry.note || ""}:${entry.status}`}
-              entry={entry}
-              student={student}
-              handleUpdateAttendanceEntry={handleUpdateAttendanceEntry}
-            />
-          ) : null
+        {visibleRows.map(({ student, entry }) => (
+          <AttendanceEntryRow
+            key={entry.id}
+            entry={entry}
+            student={student}
+            handleUpdateAttendanceEntry={handleUpdateAttendanceEntry}
+          />
+        ))}
+        {rows.length > 0 && (
+          <p className="muted">
+            {t("attendance.sessionDetail.resultsSummary", {
+              shown: visibleRows.length,
+              total: rows.length,
+            })}
+            {listIsPending ? ` ${t("attendance.sessionDetail.updatingList")}` : ""}
+          </p>
+        )}
+        {hasMoreRows && (
+          <button
+            type="button"
+            className="secondary"
+            onClick={() =>
+              startTransition(() => {
+                setVisibleRowCount((current) =>
+                  Math.min(current + VISIBLE_ATTENDANCE_ROW_STEP, rows.length)
+                );
+              })
+            }
+          >
+            {t("attendance.sessionDetail.showMore")}
+          </button>
         )}
       </div>
     </section>

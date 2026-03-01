@@ -67,7 +67,7 @@ test("opens inline grade modal and saves the updated score", async () => {
   fireEvent.click(screen.getByRole("button", { name: /Unit 1/ }));
 
   fireEvent.click(
-    screen.getByRole("button", {
+    await screen.findByRole("button", {
       name: i18n.t("assessments.aria.editAssessmentForStudent", {
         assessmentTitle: "Conceptual Understanding",
         studentName: "Maria Eduarda Tessari",
@@ -110,7 +110,7 @@ test("opens assessment detail when clicking the assessment title header", async 
   fireEvent.click(screen.getByRole("button", { name: /Unit 1/ }));
 
   fireEvent.click(
-    screen.getByRole("button", {
+    await screen.findByRole("button", {
       name: i18n.t("assessments.aria.openAssessment", {
         assessmentTitle: "Conceptual Understanding",
       }),

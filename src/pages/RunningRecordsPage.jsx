@@ -1,10 +1,13 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { DayPicker } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+
+const INITIAL_VISIBLE_RECORDS = 48;
+const VISIBLE_RECORD_STEP = 48;
 
 function RunningRecordsPage({
   formError,
@@ -29,6 +32,8 @@ function RunningRecordsPage({
   const [selectedDateRange, setSelectedDateRange] = useState("all");
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [recordToDelete, setRecordToDelete] = useState(null);
+  const [visibleRecordCount, setVisibleRecordCount] = useState(INITIAL_VISIBLE_RECORDS);
+  const deferredSearchText = useDeferredValue(searchText);
 
   const classLookup = useMemo(() => {
     const map = new Map();
@@ -146,8 +151,8 @@ function RunningRecordsPage({
     if (selectedStudentFilter && record.student_id !== selectedStudentFilter) return false;
     if (selectedLevelFilter && normalizeLevel(record.level) !== selectedLevelFilter) return false;
     if (!isDateInRange(record.record_date, selectedDateRange)) return false;
-    if (searchText.trim()) {
-      const query = searchText.trim().toLowerCase();
+    if (deferredSearchText.trim()) {
+      const query = deferredSearchText.trim().toLowerCase();
       const studentName = student
         ? `${student.first_name} ${student.last_name}`.toLowerCase()
         : unknownStudentLabel.toLowerCase();
@@ -185,6 +190,9 @@ function RunningRecordsPage({
     },
     { independent: 0, instructional: 0, frustration: 0 }
   );
+  const visibleRecords = sortedRecords.slice(0, visibleRecordCount);
+  const hasMoreRecords = visibleRecords.length < sortedRecords.length;
+  const searchIsPending = searchText !== deferredSearchText;
 
   const totalWords = runningRecordForm.totalWords ? Number(runningRecordForm.totalWords) : 0;
   const errors = runningRecordForm.errors ? Number(runningRecordForm.errors) : 0;
@@ -350,6 +358,7 @@ function RunningRecordsPage({
               onChange={(event) => {
                 setSelectedClassFilter(event.target.value);
                 setSelectedStudentFilter("");
+                setVisibleRecordCount(INITIAL_VISIBLE_RECORDS);
               }}
             >
               <option value="">{t("runningRecords.filters.allClasses")}</option>
@@ -364,7 +373,10 @@ function RunningRecordsPage({
             <span>{t("runningRecords.filters.student")}</span>
             <select
               value={selectedStudentFilter}
-              onChange={(event) => setSelectedStudentFilter(event.target.value)}
+              onChange={(event) => {
+                setSelectedStudentFilter(event.target.value);
+                setVisibleRecordCount(INITIAL_VISIBLE_RECORDS);
+              }}
             >
               <option value="">{t("runningRecords.filters.allStudents")}</option>
               {students
@@ -381,13 +393,22 @@ function RunningRecordsPage({
             <input
               type="text"
               value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
+              onChange={(event) => {
+                setSearchText(event.target.value);
+                setVisibleRecordCount(INITIAL_VISIBLE_RECORDS);
+              }}
               placeholder={t("runningRecords.filters.searchPlaceholder")}
             />
           </label>
           <label className="stack">
             <span>{t("runningRecords.filters.sort")}</span>
-            <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+            <select
+              value={sortBy}
+              onChange={(event) => {
+                setSortBy(event.target.value);
+                setVisibleRecordCount(INITIAL_VISIBLE_RECORDS);
+              }}
+            >
               <option value="date_desc">{t("runningRecords.filters.sortNewest")}</option>
               <option value="date_asc">{t("runningRecords.filters.sortOldest")}</option>
               <option value="accuracy_desc">{t("runningRecords.filters.sortAccuracyHighLow")}</option>
@@ -405,7 +426,10 @@ function RunningRecordsPage({
                 key={range.id}
                 type="button"
                 className={`rr-date-chip ${selectedDateRange === range.id ? "active" : ""}`}
-                onClick={() => setSelectedDateRange(range.id)}
+                onClick={() => {
+                  setSelectedDateRange(range.id);
+                  setVisibleRecordCount(INITIAL_VISIBLE_RECORDS);
+                }}
               >
                 {range.label}
               </button>
@@ -425,7 +449,10 @@ function RunningRecordsPage({
                   key={level}
                   className={`rr-level-chip ${isActive ? "active" : ""}`}
                   style={{ "--chip-color": meta.color, "--chip-bg": meta.tint }}
-                  onClick={() => setSelectedLevelFilter(isActive ? "" : level)}
+                  onClick={() => {
+                    setSelectedLevelFilter(isActive ? "" : level);
+                    setVisibleRecordCount(INITIAL_VISIBLE_RECORDS);
+                  }}
                 >
                   {meta.short}
                 </button>
@@ -442,6 +469,7 @@ function RunningRecordsPage({
               setSelectedDateRange("all");
               setSearchText("");
               setSortBy("date_desc");
+              setVisibleRecordCount(INITIAL_VISIBLE_RECORDS);
             }}
           >
             {t("runningRecords.filters.clear")}
@@ -460,7 +488,7 @@ function RunningRecordsPage({
           </div>
         ) : (
           <div className="rr-cards">
-            {sortedRecords.map((record) => {
+            {visibleRecords.map((record) => {
               const studentName = getStudentName(record.student_id);
               const student = studentLookup.get(record.student_id);
               const meta = levelMeta(record.level);
@@ -507,6 +535,25 @@ function RunningRecordsPage({
               );
             })}
           </div>
+        )}
+        {sortedRecords.length > 0 && (
+          <p className="muted">
+            {t("runningRecords.resultsSummary", { shown: visibleRecords.length, total: sortedRecords.length })}
+            {searchIsPending ? ` ${t("runningRecords.updatingResults")}` : ""}
+          </p>
+        )}
+        {hasMoreRecords && (
+          <button
+            type="button"
+            className="secondary"
+            onClick={() =>
+              setVisibleRecordCount((current) =>
+                Math.min(current + VISIBLE_RECORD_STEP, sortedRecords.length)
+              )
+            }
+          >
+            {t("runningRecords.showMore")}
+          </button>
         )}
       </section>
 

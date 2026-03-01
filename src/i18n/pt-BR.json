@@ -253,7 +253,10 @@
     "sessionDetail": {
       "notFoundTitle": "Sessão não encontrada",
       "notFoundDescription": "Selecione uma sessão na página de Presença.",
-      "markAttendance": "Marcar Presença"
+      "markAttendance": "Marcar Presença",
+      "resultsSummary": "Mostrando {{shown}} de {{total}} alunos",
+      "showMore": "Mostrar mais alunos",
+      "updatingList": "(atualizando lista...)"
     }
   },
   "assessments": {
@@ -274,6 +277,9 @@
       "student": "Aluno",
       "average": "Média"
     },
+    "resultsSummary": "Mostrando {{shown}} de {{total}} alunos",
+    "showMoreRows": "Mostrar mais alunos",
+    "updatingTable": "(atualizando tabela...)",
     "loading": "Carregando notas...",
     "empty": {
       "noClasses": "Nenhuma turma encontrada.",
@@ -644,6 +650,7 @@
       "groupN": "Grupo {{number}}",
       "title": "Resultados"
     },
+    "resultsSummary": "Mostrando {{shown}} de {{total}} grupos",
     "separations": {
       "add": "Adicionar",
       "selectStudent": "Selecionar aluno",
@@ -662,8 +669,10 @@
       "groups": "Grupos",
       "students": "Alunos"
     },
+    "showMore": "Mostrar mais grupos",
     "subtitle": "Criar grupos balanceados com opções avançadas",
-    "title": "Gerador Inteligente de Grupos"
+    "title": "Gerador Inteligente de Grupos",
+    "updatingResults": "(atualizando grupos...)"
   },
   "random": {
     "allClasses": "Todas as turmas",
@@ -870,6 +879,8 @@
     "newRecord": "Novo Registro",
     "noClass": "sem turma",
     "noDate": "sem data",
+    "resultsSummary": "Mostrando {{shown}} de {{total}} registros",
+    "showMore": "Mostrar mais registros",
     "stats": {
       "avgAccuracy": "Média de Acertos",
       "filteredAvg": "Média filtrada",
@@ -877,6 +888,7 @@
       "totalRecords": "Total de registros"
     },
     "title": "Running registros",
+    "updatingResults": "(atualizando resultados...)",
     "unknownStudent": "Desconhecido aluno",
     "untitledText": "Untitled texto"
   },

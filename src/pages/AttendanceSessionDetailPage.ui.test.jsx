@@ -5,7 +5,7 @@ import i18n from "../i18n";
 import AttendanceSessionDetailPage from "./AttendanceSessionDetailPage";
 import { ATTENDANCE_STATUS_BY_KEY } from "../constants/attendance";
 
-test("updates an attendance entry when a status button is clicked", () => {
+test("updates an attendance entry when a status button is clicked", async () => {
   const handleUpdateAttendanceEntry = vi.fn();
 
   render(
@@ -45,7 +45,7 @@ test("updates an attendance entry when a status button is clicked", () => {
     </MemoryRouter>
   );
 
-  fireEvent.click(screen.getByRole("button", { name: i18n.t("attendance.status.absent.label") }));
+  fireEvent.click(await screen.findByRole("button", { name: i18n.t("attendance.status.absent.label") }));
 
   expect(handleUpdateAttendanceEntry).toHaveBeenCalledWith("entry-1", {
     status: ATTENDANCE_STATUS_BY_KEY.absent.value,
