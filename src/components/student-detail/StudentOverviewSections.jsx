@@ -60,6 +60,7 @@ function StudentOverviewSections({
   records,
   avgAccuracy,
   latestLevel,
+  runningRecordRecommendation,
   normalizedLevel,
   performanceBySubject,
   recentAssessments,
@@ -204,12 +205,51 @@ function StudentOverviewSections({
                 <span>{t("studentOverview.stats.latest")}</span>
               </article>
             </div>
+            {runningRecordRecommendation && (
+              <div className="student-reading-recommendation">
+                <div className="student-reading-recommendation-copy">
+                  <p className="student-reading-recommendation-kicker">
+                    {t("studentOverview.readingRecommendation.title")}
+                  </p>
+                  <strong>
+                    {t(`studentOverview.readingRecommendation.${runningRecordRecommendation.action}`, {
+                      level: runningRecordRecommendation.recommendedBookLevel,
+                    })}
+                  </strong>
+                  <p className="muted">
+                    {t("studentOverview.readingRecommendation.basedOn", {
+                      result: runningRecordRecommendation.result.short,
+                      level: runningRecordRecommendation.currentBookLevel,
+                    })}
+                  </p>
+                </div>
+                <div className="student-reading-recommendation-metrics">
+                  <article>
+                    <span>{t("studentOverview.readingRecommendation.currentLabel")}</span>
+                    <strong>{runningRecordRecommendation.currentBookLevel}</strong>
+                  </article>
+                  <article>
+                    <span>{t("studentOverview.readingRecommendation.resultLabel")}</span>
+                    <strong style={{ color: runningRecordRecommendation.result.color }}>
+                      {runningRecordRecommendation.result.short}
+                    </strong>
+                  </article>
+                  <article>
+                    <span>{t("studentOverview.readingRecommendation.suggestedLabel")}</span>
+                    <strong>{runningRecordRecommendation.recommendedBookLevel}</strong>
+                  </article>
+                </div>
+              </div>
+            )}
             <ul className="list student-mini-list">
               {records.slice(0, 3).map((record) => {
                 const level = normalizedLevel(record.level);
                 return (
                   <li key={record.id}>
-                    <span>{record.record_date || t("runningRecords.noDate")} · {record.text_title || t("runningRecords.untitledText")}</span>
+                    <span>
+                      {record.record_date || t("runningRecords.noDate")} · {record.text_title || t("runningRecords.untitledText")}
+                      {record.book_level ? ` · ${t("runningRecords.modal.bookLevel")} ${record.book_level}` : ""}
+                    </span>
                     <strong style={{ color: level.color }}>{record.accuracy_pct ?? 0}%</strong>
                   </li>
                 );

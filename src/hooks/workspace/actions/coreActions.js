@@ -57,6 +57,76 @@ function createCoreActions({
     await refreshCoreData();
   };
 
+  const resetRunningRecordForm = () => {
+    setRunningRecordForm({
+      studentId: "",
+      recordDate: "",
+      textTitle: "",
+      bookLevel: "",
+      totalWords: "",
+      errors: "",
+      selfCorrections: "",
+      notes: "",
+    });
+  };
+
+  const buildRunningRecordPayload = () => {
+    setFormError("");
+
+    const bookLevel = runningRecordForm.bookLevel ? runningRecordForm.bookLevel.trim().toUpperCase() : "";
+    const totalWords = runningRecordForm.totalWords ? Number(runningRecordForm.totalWords) : 0;
+    const errors = runningRecordForm.errors ? Number(runningRecordForm.errors) : 0;
+    const selfCorrections = runningRecordForm.selfCorrections
+      ? Number(runningRecordForm.selfCorrections)
+      : 0;
+
+    if (!runningRecordForm.studentId) {
+      setFormError("Select a student for the running record.");
+      return null;
+    }
+    if (!runningRecordForm.recordDate) {
+      setFormError("Enter a date for the running record (YYYY-MM-DD).");
+      return null;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(runningRecordForm.recordDate)) {
+      setFormError("Date format should be YYYY-MM-DD.");
+      return null;
+    }
+    if (bookLevel && !/^[A-Z]$/.test(bookLevel)) {
+      setFormError("Book level must be a single letter from A to Z.");
+      return null;
+    }
+    if (!Number.isFinite(totalWords) || totalWords <= 0) {
+      setFormError("Total words must be greater than 0.");
+      return null;
+    }
+    if (errors < 0 || selfCorrections < 0) {
+      setFormError("Errors and self-corrections must be 0 or more.");
+      return null;
+    }
+
+    const accuracy = ((totalWords - errors) / totalWords) * 100;
+    let level = "Frustration (<90%)";
+    if (accuracy >= 95) level = "Independent (95-100%)";
+    else if (accuracy >= 90) level = "Instructional (90-94%)";
+
+    const scRatio = selfCorrections > 0 ? (errors + selfCorrections) / selfCorrections : null;
+
+    return {
+      student_id: runningRecordForm.studentId,
+      record_date: runningRecordForm.recordDate,
+      text_title: runningRecordForm.textTitle.trim() || null,
+      book_level: bookLevel || null,
+      total_words: totalWords,
+      errors,
+      self_corrections: selfCorrections,
+      accuracy_pct: Math.round(accuracy * 10) / 10,
+      level,
+      sc_ratio: scRatio ? Math.round(scRatio * 10) / 10 : null,
+      notes: runningRecordForm.notes.trim() || null,
+    };
+  };
+
   const handleCreateClass = async (event) => {
     event.preventDefault();
 
@@ -309,54 +379,10 @@ function createCoreActions({
 
   const handleCreateRunningRecord = async (event) => {
     event.preventDefault();
-    setFormError("");
-
-    const totalWords = runningRecordForm.totalWords ? Number(runningRecordForm.totalWords) : 0;
-    const errors = runningRecordForm.errors ? Number(runningRecordForm.errors) : 0;
-    const selfCorrections = runningRecordForm.selfCorrections
-      ? Number(runningRecordForm.selfCorrections)
-      : 0;
-
-    if (!runningRecordForm.studentId) {
-      setFormError("Select a student for the running record.");
+    const payload = buildRunningRecordPayload();
+    if (!payload) {
       return false;
     }
-    if (!runningRecordForm.recordDate) {
-      setFormError("Enter a date for the running record (YYYY-MM-DD).");
-      return false;
-    }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(runningRecordForm.recordDate)) {
-      setFormError("Date format should be YYYY-MM-DD.");
-      return false;
-    }
-    if (!Number.isFinite(totalWords) || totalWords <= 0) {
-      setFormError("Total words must be greater than 0.");
-      return false;
-    }
-    if (errors < 0 || selfCorrections < 0) {
-      setFormError("Errors and self-corrections must be 0 or more.");
-      return false;
-    }
-
-    const accuracy = ((totalWords - errors) / totalWords) * 100;
-    let level = "Frustration (<90%)";
-    if (accuracy >= 95) level = "Independent (95-100%)";
-    else if (accuracy >= 90) level = "Instructional (90-94%)";
-
-    const scRatio = selfCorrections > 0 ? (errors + selfCorrections) / selfCorrections : null;
-
-    const payload = {
-      student_id: runningRecordForm.studentId,
-      record_date: runningRecordForm.recordDate,
-      text_title: runningRecordForm.textTitle.trim() || null,
-      total_words: totalWords,
-      errors,
-      self_corrections: selfCorrections,
-      accuracy_pct: Math.round(accuracy * 10) / 10,
-      level,
-      sc_ratio: scRatio ? Math.round(scRatio * 10) / 10 : null,
-      notes: runningRecordForm.notes.trim() || null,
-    };
 
     const { error } = await supabase.from("running_records").insert(payload);
     if (error) {
@@ -364,15 +390,27 @@ function createCoreActions({
       return false;
     }
 
-    setRunningRecordForm({
-      studentId: "",
-      recordDate: "",
-      textTitle: "",
-      totalWords: "",
-      errors: "",
-      selfCorrections: "",
-      notes: "",
-    });
+    resetRunningRecordForm();
+    await refreshAssessmentData();
+    return true;
+  };
+
+  const handleUpdateRunningRecord = async (recordId, event) => {
+    event?.preventDefault();
+    if (!recordId) return false;
+
+    const payload = buildRunningRecordPayload();
+    if (!payload) {
+      return false;
+    }
+
+    const { error } = await supabase.from("running_records").update(payload).eq("id", recordId);
+    if (error) {
+      setFormError(error.message);
+      return false;
+    }
+
+    resetRunningRecordForm();
     await refreshAssessmentData();
     return true;
   };
@@ -546,6 +584,7 @@ function createCoreActions({
     handleUpdateSortOrder,
     handleSwapSortOrder,
     handleCreateRunningRecord,
+    handleUpdateRunningRecord,
     handleDeleteRunningRecord,
     handleCreateSubject,
     handleCreateUnit,

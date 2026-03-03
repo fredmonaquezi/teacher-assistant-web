@@ -77,6 +77,7 @@ function useTeacherWorkspaceData(userId) {
     studentId: "",
     recordDate: "",
     textTitle: "",
+    bookLevel: "",
     totalWords: "",
     errors: "",
     selfCorrections: "",
@@ -137,6 +138,7 @@ function useTeacherWorkspaceData(userId) {
     handleEnsureAssessmentEntries,
     handleUpdateAssessmentNotes,
     handleCreateRunningRecord,
+    handleUpdateRunningRecord,
     handleDeleteRunningRecord,
     handleCreateSubject,
     handleCreateUnit,
@@ -236,6 +238,77 @@ function useTeacherWorkspaceData(userId) {
       .sort();
   }, [classes, students]);
 
+  const visibleStudents = useMemo(() => {
+    const validClassIdSet = new Set(classes.map((classItem) => classItem.id).filter(Boolean));
+    return students.filter((student) => !student.class_id || validClassIdSet.has(student.class_id));
+  }, [classes, students]);
+
+  const visibleStudentIdSet = useMemo(
+    () => new Set(visibleStudents.map((student) => student.id).filter(Boolean)),
+    [visibleStudents]
+  );
+
+  const visibleAttendanceEntries = useMemo(
+    () =>
+      attendanceEntries.filter(
+        (entry) => !entry.student_id || visibleStudentIdSet.has(entry.student_id)
+      ),
+    [attendanceEntries, visibleStudentIdSet]
+  );
+
+  const visibleAssessmentEntries = useMemo(
+    () =>
+      assessmentEntries.filter(
+        (entry) => !entry.student_id || visibleStudentIdSet.has(entry.student_id)
+      ),
+    [assessmentEntries, visibleStudentIdSet]
+  );
+
+  const visibleRunningRecords = useMemo(
+    () =>
+      runningRecords.filter(
+        (record) => !record.student_id || visibleStudentIdSet.has(record.student_id)
+      ),
+    [runningRecords, visibleStudentIdSet]
+  );
+
+  const visibleDevelopmentScores = useMemo(
+    () =>
+      developmentScores.filter(
+        (score) => !score.student_id || visibleStudentIdSet.has(score.student_id)
+      ),
+    [developmentScores, visibleStudentIdSet]
+  );
+
+  const visibleGroupMembers = useMemo(
+    () =>
+      groupMembers.filter(
+        (member) => !member.student_id || visibleStudentIdSet.has(member.student_id)
+      ),
+    [groupMembers, visibleStudentIdSet]
+  );
+
+  const visibleGroupConstraints = useMemo(
+    () =>
+      groupConstraints.filter(
+        (constraint) =>
+          (!constraint.student_a || visibleStudentIdSet.has(constraint.student_a)) &&
+          (!constraint.student_b || visibleStudentIdSet.has(constraint.student_b))
+      ),
+    [groupConstraints, visibleStudentIdSet]
+  );
+
+  const visibleRandomPickerRotationRows = useMemo(
+    () =>
+      randomPickerRotationRows.map((row) => ({
+        ...row,
+        used_student_ids: (row.used_student_ids || []).filter((studentId) =>
+          visibleStudentIdSet.has(studentId)
+        ),
+      })),
+    [randomPickerRotationRows, visibleStudentIdSet]
+  );
+
   useEffect(() => {
     if (loading) return;
     if (typeof handleCleanupOrphanedStudents !== "function") return;
@@ -266,29 +339,29 @@ function useTeacherWorkspaceData(userId) {
     profilePreferences,
     setProfilePreferences,
     classes,
-    students,
+    students: visibleStudents,
     calendarDiaryEntries,
     calendarEvents,
     calendarTablesReady,
     usefulLinks,
     randomPickerCustomCategories,
-    randomPickerRotationRows,
+    randomPickerRotationRows: visibleRandomPickerRotationRows,
     attendanceSessions,
-    attendanceEntries,
+    attendanceEntries: visibleAttendanceEntries,
     assessments,
     setAssessments,
-    assessmentEntries,
-    runningRecords,
+    assessmentEntries: visibleAssessmentEntries,
+    runningRecords: visibleRunningRecords,
     subjects,
     units,
     rubrics,
     rubricCategories,
     rubricCriteria,
-    developmentScores,
+    developmentScores: visibleDevelopmentScores,
     seedingRubrics,
     groups,
-    groupMembers,
-    groupConstraints,
+    groupMembers: visibleGroupMembers,
+    groupConstraints: visibleGroupConstraints,
     loading,
     formError,
     setFormError,
@@ -339,6 +412,7 @@ function useTeacherWorkspaceData(userId) {
     handleEnsureAssessmentEntries,
     handleUpdateAssessmentNotes,
     handleCreateRunningRecord,
+    handleUpdateRunningRecord,
     handleDeleteRunningRecord,
     handleCreateSubject,
     handleCreateUnit,

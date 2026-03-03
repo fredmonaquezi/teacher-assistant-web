@@ -60,6 +60,7 @@ function StudentDetailPage({
     classLabel,
     records,
     latestLevel,
+    runningRecordRecommendation,
     avgAccuracy,
     assessmentsForStudent,
     overallAverage,
@@ -183,6 +184,7 @@ function StudentDetailPage({
         records={records}
         avgAccuracy={avgAccuracy}
         latestLevel={latestLevel}
+        runningRecordRecommendation={runningRecordRecommendation}
         normalizedLevel={normalizedLevel}
         performanceBySubject={performanceBySubject}
         recentAssessments={recentAssessments}

@@ -13,10 +13,12 @@
       "back": "Back",
       "close": "Close",
       "create": "Create",
+      "edit": "Edit",
       "delete": "Delete",
       "done": "Done",
       "next": "Next",
-      "save": "Save"
+      "save": "Save",
+      "update": "Update"
     },
     "gender": {
       "female": "Female",
@@ -856,8 +858,12 @@
       "words": "Words"
     },
     "modal": {
+      "bookLevel": "Book level",
+      "bookLevelPlaceholder": "Select A-Z",
       "clickToChoose": "Click to choose",
       "date": "Date",
+      "editDescription": "Update reading assessment data",
+      "editTitle": "Edit Record",
       "errors": "Errors",
       "newDescription": "Record Reading Assessment data",
       "newTitle": "New Record",
@@ -918,6 +924,16 @@
     "performanceBySubject": "Performance by subject",
     "quickStatus": "Quick status",
     "recentAssessments": "Recent assessments",
+    "readingRecommendation": {
+      "basedOn": "Based on {{result}} performance at level {{level}}",
+      "currentLabel": "Current level",
+      "moveDown": "Try a more supported text at level {{level}} next.",
+      "moveUp": "Ready to move up to level {{level}} next.",
+      "resultLabel": "Running record",
+      "stay": "Keep practicing at level {{level}} next.",
+      "suggestedLabel": "Suggested next",
+      "title": "Reading recommendation"
+    },
     "runningRecords": "Running records",
     "stats": {
       "avgAccuracy": "Avg accuracy",
