@@ -34,10 +34,30 @@ function EditStudentModal({
           className="student-edit-form"
           onSubmit={async (event) => {
             event.preventDefault();
-            await handleUpdateStudent(studentId, editForm);
-            setShowEditInfo(false);
+            const didUpdate = await handleUpdateStudent(studentId, editForm);
+            if (didUpdate) {
+              setShowEditInfo(false);
+            }
           }}
         >
+          <label className="stack">
+            <span>{t("studentEdit.firstName")}</span>
+            <input
+              value={editForm.firstName}
+              onChange={(event) => setEditForm((prev) => ({ ...prev, firstName: event.target.value }))}
+              placeholder={t("studentEdit.firstNamePlaceholder")}
+              required
+            />
+          </label>
+          <label className="stack">
+            <span>{t("studentEdit.lastName")}</span>
+            <input
+              value={editForm.lastName}
+              onChange={(event) => setEditForm((prev) => ({ ...prev, lastName: event.target.value }))}
+              placeholder={t("studentEdit.lastNamePlaceholder")}
+              required
+            />
+          </label>
           <label className="stack">
             <span>{t("studentEdit.gender")}</span>
             <select

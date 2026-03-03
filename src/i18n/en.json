@@ -901,13 +901,17 @@
     "notFoundTitle": "Not found title"
   },
   "studentEdit": {
-    "description": "Student edit {{name}}",
+    "description": "Update profile details for {{name}}.",
+    "firstName": "First name",
+    "firstNamePlaceholder": "Maya",
     "gender": "Gender",
-    "helpLink": "Help link",
-    "helpPrefix": "Help prefix",
+    "helpLink": "Open Groups",
+    "helpPrefix": "Need to adjust groups?",
+    "lastName": "Last name",
+    "lastNamePlaceholder": "Lopez",
     "notes": "Notes",
-    "notesPlaceholder": "Notes placeholder",
-    "title": "Student edit"
+    "notesPlaceholder": "Optional",
+    "title": "Edit student"
   },
   "studentOverview": {
     "assessmentsCount": "{{count}} assessments",

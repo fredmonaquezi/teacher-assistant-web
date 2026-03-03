@@ -247,11 +247,24 @@ function createCoreActions({
       missing_homework: !!updates.missingHomework,
     };
 
+    const hasFirstName = typeof updates.firstName === "string";
+    const hasLastName = typeof updates.lastName === "string";
+    if (hasFirstName || hasLastName) {
+      const firstName = String(updates.firstName || "").trim();
+      const lastName = String(updates.lastName || "").trim();
+      if (!firstName || !lastName) {
+        setFormError("Student first and last name are required.");
+        return false;
+      }
+      payload.first_name = firstName;
+      payload.last_name = lastName;
+    }
+
     if (typeof updates.separationList === "string") {
       payload.separation_list = updates.separationList.trim() || null;
     }
 
-    await runMutation({
+    return runMutation({
       setFormError,
       execute: () => supabase.from("students").update(payload).eq("id", studentId),
       refresh: refreshCoreData,

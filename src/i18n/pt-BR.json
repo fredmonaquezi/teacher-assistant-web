@@ -904,12 +904,16 @@
   },
   "studentEdit": {
     "description": "Atualize os dados de {{name}}.",
+    "firstName": "Primeiro nome",
+    "firstNamePlaceholder": "Ex.: Ana",
     "gender": "Gênero",
     "helpLink": "Abrir Grupos",
     "helpPrefix": "Precisa ajustar agrupamentos?",
+    "lastName": "Sobrenome",
+    "lastNamePlaceholder": "Ex.: Souza",
     "notes": "Observações",
-    "notesPlaceholder": "Observações exemplo",
-    "title": "Aluno editar"
+    "notesPlaceholder": "Opcional",
+    "title": "Editar aluno"
   },
   "studentOverview": {
     "assessmentsCount": "{{count}} avaliações",

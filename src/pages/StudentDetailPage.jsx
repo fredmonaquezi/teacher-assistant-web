@@ -46,6 +46,8 @@ function StudentDetailPage({
     notes: "",
   });
   const [editForm, setEditForm] = useState({
+    firstName: "",
+    lastName: "",
     gender: "Prefer not to say",
     notes: "",
     isParticipatingWell: false,
@@ -148,6 +150,8 @@ function StudentDetailPage({
     if (!student) return;
 
     setEditForm({
+      firstName: student.first_name || "",
+      lastName: student.last_name || "",
       gender: student.gender || "Prefer not to say",
       notes: student.notes || "",
       isParticipatingWell: !!student.is_participating_well,
