@@ -10,6 +10,19 @@ function normalizedLevel(value, t) {
   return { label: t("runningRecords.levels.frustration.short"), color: "#dc2626", short: t("runningRecords.levels.frustration.short") };
 }
 
+function normalizeBookLevel(value) {
+  const normalized = String(value || "").trim().toUpperCase();
+  return /^[A-Z]$/.test(normalized) ? normalized : "";
+}
+
+function shiftBookLevel(level, delta) {
+  const normalized = normalizeBookLevel(level);
+  if (!normalized) return "";
+  const baseCode = normalized.charCodeAt(0);
+  const nextCode = Math.min(90, Math.max(65, baseCode + delta));
+  return String.fromCharCode(nextCode);
+}
+
 function ratingLabel(rating, t) {
   if (rating === 1) return t("development.ratingShort.1");
   if (rating === 2) return t("development.ratingShort.2");
@@ -88,6 +101,40 @@ function useStudentDetailData({
     () => (records.length ? normalizedLevel(records[0].level, t) : null),
     [records, t]
   );
+
+  const runningRecordRecommendation = useMemo(() => {
+    const sourceRecord = records.find((record) => normalizeBookLevel(record.book_level));
+    if (!sourceRecord) return null;
+
+    const currentBookLevel = normalizeBookLevel(sourceRecord.book_level);
+    const result = normalizedLevel(sourceRecord.level, t);
+    const rawLevel = (sourceRecord.level || "").toLowerCase();
+
+    if (rawLevel.startsWith("independent")) {
+      return {
+        currentBookLevel,
+        recommendedBookLevel: shiftBookLevel(currentBookLevel, 1),
+        result,
+        action: "moveUp",
+      };
+    }
+
+    if (rawLevel.startsWith("instructional")) {
+      return {
+        currentBookLevel,
+        recommendedBookLevel: currentBookLevel,
+        result,
+        action: "stay",
+      };
+    }
+
+    return {
+      currentBookLevel,
+      recommendedBookLevel: shiftBookLevel(currentBookLevel, -1),
+      result,
+      action: "moveDown",
+    };
+  }, [records, t]);
 
   const avgAccuracy = useMemo(
     () =>
@@ -384,6 +431,7 @@ function useStudentDetailData({
     classLabel,
     records,
     latestLevel,
+    runningRecordRecommendation,
     avgAccuracy,
     assessmentsForStudent,
     overallAverage,

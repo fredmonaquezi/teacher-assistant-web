@@ -122,6 +122,7 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     handleEnsureAssessmentEntries,
     handleUpdateAssessmentNotes,
     handleCreateRunningRecord,
+    handleUpdateRunningRecord,
     handleDeleteRunningRecord,
     handleCreateSubject,
     handleCreateUnit,
@@ -398,6 +399,7 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
               <RunningRecordsPage
                 formError={formError}
                 handleCreateRunningRecord={handleCreateRunningRecord}
+                handleUpdateRunningRecord={handleUpdateRunningRecord}
                 handleDeleteRunningRecord={handleDeleteRunningRecord}
                 runningRecordForm={runningRecordForm}
                 setRunningRecordForm={setRunningRecordForm}

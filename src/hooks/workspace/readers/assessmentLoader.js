@@ -5,6 +5,7 @@ const RUNNING_RECORD_COLUMNS = [
   "student_id",
   "record_date",
   "text_title",
+  "book_level",
   "total_words",
   "errors",
   "self_corrections",

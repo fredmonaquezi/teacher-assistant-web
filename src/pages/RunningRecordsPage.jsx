@@ -1,17 +1,49 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { ptBR } from "date-fns/locale/pt-BR";
+import { createPortal } from "react-dom";
 import { DayPicker } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 
 const INITIAL_VISIBLE_RECORDS = 48;
 const VISIBLE_RECORD_STEP = 48;
+const BOOK_LEVEL_OPTIONS = Array.from({ length: 26 }, (_, index) => String.fromCharCode(65 + index));
+const CALENDAR_GAP = 8;
+const CALENDAR_MARGIN = 12;
+const CALENDAR_WIDTH_ESTIMATE = 320;
+const EMPTY_RUNNING_RECORD_FORM = {
+  studentId: "",
+  recordDate: "",
+  textTitle: "",
+  bookLevel: "",
+  totalWords: "",
+  errors: "",
+  selfCorrections: "",
+  notes: "",
+};
+
+function buildRunningRecordFormState(record) {
+  return {
+    studentId: record?.student_id || "",
+    recordDate: record?.record_date || "",
+    textTitle: record?.text_title || "",
+    bookLevel: record?.book_level || "",
+    totalWords: record?.total_words !== null && record?.total_words !== undefined ? String(record.total_words) : "",
+    errors: record?.errors !== null && record?.errors !== undefined ? String(record.errors) : "",
+    selfCorrections:
+      record?.self_corrections !== null && record?.self_corrections !== undefined
+        ? String(record.self_corrections)
+        : "",
+    notes: record?.notes || "",
+  };
+}
 
 function RunningRecordsPage({
   formError,
   handleCreateRunningRecord,
+  handleUpdateRunningRecord,
   handleDeleteRunningRecord,
   runningRecordForm,
   setRunningRecordForm,
@@ -32,8 +64,12 @@ function RunningRecordsPage({
   const [selectedDateRange, setSelectedDateRange] = useState("all");
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [recordToDelete, setRecordToDelete] = useState(null);
+  const [editingRecordId, setEditingRecordId] = useState(null);
   const [visibleRecordCount, setVisibleRecordCount] = useState(INITIAL_VISIBLE_RECORDS);
+  const [calendarPosition, setCalendarPosition] = useState({ top: 0, left: 0 });
   const deferredSearchText = useDeferredValue(searchText);
+  const dateInputRef = useRef(null);
+  const calendarPopoverRef = useRef(null);
 
   const classLookup = useMemo(() => {
     const map = new Map();
@@ -46,6 +82,16 @@ function RunningRecordsPage({
     students.forEach((student) => map.set(student.id, student));
     return map;
   }, [students]);
+
+  const validSelectableStudents = useMemo(
+    () =>
+      students.filter((student) => !student.class_id || classLookup.has(student.class_id)),
+    [students, classLookup]
+  );
+  const validSelectableStudentIds = useMemo(
+    () => new Set(validSelectableStudents.map((student) => student.id)),
+    [validSelectableStudents]
+  );
 
   const unknownStudentLabel = t("runningRecords.unknownStudent");
   const noClassLabel = t("runningRecords.noClass");
@@ -65,8 +111,13 @@ function RunningRecordsPage({
 
   const groupedStudents = (() => {
     const groups = new Map();
-    students.forEach((student) => {
-      const key = classDisplayName(student.class_id);
+    validSelectableStudents.forEach((student) => {
+      const classItem = student.class_id ? classLookup.get(student.class_id) : null;
+      const key = !student.class_id
+        ? noClassLabel
+        : classItem?.grade_level
+          ? `${classItem.name} (${classItem.grade_level})`
+          : classItem?.name || noClassLabel;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(student);
     });
@@ -144,11 +195,14 @@ function RunningRecordsPage({
         : "0.0",
     [runningRecords, totalRecords]
   );
+  const effectiveSelectedStudentFilter = validSelectableStudentIds.has(selectedStudentFilter)
+    ? selectedStudentFilter
+    : "";
 
   const filteredRecords = runningRecords.filter((record) => {
     const student = studentLookup.get(record.student_id);
     if (selectedClassFilter && student?.class_id !== selectedClassFilter) return false;
-    if (selectedStudentFilter && record.student_id !== selectedStudentFilter) return false;
+    if (effectiveSelectedStudentFilter && record.student_id !== effectiveSelectedStudentFilter) return false;
     if (selectedLevelFilter && normalizeLevel(record.level) !== selectedLevelFilter) return false;
     if (!isDateInRange(record.record_date, selectedDateRange)) return false;
     if (deferredSearchText.trim()) {
@@ -206,14 +260,78 @@ function RunningRecordsPage({
         : "Frustration (<90%)";
   const liveRatio =
     selfCorrections > 0 ? `1:${(((errors + selfCorrections) / selfCorrections) || 0).toFixed(1)}` : null;
+  const isEditingRecord = Boolean(editingRecordId);
+
+  const closeCreateModal = () => {
+    setEditingRecordId(null);
+    setShowCreateModal(false);
+    setShowCalendar(false);
+  };
+
+  const openCreateModal = () => {
+    setEditingRecordId(null);
+    setRunningRecordForm(EMPTY_RUNNING_RECORD_FORM);
+    setShowCalendar(false);
+    setShowCreateModal(true);
+  };
+
+  const openEditModal = (record) => {
+    if (!record?.id) return;
+    setEditingRecordId(record.id);
+    setRunningRecordForm(buildRunningRecordFormState(record));
+    setShowCalendar(false);
+    setSelectedRecord(null);
+    setShowCreateModal(true);
+  };
 
   const onCreateRecord = async (event) => {
-    const created = await handleCreateRunningRecord(event);
-    if (created) {
-      setShowCreateModal(false);
-      setShowCalendar(false);
+    const saved = isEditingRecord
+      ? await handleUpdateRunningRecord(editingRecordId, event)
+      : await handleCreateRunningRecord(event);
+    if (saved) {
+      closeCreateModal();
     }
   };
+
+  useEffect(() => {
+    if (!showCalendar) return undefined;
+
+    const updateCalendarPosition = () => {
+      const input = dateInputRef.current;
+      if (!input || typeof window === "undefined") return;
+
+      const rect = input.getBoundingClientRect();
+      const popoverWidth = calendarPopoverRef.current?.offsetWidth || CALENDAR_WIDTH_ESTIMATE;
+      const popoverHeight = calendarPopoverRef.current?.offsetHeight || 360;
+      const maxLeft = Math.max(CALENDAR_MARGIN, window.innerWidth - popoverWidth - CALENDAR_MARGIN);
+      const left = Math.min(Math.max(rect.left, CALENDAR_MARGIN), maxLeft);
+      const fitsBelow = rect.bottom + CALENDAR_GAP + popoverHeight <= window.innerHeight - CALENDAR_MARGIN;
+      const top = fitsBelow
+        ? rect.bottom + CALENDAR_GAP
+        : Math.max(CALENDAR_MARGIN, rect.top - popoverHeight - CALENDAR_GAP);
+
+      setCalendarPosition({ top, left });
+    };
+
+    const handlePointerDown = (event) => {
+      const input = dateInputRef.current;
+      const popover = calendarPopoverRef.current;
+      const target = event.target;
+      if (input?.contains(target) || popover?.contains(target)) return;
+      setShowCalendar(false);
+    };
+
+    updateCalendarPosition();
+    window.addEventListener("resize", updateCalendarPosition);
+    window.addEventListener("scroll", updateCalendarPosition, true);
+    document.addEventListener("mousedown", handlePointerDown);
+
+    return () => {
+      window.removeEventListener("resize", updateCalendarPosition);
+      window.removeEventListener("scroll", updateCalendarPosition, true);
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [showCalendar]);
 
   const selectedRecordLevel = selectedRecord ? levelMeta(selectedRecord.level) : null;
   const selectedRecordDate = selectedRecord?.record_date
@@ -315,7 +433,7 @@ function RunningRecordsPage({
             <button type="button" className="secondary" onClick={exportRunningRecordsJson} disabled={sortedRecords.length === 0}>
               {t("runningRecords.exportJson")}
             </button>
-            <button type="button" onClick={() => setShowCreateModal(true)}>
+            <button type="button" onClick={openCreateModal}>
               {t("runningRecords.newRecord")}
             </button>
           </div>
@@ -372,14 +490,14 @@ function RunningRecordsPage({
           <label className="stack">
             <span>{t("runningRecords.filters.student")}</span>
             <select
-              value={selectedStudentFilter}
+              value={effectiveSelectedStudentFilter}
               onChange={(event) => {
                 setSelectedStudentFilter(event.target.value);
                 setVisibleRecordCount(INITIAL_VISIBLE_RECORDS);
               }}
             >
               <option value="">{t("runningRecords.filters.allStudents")}</option>
-              {students
+              {validSelectableStudents
                 .filter((student) => !selectedClassFilter || student.class_id === selectedClassFilter)
                 .map((student) => (
                 <option key={student.id} value={student.id}>
@@ -482,7 +600,7 @@ function RunningRecordsPage({
           <div className="rr-empty">
             <h3>{t("runningRecords.empty.title")}</h3>
             <p className="muted">{t("runningRecords.empty.description")}</p>
-            <button type="button" onClick={() => setShowCreateModal(true)}>
+            <button type="button" onClick={openCreateModal}>
               {t("runningRecords.empty.createFirst")}
             </button>
           </div>
@@ -527,9 +645,17 @@ function RunningRecordsPage({
                       <span>{t("runningRecords.metrics.words")}</span>
                     </article>
                   </div>
-                  <div className="rr-level-badge" style={{ color: meta.color, background: meta.tint }}>
-                    <span>{meta.badge}</span>
-                    <span>{meta.short}</span>
+                  <div className="rr-card-badges">
+                    <div className="rr-level-badge" style={{ color: meta.color, background: meta.tint }}>
+                      <span>{meta.badge}</span>
+                      <span>{meta.short}</span>
+                    </div>
+                    {!!record.book_level && (
+                      <div className="rr-book-level-chip">
+                        <span>{t("runningRecords.modal.bookLevel")}</span>
+                        <strong>{record.book_level}</strong>
+                      </div>
+                    )}
                   </div>
                 </button>
               );
@@ -562,22 +688,23 @@ function RunningRecordsPage({
           <div className="modal-card running-records-modal">
             <div className="rr-modal-header">
               <div>
-                <h3>{t("runningRecords.modal.newTitle")}</h3>
-                <p className="muted">{t("runningRecords.modal.newDescription")}</p>
+                <h3>{isEditingRecord ? t("runningRecords.modal.editTitle") : t("runningRecords.modal.newTitle")}</h3>
+                <p className="muted">
+                  {isEditingRecord
+                    ? t("runningRecords.modal.editDescription")
+                    : t("runningRecords.modal.newDescription")}
+                </p>
               </div>
               <button
                 type="button"
                 className="icon-button"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setShowCalendar(false);
-                }}
+                onClick={closeCreateModal}
                 aria-label={t("common.actions.close")}
               >
                 ×
               </button>
             </div>
-            <form onSubmit={onCreateRecord} className="grid">
+            <form onSubmit={onCreateRecord} className="grid rr-create-form">
               <label className="stack">
                 <span>{t("runningRecords.modal.student")}</span>
                 <select
@@ -602,6 +729,7 @@ function RunningRecordsPage({
               <label className="stack date-picker">
                 <span>{t("runningRecords.modal.date")}</span>
                 <input
+                  ref={dateInputRef}
                   type="text"
                   value={runningRecordForm.recordDate}
                   onClick={() => setShowCalendar(true)}
@@ -610,24 +738,24 @@ function RunningRecordsPage({
                   placeholder={t("runningRecords.modal.clickToChoose")}
                   required
                 />
-                {showCalendar && (
-                  <div className="calendar-popover">
-                    <DayPicker
-                      mode="single"
-                      selected={runningRecordForm.recordDate ? parseISO(runningRecordForm.recordDate) : undefined}
-                      onSelect={(date) => {
-                        if (!date) return;
-                        setRunningRecordForm((prev) => ({
-                          ...prev,
-                          recordDate: format(date, "yyyy-MM-dd"),
-                        }));
-                        setShowCalendar(false);
-                      }}
-                    />
-                  </div>
-                )}
               </label>
               <label className="stack">
+                <span>{t("runningRecords.modal.bookLevel")}</span>
+                <select
+                  value={runningRecordForm.bookLevel}
+                  onChange={(event) =>
+                    setRunningRecordForm((prev) => ({ ...prev, bookLevel: event.target.value }))
+                  }
+                >
+                  <option value="">{t("runningRecords.modal.bookLevelPlaceholder")}</option>
+                  {BOOK_LEVEL_OPTIONS.map((level) => (
+                    <option key={level} value={level}>
+                      {level}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="stack rr-form-row-full">
                 <span>{t("runningRecords.modal.textTitle")}</span>
                 <input
                   value={runningRecordForm.textTitle}
@@ -676,17 +804,6 @@ function RunningRecordsPage({
                   required
                 />
               </label>
-              <label className="stack rr-notes-field">
-                <span>{t("runningRecords.modal.notesOptional")}</span>
-                <textarea
-                  rows="3"
-                  value={runningRecordForm.notes}
-                  onChange={(event) =>
-                    setRunningRecordForm((prev) => ({ ...prev, notes: event.target.value }))
-                  }
-                  placeholder={t("runningRecords.modal.notesPlaceholder")}
-                />
-              </label>
               {totalWords > 0 && (
                 <div className="rr-live-results">
                   <h4>{t("runningRecords.modal.results")}</h4>
@@ -703,23 +820,55 @@ function RunningRecordsPage({
                   )}
                 </div>
               )}
+              <label className="stack rr-notes-field">
+                <span>{t("runningRecords.modal.notesOptional")}</span>
+                <textarea
+                  rows="3"
+                  value={runningRecordForm.notes}
+                  onChange={(event) =>
+                    setRunningRecordForm((prev) => ({ ...prev, notes: event.target.value }))
+                  }
+                  placeholder={t("runningRecords.modal.notesPlaceholder")}
+                />
+              </label>
               <div className="modal-actions">
                 <button
                   type="button"
                   className="secondary"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setShowCalendar(false);
-                  }}
+                  onClick={closeCreateModal}
                 >
                   {t("common.actions.cancel")}
                 </button>
-                <button type="submit">{t("common.actions.save")}</button>
+                <button type="submit">{isEditingRecord ? t("common.actions.update") : t("common.actions.save")}</button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {showCalendar && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={calendarPopoverRef}
+              className="calendar-popover rr-calendar-floating"
+              style={{ top: `${calendarPosition.top}px`, left: `${calendarPosition.left}px` }}
+            >
+              <DayPicker
+                mode="single"
+                selected={runningRecordForm.recordDate ? parseISO(runningRecordForm.recordDate) : undefined}
+                onSelect={(date) => {
+                  if (!date) return;
+                  setRunningRecordForm((prev) => ({
+                    ...prev,
+                    recordDate: format(date, "yyyy-MM-dd"),
+                  }));
+                  setShowCalendar(false);
+                }}
+              />
+            </div>,
+            document.body
+          )
+        : null}
 
       {selectedRecord && (
         <div className="modal-overlay">
@@ -741,6 +890,11 @@ function RunningRecordsPage({
             <div className="rr-detail-block">
               <p className="rr-detail-title">{selectedRecord.text_title || t("runningRecords.untitledText")}</p>
               <p className="muted">{selectedRecordDate ? format(selectedRecordDate, "PPP", { locale }) : t("runningRecords.noDate")}</p>
+              {!!selectedRecord.book_level && (
+                <p className="rr-detail-meta">
+                  {t("runningRecords.modal.bookLevel")}: {selectedRecord.book_level}
+                </p>
+              )}
             </div>
             <div
               className="rr-detail-accuracy"
@@ -779,6 +933,12 @@ function RunningRecordsPage({
             <div className="modal-actions">
               <button type="button" className="secondary" onClick={() => setSelectedRecord(null)}>
                 {t("common.actions.done")}
+              </button>
+              <button
+                type="button"
+                onClick={() => openEditModal(selectedRecord)}
+              >
+                {t("common.actions.edit")}
               </button>
               <button
                 type="button"

@@ -13,10 +13,12 @@
       "back": "Voltar",
       "close": "Fechar",
       "create": "Criar",
+      "edit": "Editar",
       "delete": "Excluir",
       "done": "Concluir",
       "next": "Próximo",
-      "save": "Salvar"
+      "save": "Salvar",
+      "update": "Atualizar"
     },
     "gender": {
       "female": "Feminino",
@@ -858,8 +860,12 @@
       "words": "Palavras"
     },
     "modal": {
+      "bookLevel": "Nível do livro",
+      "bookLevelPlaceholder": "Selecione A-Z",
       "clickToChoose": "Clique para escolher",
       "date": "Data",
+      "editDescription": "Atualize as informações de leitura",
+      "editTitle": "Editar Registro",
       "errors": "Erros",
       "newDescription": "Registre as informações de leitura",
       "newTitle": "Novo Registro",
@@ -920,6 +926,16 @@
     "performanceBySubject": "Desempenho por disciplina",
     "quickStatus": "Status Rápido",
     "recentAssessments": "Avaliações Recentes",
+    "readingRecommendation": {
+      "basedOn": "Com base no resultado {{result}} no nível {{level}}",
+      "currentLabel": "Nível atual",
+      "moveDown": "Tente um texto com mais apoio no nível {{level}} agora.",
+      "moveUp": "Já pode avançar para o nível {{level}} agora.",
+      "resultLabel": "Registro de leitura",
+      "stay": "Continue praticando no nível {{level}} agora.",
+      "suggestedLabel": "Próximo sugerido",
+      "title": "Recomendação de leitura"
+    },
     "runningRecords": "Registros de Leitura",
     "stats": {
       "avgAccuracy": "Avg accuracy",
