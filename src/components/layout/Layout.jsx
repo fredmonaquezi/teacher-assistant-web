@@ -1,12 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  addDays,
-  endOfDay,
-  format,
-  isValid,
-  parseISO,
-  startOfDay,
-} from "date-fns";
+import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { useTranslation } from "react-i18next";
@@ -14,9 +7,9 @@ import { NavLink } from "react-router-dom";
 import "../../i18n";
 import { formatDisplayName } from "../../utils/formatDisplayName";
 
-function Layout({ user, onSignOut, preferences, calendarEvents = [], children }) {
+function Layout({ user, onSignOut, preferences, children }) {
   const { t, i18n } = useTranslation();
-  const appName = "Teacher Codex";
+  const appName = "Class Notes";
   const userEmail = user?.email || "";
   const displayName = formatDisplayName(user);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -36,38 +29,9 @@ function Layout({ user, onSignOut, preferences, calendarEvents = [], children })
   const todayTimeLabel = preferences?.timeFormat === "24h"
     ? format(now, "HH:mm", { locale })
     : format(now, "p", { locale });
-  const upcomingStickyEvents = useMemo(() => {
-    const currentDate = new Date();
-    const windowStart = startOfDay(currentDate);
-    const windowEnd = endOfDay(addDays(currentDate, 15));
-    return calendarEvents
-      .filter((item) => {
-        if (!item?.event_date) return false;
-        const eventDate = parseISO(String(item.event_date));
-        if (!isValid(eventDate)) return false;
-        return eventDate >= windowStart && eventDate <= windowEnd;
-      })
-      .sort((a, b) => {
-        const firstDate = parseISO(String(a.event_date));
-        const secondDate = parseISO(String(b.event_date));
-        const dateCompare = firstDate.getTime() - secondDate.getTime();
-        if (dateCompare !== 0) return dateCompare;
-        if (!!a.is_all_day !== !!b.is_all_day) return a.is_all_day ? -1 : 1;
-        return (a.start_time || "").localeCompare(b.start_time || "");
-      })
-      .slice(0, 4);
-  }, [calendarEvents]);
   const navLinks = [
-    { label: t("layout.nav.dashboard"), path: "/" },
     { label: t("layout.nav.classes"), path: "/classes" },
     { label: t("layout.nav.attendance"), path: "/attendance" },
-    { label: t("layout.nav.gradebook"), path: "/assessments" },
-    { label: t("layout.nav.groups"), path: "/groups" },
-    { label: t("layout.nav.calendar"), path: "/calendar" },
-    { label: t("layout.nav.timer"), path: "/timer" },
-    { label: t("layout.nav.randomPicker"), path: "/random" },
-    { label: t("layout.nav.runningRecords"), path: "/running-records" },
-    { label: t("layout.nav.usefulLinks"), path: "/useful-links" },
   ];
   const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
 
@@ -187,41 +151,6 @@ function Layout({ user, onSignOut, preferences, calendarEvents = [], children })
             <h2 className="postit-title">{t("layout.greeting.hello", { name: displayName })}</h2>
             <p className="postit-line">{t("layout.greeting.todayIs", { date: todayDateLabel })}</p>
             <p className="postit-line">{todayTimeLabel}</p>
-          </section>
-          <section className="postit postit-events">
-            <span className="postit-tape postit-tape-top-left" aria-hidden="true" />
-            <span className="postit-tape postit-tape-top-right" aria-hidden="true" />
-            <div className="postit-header">
-              <h3>{t("layout.events.title")}</h3>
-              <NavLink to="/calendar" className="postit-calendar-link">
-                {t("layout.events.calendar")}
-              </NavLink>
-            </div>
-            {upcomingStickyEvents.length === 0 ? (
-              <p className="postit-empty">{t("layout.events.empty")}</p>
-            ) : (
-              <ul className="postit-events-list">
-                {upcomingStickyEvents.map((item) => {
-                  const parsedEventDate = parseISO(String(item.event_date));
-                  const eventDateLabel = isValid(parsedEventDate)
-                    ? format(parsedEventDate, "EEE, MMM d", { locale })
-                    : t("layout.events.dateTbd");
-                  const parsedStartTime = item.start_time ? parseISO(String(item.start_time)) : null;
-                  const eventTimeLabel = item.is_all_day
-                    ? t("layout.events.allDay")
-                    : parsedStartTime && isValid(parsedStartTime)
-                      ? format(parsedStartTime, "p", { locale })
-                      : t("layout.events.timeTbd");
-                  return (
-                    <li key={item.id}>
-                      <span>{eventDateLabel}</span>
-                      <strong>{item.title || t("layout.events.untitled")}</strong>
-                      <em>{eventTimeLabel}</em>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
           </section>
         </header>
         <main className="content notebook-board">

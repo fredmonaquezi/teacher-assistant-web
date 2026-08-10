@@ -161,7 +161,7 @@ function createCoreActions({
     setClassForm({ name: "", gradeLevel: "", schoolYear: "", sortOrder: "" });
   };
 
-  const handleCreateStudent = async (event) => {
+  const handleCreateStudent = async (event, overrides = {}) => {
     event.preventDefault();
     setFormError("");
 
@@ -170,7 +170,7 @@ function createCoreActions({
       first_name: studentForm.firstName.trim(),
       last_name: studentForm.lastName.trim(),
       gender: studentForm.gender.trim() || "Prefer not to say",
-      class_id: studentForm.classId || null,
+      class_id: overrides.classId || studentForm.classId || null,
       notes: studentForm.notes.trim() || null,
       is_participating_well: !!studentForm.isParticipatingWell,
       needs_help: !!studentForm.needsHelp,
@@ -194,32 +194,6 @@ function createCoreActions({
       return false;
     }
 
-    if (insertedStudent.class_id) {
-      const { data: classAssessments, error: assessmentsError } = await supabase
-        .from("assessments")
-        .select("id")
-        .eq("class_id", insertedStudent.class_id);
-
-      if (assessmentsError) {
-        setFormError(`Student created, but assessment linking failed: ${assessmentsError.message}`);
-      } else if (classAssessments && classAssessments.length > 0) {
-        const rows = classAssessments.map((assessment) => ({
-          assessment_id: assessment.id,
-          student_id: insertedStudent.id,
-          score: null,
-          notes: null,
-        }));
-
-        const { error: linkError } = await supabase
-          .from("assessment_entries")
-          .upsert(rows, { onConflict: "assessment_id,student_id", ignoreDuplicates: true });
-
-        if (linkError) {
-          setFormError(`Student created, but assessment linking failed: ${linkError.message}`);
-        }
-      }
-    }
-
     setStudentForm({
       firstName: "",
       lastName: "",
@@ -232,7 +206,7 @@ function createCoreActions({
       separationList: "",
       sortOrder: "",
     });
-    await Promise.all([refreshCoreData(), refreshAssessmentData()]);
+    await refreshCoreData();
     return true;
   };
 

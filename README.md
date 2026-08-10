@@ -1,11 +1,22 @@
-# Teacher Assistant Web
+# Class Notes
 
 Teacher workflow app built with React + Vite + Supabase.
 
 ## What it does
-- Manage classes, students, subjects, units, assessments, attendance, rubrics, groups, calendar, and profile settings.
+- Keep a deliberately small private classroom workspace: classes, students, dated anecdotal notes, development updates, and attendance.
+- Student notes are protected with per-user Supabase Row Level Security; only the signed-in owner can read or change them.
 - Uses Supabase Auth and Postgres with row-level security.
 - Supports optional Google OAuth sign-in (feature-flagged).
+
+## Before reactivating
+
+Apply the latest Supabase migration so the private `student_notes` table and its Row Level Security policies exist:
+
+```bash
+npx supabase db push
+```
+
+Then deploy the app as usual. The active UI only exposes Classes, Attendance, and the student records reached from a class. Older features are no longer routable.
 
 ## Tech stack
 - React 18

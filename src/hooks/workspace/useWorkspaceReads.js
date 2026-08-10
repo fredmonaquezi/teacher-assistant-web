@@ -80,7 +80,7 @@ function getWorkspaceDomainsForPath(pathname) {
     assessment: false,
     rubric: false,
     group: false,
-    calendar: true,
+    calendar: false,
     links: false,
     randomPicker: false,
   };
@@ -106,14 +106,10 @@ function getWorkspaceDomainsForPath(pathname) {
 
   if (path.startsWith("/classes/")) {
     domains.attendance = true;
-    domains.assessment = true;
-    domains.rubric = true;
   }
 
   if (path.startsWith("/students/")) {
     domains.attendance = true;
-    domains.assessment = true;
-    domains.rubric = true;
   }
 
   if (path.startsWith("/rubrics")) {
