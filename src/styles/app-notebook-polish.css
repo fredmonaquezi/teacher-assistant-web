@@ -127,6 +127,8 @@
 .simple-entry-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .simple-entry-controls:has(label:nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .simple-entry-form button[type="submit"] { justify-self: start; }
+.class-journal .simple-entry-form { grid-template-columns: minmax(145px, 190px) 1fr; align-items: end; }
+.class-journal .simple-entry-form > button { grid-column: 2; }
 .simple-timeline { display: grid; gap: 12px; }
 .simple-timeline-entry { position: relative; padding: 16px 76px 16px 18px; border-left: 4px solid #ba8652; border-radius: 0 12px 12px 0; background: #fffdf7; box-shadow: 0 2px 10px rgba(77, 47, 21, 0.07); }
 .simple-timeline-entry p { margin: 10px 0 0; white-space: pre-wrap; }
@@ -140,6 +142,8 @@
   .simple-page-header, .simple-class-header, .simple-profile-note { align-items: flex-start; flex-direction: column; }
   .student-overview-simple { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .simple-entry-controls, .simple-entry-controls:has(label:nth-child(2):last-child) { grid-template-columns: 1fr; }
+  .class-journal .simple-entry-form { grid-template-columns: 1fr; }
+  .class-journal .simple-entry-form > button { grid-column: auto; }
 }
 
 .notebook-content .panel > h2 {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
+import ClassJournal from "../components/ClassJournal";
 
 function byName(first, second) {
   return `${first.first_name || ""} ${first.last_name || ""}`.localeCompare(`${second.first_name || ""} ${second.last_name || ""}`, undefined, { sensitivity: "base" });
@@ -54,6 +55,8 @@ function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm,
             ))}
           </div>
         )}
+
+        <ClassJournal classId={classId} />
       </section>
 
       {showStudentForm && (
