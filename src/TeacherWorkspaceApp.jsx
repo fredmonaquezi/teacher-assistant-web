@@ -12,6 +12,7 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const SimpleClassesPage = lazy(() => import("./pages/SimpleClassesPage"));
 const SimpleClassDetailPage = lazy(() => import("./pages/SimpleClassDetailPage"));
 const StudentProfilePage = lazy(() => import("./pages/StudentProfilePage"));
+const ActivityAssessmentPage = lazy(() => import("./pages/ActivityAssessmentPage"));
 
 function RouteFallback() {
   const { t } = useTranslation();
@@ -100,6 +101,14 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
                 handleCreateStudent={handleCreateStudent}
               />
             }
+          />
+          <Route
+            path="/classes/:classId/assess-activity"
+            element={<ActivityAssessmentPage classes={classes} students={students} />}
+          />
+          <Route
+            path="/classes/:classId/assess-activity/:activityAssessmentId"
+            element={<ActivityAssessmentPage classes={classes} students={students} />}
           />
           <Route
             path="/attendance"

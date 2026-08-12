@@ -18,6 +18,24 @@ import {
   summarizeAttendanceEntries,
 } from "../utils/attendanceMetrics";
 
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3.5" y="5.5" width="17" height="15" rx="3" />
+      <path d="M8 3.5v4M16 3.5v4M3.5 10h17" />
+      <path d="m8.2 15.1 2.2 2.1 4.8-4.7" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <path d="m5.5 5.5 9 9M14.5 5.5l-9 9" />
+    </svg>
+  );
+}
+
 const AttendancePage = ({
   classOptions,
   students,
@@ -200,7 +218,7 @@ const AttendancePage = ({
           <h3>{t("attendance.sessions.title")}</h3>
           {classSessions.length === 0 ? (
             <div className="attendance-empty">
-              <div className="attendance-empty-icon">📅</div>
+              <div className="attendance-empty-icon"><CalendarIcon /></div>
               <div className="attendance-empty-title">{t("attendance.sessions.emptyTitle")}</div>
               <div className="muted">
                 {t("attendance.sessions.emptyDescription")}
@@ -237,7 +255,7 @@ const AttendancePage = ({
                         {deletingSessionId === session.id ? (
                           <span className="inline-spinner" aria-hidden="true" />
                         ) : (
-                          "✕"
+                          <CloseIcon />
                         )}
                       </button>
                     </div>
@@ -287,7 +305,7 @@ const AttendancePage = ({
         <div className="modal-overlay">
           <div className="modal-card attendance-modal">
             <div className="attendance-modal-header">
-              <div className="attendance-modal-icon">📅</div>
+              <div className="attendance-modal-icon"><CalendarIcon /></div>
               <h3>{t("attendance.modal.title")}</h3>
               <div className="muted">{t("attendance.modal.description")}</div>
             </div>

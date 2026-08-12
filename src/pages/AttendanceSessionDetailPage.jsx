@@ -3,7 +3,7 @@ import { format, parseISO } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
+import { NavLink, useParams } from "react-router-dom";
 import {
   ATTENDANCE_STATUSES,
   ATTENDANCE_STATUS_BY_KEY,
@@ -48,6 +48,31 @@ function StatusIcon({ kind }) {
   );
 }
 
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3.5" y="5.5" width="17" height="15" rx="3" />
+      <path d="M8 3.5v4M16 3.5v4M3.5 10h17" />
+      <path d="M8 14h3M8 17h6" />
+    </svg>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <path d="m12.5 4.5-5.5 5.5 5.5 5.5" />
+    </svg>
+  );
+}
+
+function getStudentInitials(student) {
+  const initials = [student.first_name, student.last_name]
+    .map((name) => name?.trim()?.[0] || "")
+    .filter((character) => /[\p{L}\p{N}]/u.test(character));
+  return initials.join("").slice(0, 2).toLocaleUpperCase();
+}
+
 const INITIAL_VISIBLE_ATTENDANCE_ROWS = 64;
 const VISIBLE_ATTENDANCE_ROW_STEP = 64;
 
@@ -88,8 +113,9 @@ const AttendanceEntryRow = memo(function AttendanceEntryRow({
           <div
             className="attendance-avatar"
             style={{ background: `${statusColor}22`, color: statusColor }}
+            aria-hidden="true"
           >
-            👤
+            {getStudentInitials(student)}
           </div>
           <div>
             <div className="attendance-student-name">
@@ -206,9 +232,13 @@ function AttendanceSessionDetailPage({
 
   return (
     <section className="panel attendance-session">
+      <NavLink to="/attendance" className="attendance-back-link">
+        <BackIcon />
+        {t("attendance.title")}
+      </NavLink>
       <div className="attendance-session-summary">
         <div className="attendance-summary-header">
-          <div className="attendance-summary-icon">📆</div>
+          <div className="attendance-summary-icon"><CalendarIcon /></div>
           <div>
             <div className="attendance-summary-title">
               {format(parseISO(session.session_date), "PPPP", { locale })}

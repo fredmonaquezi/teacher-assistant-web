@@ -138,12 +138,58 @@
 .simple-development-label { color: #59724e; font-size: 0.86rem; font-weight: 700; text-transform: capitalize; }
 .simple-entry-delete { position: absolute; top: 13px; right: 13px; }
 
+.activity-assessment-header,
+.activity-student-heading,
+.activity-assessment-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+.activity-assessment-header h2 { margin: 3px 0 6px; }
+.activity-assessment-count { padding: 7px 12px; border-radius: 999px; background: #eaddc6; color: #674829; font-weight: 800; white-space: nowrap; }
+.activity-assessment-form,
+.activity-student-section { display: grid; gap: 18px; }
+.activity-details-card { display: grid; gap: 14px; padding: 18px; border: 1px solid #d7bb90; border-radius: 14px; background: #fff8e9; }
+.activity-details-grid { display: grid; grid-template-columns: minmax(150px, 210px) minmax(220px, 1fr); gap: 14px; }
+.activity-student-heading h3 { margin: 3px 0 0; }
+.activity-student-heading > label { display: flex; align-items: center; gap: 8px; color: #6f5236; font-size: 0.82rem; font-weight: 800; }
+.activity-student-list { display: grid; gap: 10px; }
+.activity-student-card { display: grid; grid-template-columns: minmax(190px, 0.8fr) minmax(160px, 0.65fr) minmax(260px, 1.55fr); align-items: end; gap: 14px; padding: 14px 16px; border: 1px solid #dfc59d; border-radius: 13px; background: #fffdf7; }
+.activity-student-card.assessed { border-color: #a9c6a5; background: #f8fcf4; }
+.activity-student-identity { display: flex; align-items: center; gap: 11px; min-height: 42px; }
+.activity-student-identity strong, .activity-student-identity small { display: block; }
+.activity-student-identity small { margin-top: 3px; color: #55734f; font-weight: 700; }
+.activity-assessment-actions { justify-content: flex-end; padding-top: 4px; }
+.activity-assessment-actions .button { display: inline-flex; align-items: center; justify-content: center; }
+.class-activity-history { display: grid; gap: 14px; }
+.class-activity-list { display: grid; gap: 10px; }
+.class-activity-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px 18px; border: 1px solid #ddc39a; border-radius: 14px; background: #fffaf0; }
+.class-activity-card p { margin: 7px 0; color: #6f5338; }
+.class-activity-card small { color: #7a5b3c; font-weight: 800; }
+.class-activity-card .button { flex: 0 0 auto; }
+.class-activity-meta { display: flex; align-items: center; gap: 9px; }
+.class-activity-meta span { padding: 3px 8px; border-radius: 999px; color: #75512f; background: #f0debe; font-size: 0.72rem; font-weight: 800; }
+.activity-profile-entry { padding-right: 18px; }
+.activity-profile-subject { color: #65421f; font-size: 1.02rem; font-weight: 800; }
+.activity-profile-date { color: #806243; font-size: 0.78rem; font-weight: 700; }
+.activity-profile-observation { padding-top: 9px; border-top: 1px solid #ead9bb; color: #5f4c38; }
+.activity-outcome { padding: 3px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 800; text-transform: capitalize; }
+.activity-outcome.needs_support { color: #8d302a; background: #f7d9d4; }
+.activity-outcome.working_towards { color: #80531a; background: #f5e2bd; }
+.activity-outcome.met { color: #35613a; background: #dcebd8; }
+.activity-outcome.exceeded { color: #315f72; background: #d7e9ef; }
+
 @media (max-width: 720px) {
   .simple-page-header, .simple-class-header, .simple-profile-note { align-items: flex-start; flex-direction: column; }
   .student-overview-simple { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .simple-entry-controls, .simple-entry-controls:has(label:nth-child(2):last-child) { grid-template-columns: 1fr; }
   .class-journal .simple-entry-form { grid-template-columns: 1fr; }
   .class-journal .simple-entry-form > button { grid-column: auto; }
+  .activity-assessment-header, .activity-student-heading { align-items: flex-start; flex-direction: column; }
+  .activity-details-grid, .activity-student-card { grid-template-columns: 1fr; }
+  .class-activity-card { align-items: flex-start; flex-direction: column; }
+  .activity-student-note { grid-column: auto; }
 }
 
 .notebook-content .panel > h2 {

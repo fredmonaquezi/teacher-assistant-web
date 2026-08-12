@@ -14,6 +14,7 @@ function ClassJournal({ classId }) {
 
   const loadEntries = async () => {
     if (!classId) return;
+    await Promise.resolve();
     setLoading(true);
     const { data, error: loadError } = await supabase
       .from("class_notes")
@@ -29,7 +30,9 @@ function ClassJournal({ classId }) {
     setLoading(false);
   };
 
-  useEffect(() => { loadEntries(); }, [classId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The effect intentionally starts the async Supabase loader when its owner changes.
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  useEffect(() => { loadEntries(); }, [classId]);
 
   const saveEntry = async (event) => {
     event.preventDefault();

@@ -6,13 +6,22 @@ import { summarizeAttendanceEntries } from "../utils/attendanceMetrics";
 
 const today = () => format(new Date(), "yyyy-MM-dd");
 
+function activityDetailsForEntry(entry) {
+  return Array.isArray(entry.activity_assessments)
+    ? entry.activity_assessments[0]
+    : entry.activity_assessments;
+}
+
 function StudentProfilePage({ students, classes, attendanceSessions, attendanceEntries, handleUpdateStudent }) {
   const { studentId } = useParams();
   const student = students.find((item) => item.id === studentId);
   const classItem = classes.find((item) => item.id === student?.class_id);
   const [notes, setNotes] = useState([]);
+  const [activityAssessments, setActivityAssessments] = useState([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
+  const [loadingActivityAssessments, setLoadingActivityAssessments] = useState(true);
   const [noteError, setNoteError] = useState("");
+  const [activityAssessmentError, setActivityAssessmentError] = useState("");
   const [saving, setSaving] = useState(false);
   const [entry, setEntry] = useState({ noteDate: today(), entryType: "anecdotal", developmentArea: "", developmentLevel: "on_track", body: "" });
   const [profileNote, setProfileNote] = useState("");
@@ -20,6 +29,7 @@ function StudentProfilePage({ students, classes, attendanceSessions, attendanceE
 
   const loadNotes = async () => {
     if (!studentId) return;
+    await Promise.resolve();
     setLoadingNotes(true);
     const { data, error } = await supabase
       .from("student_notes")
@@ -35,7 +45,33 @@ function StudentProfilePage({ students, classes, attendanceSessions, attendanceE
     setLoadingNotes(false);
   };
 
-  useEffect(() => { loadNotes(); }, [studentId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The effect intentionally starts the async Supabase loader when its owner changes.
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  useEffect(() => { loadNotes(); }, [studentId]);
+
+  const loadActivityAssessments = async () => {
+    if (!studentId) return;
+    await Promise.resolve();
+    setLoadingActivityAssessments(true);
+    const { data, error } = await supabase
+      .from("activity_assessment_entries")
+      .select("id,outcome,notes,created_at,activity_assessments!inner(id,activity_date,subject,description)")
+      .eq("student_id", studentId)
+      .order("created_at", { ascending: false });
+    if (error) setActivityAssessmentError(error.message);
+    else {
+      const sortedAssessments = [...(data || [])].sort((first, second) => {
+        return (second.created_at || "").localeCompare(first.created_at || "");
+      });
+      setActivityAssessments(sortedAssessments);
+      setActivityAssessmentError("");
+    }
+    setLoadingActivityAssessments(false);
+  };
+
+  // The effect intentionally starts the async Supabase loader when its owner changes.
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  useEffect(() => { loadActivityAssessments(); }, [studentId]);
 
   const attendance = useMemo(() => {
     const sessionIds = new Set(attendanceSessions.filter((session) => session.class_id === student?.class_id).map((session) => session.id));
@@ -86,6 +122,7 @@ function StudentProfilePage({ students, classes, attendanceSessions, attendanceE
   return (
     <>
       {noteError && <div className="error">{noteError}</div>}
+      {activityAssessmentError && <div className="error">{activityAssessmentError}</div>}
       <section className="panel simple-page student-profile-page">
         <NavLink className="simple-back" to={`/classes/${student.class_id}`}>← {classItem?.name || "Class"}</NavLink>
         <header className="student-profile-simple-header">
@@ -103,6 +140,35 @@ function StudentProfilePage({ students, classes, attendanceSessions, attendanceE
         <section className="simple-profile-note">
           <div><h3>Profile note</h3><p>{student.notes || "Add a short, ongoing note about this student."}</p></div>
           <button type="button" className="secondary" onClick={() => { setProfileNote(student.notes || ""); setShowProfileNote(true); }}>Edit</button>
+        </section>
+
+        <section className="simple-timeline-section activity-profile-section">
+          <div className="simple-section-heading">
+            <div><p className="simple-kicker">Class activities</p><h3>Activity assessments</h3></div>
+          </div>
+          {loadingActivityAssessments ? (
+            <p className="muted">Loading activity assessments…</p>
+          ) : activityAssessments.length === 0 ? (
+            <div className="simple-empty"><h3>No activity assessments yet</h3><p>Assessments recorded from the class page will appear here.</p></div>
+          ) : (
+            <div className="simple-timeline">
+              {activityAssessments.map((assessmentEntry) => {
+                const assessment = activityDetailsForEntry(assessmentEntry);
+                return (
+                  <article key={assessmentEntry.id} className="simple-timeline-entry activity-profile-entry">
+                    <div className="simple-entry-meta">
+                      <strong>{assessmentEntry.created_at ? `Assessed ${format(parseISO(assessmentEntry.created_at), "d MMM yyyy")}` : "Assessment date not set"}</strong>
+                      <span className={`activity-outcome ${assessmentEntry.outcome}`}>{assessmentEntry.outcome.replaceAll("_", " ")}</span>
+                    </div>
+                    <p className="activity-profile-subject">{assessment?.subject || "Activity"}</p>
+                    {assessment?.activity_date && <p className="activity-profile-date">Activity started {format(parseISO(assessment.activity_date), "d MMM yyyy")}</p>}
+                    <p>{assessment?.description}</p>
+                    {assessmentEntry.notes && <p className="activity-profile-observation"><strong>Observation:</strong> {assessmentEntry.notes}</p>}
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         <section className="simple-timeline-section">

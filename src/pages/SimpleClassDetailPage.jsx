@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { NavLink, useNavigate, useParams } from "react-router-dom";
+import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
+import ActivityAssessmentHistory from "../components/ActivityAssessmentHistory";
 import ClassJournal from "../components/ClassJournal";
 
 function byName(first, second) {
@@ -9,6 +10,7 @@ function byName(first, second) {
 function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm, handleCreateStudent, formError }) {
   const { classId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const classItem = classes.find((item) => item.id === classId);
   const [showStudentForm, setShowStudentForm] = useState(false);
   const classStudents = students.filter((student) => student.class_id === classId).sort(byName);
@@ -27,6 +29,9 @@ function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm,
   return (
     <>
       {formError && <div className="error">{formError}</div>}
+      {location.state?.activityAssessmentSaved && (
+        <div className="status">Activity assessment saved to the student profiles.</div>
+      )}
       <section className="panel simple-page">
         <NavLink className="simple-back" to="/classes">← All classes</NavLink>
         <div className="simple-page-header simple-class-header">
@@ -36,6 +41,7 @@ function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm,
             <p className="muted">{classItem.grade_level || "Grade not set"}{classItem.school_year ? ` · ${classItem.school_year}` : ""}</p>
           </div>
           <div className="simple-header-actions">
+            <button type="button" onClick={() => navigate(`/classes/${classId}/assess-activity`)}>Assess an activity</button>
             <button type="button" className="secondary" onClick={() => navigate(`/attendance?classId=${classId}`)}>Attendance</button>
             <button type="button" onClick={() => setShowStudentForm(true)}>Add student</button>
           </div>
@@ -55,6 +61,12 @@ function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm,
             ))}
           </div>
         )}
+
+        <ActivityAssessmentHistory
+          classId={classId}
+          studentCount={classStudents.length}
+          refreshKey={location.key}
+        />
 
         <ClassJournal classId={classId} />
       </section>

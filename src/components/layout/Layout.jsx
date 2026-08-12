@@ -7,6 +7,16 @@ import { NavLink } from "react-router-dom";
 import "../../i18n";
 import { formatDisplayName } from "../../utils/formatDisplayName";
 
+function NavIcon({ kind }) {
+  if (kind === "classes") {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="3" /><path d="M8 9h8M8 13h5" /></svg>;
+  }
+  if (kind === "attendance") {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3" /><path d="M8 3.5v4M16 3.5v4M8 12l2.5 2.5L16 9" /></svg>;
+  }
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3" /><path d="M5.5 19c.5-3.4 3-5 6.5-5s6 1.6 6.5 5" /></svg>;
+}
+
 function Layout({ user, onSignOut, preferences, children }) {
   const { t, i18n } = useTranslation();
   const appName = "Class Notes";
@@ -30,8 +40,8 @@ function Layout({ user, onSignOut, preferences, children }) {
     ? format(now, "HH:mm", { locale })
     : format(now, "p", { locale });
   const navLinks = [
-    { label: t("layout.nav.classes"), path: "/classes" },
-    { label: t("layout.nav.attendance"), path: "/attendance" },
+    { label: t("layout.nav.classes"), path: "/classes", icon: "classes" },
+    { label: t("layout.nav.attendance"), path: "/attendance", icon: "attendance" },
   ];
   const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
 
@@ -89,7 +99,7 @@ function Layout({ user, onSignOut, preferences, children }) {
         }
         onClick={() => setIsMobileSidebarOpen((open) => !open)}
       >
-        {isMobileSidebarOpen ? t("layout.mobileNav.close") : t("layout.mobileNav.open")}
+        <span aria-hidden="true">{isMobileSidebarOpen ? "×" : "☰"}</span>
       </button>
       <button
         type="button"
@@ -101,10 +111,15 @@ function Layout({ user, onSignOut, preferences, children }) {
       />
       <aside id="app-sidebar" className="sidebar">
         <div className="sidebar-brand">
-          <p className="sidebar-kicker">{appName}</p>
-          <h1 className="sidebar-title">{t("layout.sidebar.title")}</h1>
-          <p className="sidebar-email">{t("layout.sidebar.signedInAs", { identity: sidebarIdentity })}</p>
+          <span className="sidebar-app-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 5.5h10.5A3.5 3.5 0 0 1 19 9v9.5H8.5A3.5 3.5 0 0 1 5 15V5.5Z" /><path d="M9 9h6M9 12h4" /></svg>
+          </span>
+          <div>
+            <p className="sidebar-kicker">{appName}</p>
+            <h1 className="sidebar-title">{t("layout.sidebar.title")}</h1>
+          </div>
         </div>
+        <p className="sidebar-email">{t("layout.sidebar.signedInAs", { identity: sidebarIdentity })}</p>
         <nav className="nav-links">
           {navLinks.map((link) => (
             <NavLink
@@ -113,7 +128,8 @@ function Layout({ user, onSignOut, preferences, children }) {
               end={link.path === "/"}
               onClick={closeMobileSidebar}
             >
-              {link.label}
+              <span className="sidebar-nav-icon"><NavIcon kind={link.icon} /></span>
+              <span>{link.label}</span>
             </NavLink>
           ))}
         </nav>
@@ -135,7 +151,8 @@ function Layout({ user, onSignOut, preferences, children }) {
             </button>
           </div>
           <NavLink to="/profile" className="sidebar-account-link" onClick={closeMobileSidebar}>
-            {t("layout.sidebar.profile")}
+            <span className="sidebar-nav-icon"><NavIcon kind="profile" /></span>
+            <span>{t("layout.sidebar.profile")}</span>
           </NavLink>
           <button type="button" className="secondary sidebar-signout" onClick={onSignOut}>
             {t("layout.sidebar.signOut")}
@@ -144,14 +161,14 @@ function Layout({ user, onSignOut, preferences, children }) {
       </aside>
       <div className="workspace">
         <header className="topbar">
-          <section className="postit postit-greeting">
-            <span className="postit-tape postit-tape-top-left" aria-hidden="true" />
-            <span className="postit-tape postit-tape-top-right" aria-hidden="true" />
+          <div>
             <p className="postit-kicker">{appName}</p>
             <h2 className="postit-title">{t("layout.greeting.hello", { name: displayName })}</h2>
+          </div>
+          <div className="topbar-date">
             <p className="postit-line">{t("layout.greeting.todayIs", { date: todayDateLabel })}</p>
             <p className="postit-line">{todayTimeLabel}</p>
-          </section>
+          </div>
         </header>
         <main className="content notebook-board">
           <div className="notebook-content">{children}</div>
