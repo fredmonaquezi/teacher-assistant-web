@@ -34,6 +34,7 @@ test("filters activity performance by the selected subject", async () => {
         activity_date: "2026-08-18",
         subject_id: "subject-math",
         subject: "Mathematics",
+        title: "Multiplication strategies",
         description: "Explained two multiplication strategies.",
       },
     },
@@ -47,6 +48,7 @@ test("filters activity performance by the selected subject", async () => {
         activity_date: "2026-08-17",
         subject_id: "subject-english",
         subject: "English",
+        title: "Finding textual evidence",
         description: "Identified evidence in a short text.",
       },
     },
@@ -91,6 +93,7 @@ test("filters activity performance by the selected subject", async () => {
   });
 
   expect(screen.getByText("Explained two multiplication strategies.")).toBeTruthy();
+  expect(screen.getByText("Multiplication strategies")).toBeTruthy();
   expect(screen.queryByText("Identified evidence in a short text.")).toBeNull();
   const summary = screen.getByLabelText("Activity performance summary");
   expect(within(summary).getAllByText("1", { selector: "strong" })).toHaveLength(2);

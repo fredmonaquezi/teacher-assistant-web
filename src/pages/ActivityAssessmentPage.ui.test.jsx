@@ -51,6 +51,9 @@ test("saves one class activity and an outcome for every student", async () => {
   fireEvent.change(screen.getByLabelText("Subject"), {
     target: { value: "subject-1" },
   });
+  fireEvent.change(screen.getByLabelText("Activity title"), {
+    target: { value: "Retelling the main events" },
+  });
   fireEvent.change(screen.getByLabelText("Brief activity description"), {
     target: { value: "Retold the main events and identified key details." },
   });
@@ -65,6 +68,7 @@ test("saves one class activity and an outcome for every student", async () => {
       class_id: "class-1",
       subject_id: "subject-1",
       subject: "Guided reading",
+      title: "Retelling the main events",
       description: "Retold the main events and identified key details.",
     })
   );
@@ -119,6 +123,9 @@ test("allows an activity to be saved after assessing only participating students
 
   fireEvent.change(screen.getByLabelText("Subject"), {
     target: { value: "subject-1" },
+  });
+  fireEvent.change(screen.getByLabelText("Activity title"), {
+    target: { value: "Retelling the main events" },
   });
   fireEvent.change(screen.getByLabelText("Brief activity description"), {
     target: { value: "Retold the main events." },

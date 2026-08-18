@@ -65,7 +65,7 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
     setLoadingActivityAssessments(true);
     const { data, error } = await supabase
       .from("activity_assessment_entries")
-      .select("id,outcome,notes,created_at,activity_assessments!inner(id,activity_date,subject_id,subject,description)")
+      .select("id,outcome,notes,created_at,activity_assessments!inner(id,activity_date,subject_id,subject,title,description)")
       .eq("student_id", studentId)
       .order("created_at", { ascending: false });
     if (error) setActivityAssessmentError(error.message);
@@ -228,6 +228,7 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
                         <span className={`activity-outcome ${assessmentEntry.outcome}`}>{assessmentEntry.outcome.replaceAll("_", " ")}</span>
                       </div>
                       <p className="activity-profile-subject">{subjectNameById.get(assessment?.subject_id) || assessment?.subject || "Activity"}</p>
+                      <h4 className="activity-profile-title">{assessment?.title || assessment?.subject || "Activity"}</h4>
                       {assessment?.activity_date && <p className="activity-profile-date">Activity started {format(parseISO(assessment.activity_date), "d MMM yyyy")}</p>}
                       <p>{assessment?.description}</p>
                       {assessmentEntry.notes && <p className="activity-profile-observation"><strong>Observation:</strong> {assessmentEntry.notes}</p>}

@@ -15,7 +15,7 @@ function ActivityAssessmentHistory({ classId, studentCount, refreshKey = "" }) {
       setLoading(true);
       const { data, error: loadError } = await supabase
         .from("activity_assessments")
-        .select("id,activity_date,subject,description,created_at,activity_assessment_entries(id,student_id)")
+        .select("id,activity_date,subject,title,description,created_at,activity_assessment_entries(id,student_id)")
         .eq("class_id", classId)
         .order("activity_date", { ascending: false })
         .order("created_at", { ascending: false });
@@ -60,9 +60,10 @@ function ActivityAssessmentHistory({ classId, studentCount, refreshKey = "" }) {
               <article className="class-activity-card" key={activity.id}>
                 <div>
                   <div className="class-activity-meta">
-                    <strong>{activity.subject}</strong>
+                    <span>{activity.subject}</span>
                     <span>{format(parseISO(activity.activity_date), "d MMM yyyy")}</span>
                   </div>
+                  <h4 className="class-activity-title">{activity.title || activity.subject}</h4>
                   <p>{activity.description}</p>
                   <small>
                     {assessedCount} of {studentCount} assessed

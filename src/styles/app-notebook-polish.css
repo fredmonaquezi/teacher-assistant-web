@@ -166,12 +166,14 @@
 .class-activity-list { display: grid; gap: 10px; }
 .class-activity-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px 18px; border: 1px solid #ddc39a; border-radius: 14px; background: #fffaf0; }
 .class-activity-card p { margin: 7px 0; color: #6f5338; }
+.class-activity-title { margin: 9px 0 0; color: #513a23; font-size: 1.03rem; }
 .class-activity-card small { color: #7a5b3c; font-weight: 800; }
 .class-activity-card .button { flex: 0 0 auto; }
 .class-activity-meta { display: flex; align-items: center; gap: 9px; }
 .class-activity-meta span { padding: 3px 8px; border-radius: 999px; color: #75512f; background: #f0debe; font-size: 0.72rem; font-weight: 800; }
 .activity-profile-entry { padding-right: 18px; }
-.activity-profile-subject { color: #65421f; font-size: 1.02rem; font-weight: 800; }
+.activity-profile-subject { color: #806243; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+.activity-profile-title { margin: 5px 0 0; color: #513a23; font-size: 1.04rem; }
 .activity-profile-date { color: #806243; font-size: 0.78rem; font-weight: 700; }
 .activity-profile-observation { padding-top: 9px; border-top: 1px solid #ead9bb; color: #5f4c38; }
 .activity-subject-filter { display: flex; align-items: center; gap: 8px; color: #6f5236; font-size: 0.82rem; font-weight: 800; }

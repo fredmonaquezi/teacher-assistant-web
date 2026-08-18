@@ -46,6 +46,7 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
     activityDate: format(new Date(), "yyyy-MM-dd"),
     subjectId: "",
     customSubject: "",
+    title: "",
     description: "",
   });
   const [studentResults, setStudentResults] = useState({});
@@ -64,7 +65,7 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
       const [{ data: activityRow, error: activityError }, { data: entryRows, error: entriesError }] = await Promise.all([
         supabase
           .from("activity_assessments")
-          .select("id,class_id,activity_date,subject_id,subject,description")
+          .select("id,class_id,activity_date,subject_id,subject,title,description")
           .eq("id", activityAssessmentId)
           .eq("class_id", classId)
           .single(),
@@ -89,6 +90,7 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
         activityDate: activityRow.activity_date,
         subjectId: matchingSubject?.id || OTHER_SUBJECT_VALUE,
         customSubject: matchingSubject ? "" : activityRow.subject,
+        title: activityRow.title || activityRow.subject,
         description: activityRow.description,
       });
       setStudentResults(
@@ -157,6 +159,7 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
       activity_date: activity.activityDate,
       subject_id: selectedSubject?.id || null,
       subject: selectedSubject?.name || activity.customSubject.trim(),
+      title: activity.title.trim(),
       description: activity.description.trim(),
     };
     const activityMutation = isExistingActivity
@@ -283,6 +286,17 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
               />
             </label>
           )}
+          <label className="stack">
+            <span>Activity title</span>
+            <input
+              required
+              value={activity.title}
+              onChange={(event) =>
+                setActivity((current) => ({ ...current, title: event.target.value }))
+              }
+              placeholder="e.g. Retelling the main events"
+            />
+          </label>
           <label className="stack">
             <span>Brief activity description</span>
             <textarea
