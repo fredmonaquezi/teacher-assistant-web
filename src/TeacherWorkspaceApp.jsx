@@ -8,6 +8,7 @@ import "react-day-picker/dist/style.css";
 
 const AttendancePage = lazy(() => import("./pages/AttendancePage"));
 const AttendanceSessionDetailPage = lazy(() => import("./pages/AttendanceSessionDetailPage"));
+const GroupsPage = lazy(() => import("./pages/GroupsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const SimpleClassesPage = lazy(() => import("./pages/SimpleClassesPage"));
 const SimpleClassDetailPage = lazy(() => import("./pages/SimpleClassDetailPage"));
@@ -45,6 +46,9 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     attendanceSessions,
     attendanceEntries,
     subjects,
+    groups,
+    groupMembers,
+    groupConstraints,
     loading,
     formError,
     setFormError,
@@ -52,6 +56,16 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     setClassForm,
     studentForm,
     setStudentForm,
+    groupGenForm,
+    setGroupGenForm,
+    constraintForm,
+    setConstraintForm,
+    groupsShowAdvanced,
+    setGroupsShowAdvanced,
+    groupsShowSeparations,
+    setGroupsShowSeparations,
+    isGeneratingGroups,
+    groupsScrollTopRef,
     classOptions,
     ensureDataForPath,
     handleCreateClass,
@@ -61,6 +75,9 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     handleUpdateAttendanceEntry,
     handleCreateAttendanceSessionForDate,
     handleDeleteAttendanceSession,
+    handleAddConstraint,
+    handleDeleteConstraint,
+    handleGenerateGroups,
   } = workspace;
 
   return (
@@ -135,6 +152,32 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
                 classes={classes}
                 students={students}
                 handleUpdateAttendanceEntry={handleUpdateAttendanceEntry}
+              />
+            }
+          />
+          <Route
+            path="/groups"
+            element={
+              <GroupsPage
+                formError={formError}
+                classOptions={classOptions}
+                students={students}
+                groups={groups}
+                groupMembers={groupMembers}
+                groupConstraints={groupConstraints}
+                groupGenForm={groupGenForm}
+                setGroupGenForm={setGroupGenForm}
+                constraintForm={constraintForm}
+                setConstraintForm={setConstraintForm}
+                groupsShowAdvanced={groupsShowAdvanced}
+                setGroupsShowAdvanced={setGroupsShowAdvanced}
+                groupsShowSeparations={groupsShowSeparations}
+                setGroupsShowSeparations={setGroupsShowSeparations}
+                groupsScrollTopRef={groupsScrollTopRef}
+                handleGenerateGroups={handleGenerateGroups}
+                isGeneratingGroups={isGeneratingGroups}
+                handleAddConstraint={handleAddConstraint}
+                handleDeleteConstraint={handleDeleteConstraint}
               />
             }
           />

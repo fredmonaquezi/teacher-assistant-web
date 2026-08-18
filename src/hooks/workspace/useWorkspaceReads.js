@@ -43,6 +43,8 @@ const EMPTY_GROUP_ROWS = {
   groupRows: [],
   groupMemberRows: [],
   constraintRows: [],
+  activityAssessmentRows: [],
+  activityAssessmentEntryRows: [],
 };
 
 const EMPTY_CALENDAR_ROWS = {
@@ -122,6 +124,7 @@ function getWorkspaceDomainsForPath(pathname) {
 
   if (path.startsWith("/groups")) {
     domains.group = true;
+    domains.assessment = true;
   }
 
   if (path.startsWith("/useful-links")) {
@@ -254,6 +257,8 @@ function useWorkspaceReads(userId) {
       groupResult.errors.groupError,
       groupResult.errors.groupMemberError,
       groupResult.errors.constraintError,
+      groupResult.errors.activityAssessmentError,
+      groupResult.errors.activityAssessmentEntryError,
     ].find(Boolean);
 
     if (firstError) {
@@ -391,6 +396,8 @@ function useWorkspaceReads(userId) {
   const groups = groupRows.groupRows;
   const groupMembers = groupRows.groupMemberRows;
   const groupConstraints = groupRows.constraintRows;
+  const activityAssessmentsForGrouping = groupRows.activityAssessmentRows;
+  const activityAssessmentEntriesForGrouping = groupRows.activityAssessmentEntryRows;
 
   const calendarDiaryEntries = calendarRows.diaryRows;
   const calendarEvents = calendarRows.eventRows;
@@ -1012,6 +1019,8 @@ function useWorkspaceReads(userId) {
     groups,
     groupMembers,
     groupConstraints,
+    activityAssessmentsForGrouping,
+    activityAssessmentEntriesForGrouping,
     loading,
     formError,
     setFormError,

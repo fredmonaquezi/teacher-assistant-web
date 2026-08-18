@@ -10,6 +10,8 @@ function createGroupActions({
   students,
   assessmentEntries,
   assessments,
+  activityAssessmentsForGrouping = [],
+  activityAssessmentEntriesForGrouping = [],
   groupConstraints,
   groupGenForm,
   constraintForm,
@@ -31,6 +33,18 @@ function createGroupActions({
     }
 
     const [firstId, secondId] = studentA < studentB ? [studentA, studentB] : [studentB, studentA];
+    const alreadyExists = groupConstraints.some((constraint) => {
+      const [constraintFirstId, constraintSecondId] =
+        constraint.student_a < constraint.student_b
+          ? [constraint.student_a, constraint.student_b]
+          : [constraint.student_b, constraint.student_a];
+      return constraintFirstId === firstId && constraintSecondId === secondId;
+    });
+
+    if (alreadyExists) {
+      setFormError("That separation rule already exists.");
+      return false;
+    }
 
     const didSave = await runMutation({
       setFormError,
@@ -98,7 +112,9 @@ function createGroupActions({
         classId,
         classStudents,
         assessments,
-        assessmentEntries
+        assessmentEntries,
+        activityAssessmentsForGrouping,
+        activityAssessmentEntriesForGrouping
       );
 
       const groupList = generateGroups(
@@ -109,7 +125,11 @@ function createGroupActions({
         abilityByStudentId
       );
 
-      if (!groupList) {
+      const assignedStudentCount = groupList?.reduce(
+        (count, group) => count + group.length,
+        0
+      );
+      if (!groupList || assignedStudentCount !== classStudents.length) {
         setFormError("Could not satisfy the grouping rules. Try adjusting constraints or size.");
         return;
       }

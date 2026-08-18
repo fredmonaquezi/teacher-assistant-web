@@ -43,6 +43,7 @@ function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm,
           <div className="simple-header-actions">
             <button type="button" onClick={() => navigate(`/classes/${classId}/assess-activity`)}>Assess an activity</button>
             <button type="button" className="secondary" onClick={() => navigate(`/attendance?classId=${classId}`)}>Attendance</button>
+            <button type="button" className="secondary" onClick={() => navigate(`/groups?classId=${classId}`)}>Make groups</button>
             <button type="button" onClick={() => setShowStudentForm(true)}>Add student</button>
           </div>
         </div>

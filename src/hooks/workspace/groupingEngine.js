@@ -54,23 +54,51 @@ function normalizeGender(value) {
   return (value || "").trim().toLowerCase();
 }
 
-export function buildAbilityProfiles(classId, classStudents, assessments, assessmentEntries) {
+const ACTIVITY_OUTCOME_PERCENT = {
+  needs_support: 25,
+  working_towards: 50,
+  met: 75,
+  exceeded: 100,
+};
+
+export function buildAbilityProfiles(
+  classId,
+  classStudents,
+  assessments,
+  assessmentEntries,
+  activityAssessments = [],
+  activityAssessmentEntries = []
+) {
   const classAssessmentMap = new Map(
     assessments
       .filter((assessment) => assessment.class_id === classId)
       .map((assessment) => [assessment.id, assessment])
   );
+  const classActivityAssessmentIds = new Set(
+    activityAssessments
+      .filter((assessment) => assessment.class_id === classId)
+      .map((assessment) => assessment.id)
+  );
   const scoreSamplesByStudent = new Map();
+
+  const addScoreSample = (studentId, percent) => {
+    if (!Number.isFinite(percent)) return;
+    if (!scoreSamplesByStudent.has(studentId)) {
+      scoreSamplesByStudent.set(studentId, []);
+    }
+    scoreSamplesByStudent.get(studentId).push(percent);
+  };
 
   assessmentEntries.forEach((entry) => {
     const assessment = classAssessmentMap.get(entry.assessment_id);
     if (!assessment) return;
     const percent = scoreToPercent(entry.score, getAssessmentMaxScore(assessment));
-    if (!Number.isFinite(percent)) return;
-    if (!scoreSamplesByStudent.has(entry.student_id)) {
-      scoreSamplesByStudent.set(entry.student_id, []);
-    }
-    scoreSamplesByStudent.get(entry.student_id).push(percent);
+    addScoreSample(entry.student_id, percent);
+  });
+
+  activityAssessmentEntries.forEach((entry) => {
+    if (!classActivityAssessmentIds.has(entry.activity_assessment_id)) return;
+    addScoreSample(entry.student_id, ACTIVITY_OUTCOME_PERCENT[entry.outcome]);
   });
 
   const averages = classStudents
@@ -201,7 +229,24 @@ export function generateGroups(
 ) {
   if (studentList.length === 0) return [];
   const size = Math.max(2, groupSize);
+  const targetGroupCount = Math.max(1, Math.ceil(studentList.length / size));
+  const attemptLimit = Math.max(
+    maxAttempts,
+    studentList.length * (targetGroupCount + 1) * 2
+  );
   let available = [...studentList];
+
+  const finish = (groups) => {
+    if (available.length > 0) return null;
+    const assignedIds = groups.flatMap((group) => group.map((student) => student.id));
+    if (
+      assignedIds.length !== studentList.length ||
+      new Set(assignedIds).size !== studentList.length
+    ) {
+      return null;
+    }
+    return groups;
+  };
 
   if (options.balanceAbility) {
     available.sort((a, b) => {
@@ -219,11 +264,10 @@ export function generateGroups(
   }
 
   if (options.balanceGender) {
-    const targetGroupCount = Math.max(1, Math.ceil(studentList.length / size));
     const groupsDraft = Array.from({ length: targetGroupCount }, () => []);
     let attempts = 0;
 
-    while (available.length > 0 && attempts < maxAttempts) {
+    while (available.length > 0 && attempts < attemptLimit) {
       let assignedThisRound = 0;
 
       for (const group of groupsDraft) {
@@ -244,11 +288,11 @@ export function generateGroups(
 
     const finalized = groupsDraft.filter((group) => group.length > 0);
 
-    while (available.length > 0 && attempts < maxAttempts) {
+    while (available.length > 0 && attempts < attemptLimit) {
       attempts += 1;
       const group = [];
 
-      while (group.length < size && available.length > 0 && attempts < maxAttempts) {
+      while (group.length < size && available.length > 0 && attempts < attemptLimit) {
         const candidate = pickBestStudent(available, group, constraintSet, options, abilityByStudentId);
         if (!candidate) break;
         group.push(candidate);
@@ -259,17 +303,17 @@ export function generateGroups(
       finalized.push(group);
     }
 
-    return finalized;
+    return finish(finalized);
   }
 
   const groupsDraft = [];
   let attempts = 0;
 
-  while (available.length > 0 && attempts < maxAttempts) {
+  while (available.length > 0 && attempts < attemptLimit) {
     attempts += 1;
     const group = [];
 
-    while (group.length < size && available.length > 0 && attempts < maxAttempts) {
+    while (group.length < size && available.length > 0 && attempts < attemptLimit) {
       const candidate = pickBestStudent(available, group, constraintSet, options, abilityByStudentId);
       if (!candidate) break;
       group.push(candidate);
@@ -279,5 +323,5 @@ export function generateGroups(
     if (group.length > 0) groupsDraft.push(group);
   }
 
-  return groupsDraft;
+  return finish(groupsDraft);
 }

@@ -14,6 +14,9 @@ function NavIcon({ kind }) {
   if (kind === "attendance") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3" /><path d="M8 3.5v4M16 3.5v4M8 12l2.5 2.5L16 9" /></svg>;
   }
+  if (kind === "groups") {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="2.5" /><circle cx="16.5" cy="9" r="2" /><path d="M4.5 18c.4-3.1 2.2-4.8 4.5-4.8s4.1 1.7 4.5 4.8M13.5 14.5c.8-.8 1.8-1.2 3-1.2 2 0 3.4 1.4 3.8 3.8" /></svg>;
+  }
   return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3" /><path d="M5.5 19c.5-3.4 3-5 6.5-5s6 1.6 6.5 5" /></svg>;
 }
 
@@ -42,6 +45,7 @@ function Layout({ user, onSignOut, preferences, children }) {
   const navLinks = [
     { label: t("layout.nav.classes"), path: "/classes", icon: "classes" },
     { label: t("layout.nav.attendance"), path: "/attendance", icon: "attendance" },
+    { label: t("layout.nav.groups"), path: "/groups", icon: "groups" },
   ];
   const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
 
