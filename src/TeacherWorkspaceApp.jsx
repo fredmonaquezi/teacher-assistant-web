@@ -44,6 +44,7 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     students,
     attendanceSessions,
     attendanceEntries,
+    subjects,
     loading,
     formError,
     setFormError,
@@ -104,11 +105,11 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
           />
           <Route
             path="/classes/:classId/assess-activity"
-            element={<ActivityAssessmentPage classes={classes} students={students} />}
+            element={<ActivityAssessmentPage classes={classes} students={students} subjects={subjects} />}
           />
           <Route
             path="/classes/:classId/assess-activity/:activityAssessmentId"
-            element={<ActivityAssessmentPage classes={classes} students={students} />}
+            element={<ActivityAssessmentPage classes={classes} students={students} subjects={subjects} />}
           />
           <Route
             path="/attendance"
@@ -143,6 +144,7 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
               <StudentProfilePage
                 students={students}
                 classes={classes}
+                subjects={subjects}
                 attendanceSessions={attendanceSessions}
                 attendanceEntries={attendanceEntries}
                 handleUpdateStudent={handleUpdateStudent}

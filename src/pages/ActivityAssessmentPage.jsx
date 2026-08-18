@@ -10,6 +10,8 @@ const OUTCOME_OPTIONS = [
   { value: "exceeded", label: "Exceeded" },
 ];
 
+const OTHER_SUBJECT_VALUE = "__other__";
+
 function byName(first, second) {
   return `${first.first_name || ""} ${first.last_name || ""}`.localeCompare(
     `${second.first_name || ""} ${second.last_name || ""}`,
@@ -22,7 +24,7 @@ function emptyStudentResult() {
   return { outcome: "", notes: "", assessedAt: "" };
 }
 
-function ActivityAssessmentPage({ classes, students }) {
+function ActivityAssessmentPage({ classes, students, subjects = [] }) {
   const { classId, activityAssessmentId } = useParams();
   const navigate = useNavigate();
   const isExistingActivity = Boolean(activityAssessmentId);
@@ -31,9 +33,19 @@ function ActivityAssessmentPage({ classes, students }) {
     () => students.filter((student) => student.class_id === classId).sort(byName),
     [classId, students]
   );
+  const classSubjects = useMemo(
+    () => subjects
+      .filter((subject) => subject.class_id === classId)
+      .sort((first, second) => {
+        const sortDifference = Number(first.sort_order || 0) - Number(second.sort_order || 0);
+        return sortDifference || first.name.localeCompare(second.name, undefined, { sensitivity: "base" });
+      }),
+    [classId, subjects]
+  );
   const [activity, setActivity] = useState({
     activityDate: format(new Date(), "yyyy-MM-dd"),
-    subject: "",
+    subjectId: "",
+    customSubject: "",
     description: "",
   });
   const [studentResults, setStudentResults] = useState({});
@@ -52,7 +64,7 @@ function ActivityAssessmentPage({ classes, students }) {
       const [{ data: activityRow, error: activityError }, { data: entryRows, error: entriesError }] = await Promise.all([
         supabase
           .from("activity_assessments")
-          .select("id,class_id,activity_date,subject,description")
+          .select("id,class_id,activity_date,subject_id,subject,description")
           .eq("id", activityAssessmentId)
           .eq("class_id", classId)
           .single(),
@@ -69,9 +81,14 @@ function ActivityAssessmentPage({ classes, students }) {
         return;
       }
 
+      const matchingSubject = classSubjects.find((subject) =>
+        subject.id === activityRow.subject_id ||
+        subject.name.trim().toLocaleLowerCase() === activityRow.subject.trim().toLocaleLowerCase()
+      );
       setActivity({
         activityDate: activityRow.activity_date,
-        subject: activityRow.subject,
+        subjectId: matchingSubject?.id || OTHER_SUBJECT_VALUE,
+        customSubject: matchingSubject ? "" : activityRow.subject,
         description: activityRow.description,
       });
       setStudentResults(
@@ -93,7 +110,7 @@ function ActivityAssessmentPage({ classes, students }) {
 
     loadActivity();
     return () => { active = false; };
-  }, [activityAssessmentId, classId]);
+  }, [activityAssessmentId, classId, classSubjects]);
 
   if (!classItem) {
     return (
@@ -134,10 +151,12 @@ function ActivityAssessmentPage({ classes, students }) {
     setError("");
 
     setSaving(true);
+    const selectedSubject = classSubjects.find((subject) => subject.id === activity.subjectId);
     const activityPayload = {
       class_id: classId,
       activity_date: activity.activityDate,
-      subject: activity.subject.trim(),
+      subject_id: selectedSubject?.id || null,
+      subject: selectedSubject?.name || activity.customSubject.trim(),
       description: activity.description.trim(),
     };
     const activityMutation = isExistingActivity
@@ -236,16 +255,34 @@ function ActivityAssessmentPage({ classes, students }) {
             </label>
             <label className="stack">
               <span>Subject</span>
+              <select
+                required
+                value={activity.subjectId}
+                onChange={(event) =>
+                  setActivity((current) => ({ ...current, subjectId: event.target.value }))
+                }
+              >
+                <option value="" disabled>Choose a subject</option>
+                {classSubjects.map((subject) => (
+                  <option key={subject.id} value={subject.id}>{subject.name}</option>
+                ))}
+                <option value={OTHER_SUBJECT_VALUE}>Other subject</option>
+              </select>
+            </label>
+          </div>
+          {activity.subjectId === OTHER_SUBJECT_VALUE && (
+            <label className="stack">
+              <span>Subject name</span>
               <input
                 required
-                value={activity.subject}
+                value={activity.customSubject}
                 onChange={(event) =>
-                  setActivity((current) => ({ ...current, subject: event.target.value }))
+                  setActivity((current) => ({ ...current, customSubject: event.target.value }))
                 }
                 placeholder="e.g. Guided reading"
               />
             </label>
-          </div>
+          )}
           <label className="stack">
             <span>Brief activity description</span>
             <textarea

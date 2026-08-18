@@ -35,6 +35,7 @@ test("saves one class activity and an outcome for every student", async () => {
           element={
             <ActivityAssessmentPage
               classes={[{ id: "class-1", name: "Year 3" }]}
+              subjects={[{ id: "subject-1", class_id: "class-1", name: "Guided reading", sort_order: 1 }]}
               students={[
                 { id: "student-2", class_id: "class-1", first_name: "Zoe", last_name: "Brown" },
                 { id: "student-1", class_id: "class-1", first_name: "Ana", last_name: "Silva" },
@@ -48,7 +49,7 @@ test("saves one class activity and an outcome for every student", async () => {
   );
 
   fireEvent.change(screen.getByLabelText("Subject"), {
-    target: { value: "Guided reading" },
+    target: { value: "subject-1" },
   });
   fireEvent.change(screen.getByLabelText("Brief activity description"), {
     target: { value: "Retold the main events and identified key details." },
@@ -62,6 +63,7 @@ test("saves one class activity and an outcome for every student", async () => {
   expect(insertActivity).toHaveBeenCalledWith(
     expect.objectContaining({
       class_id: "class-1",
+      subject_id: "subject-1",
       subject: "Guided reading",
       description: "Retold the main events and identified key details.",
     })
@@ -102,6 +104,7 @@ test("allows an activity to be saved after assessing only participating students
           element={
             <ActivityAssessmentPage
               classes={[{ id: "class-1", name: "Year 3" }]}
+              subjects={[{ id: "subject-1", class_id: "class-1", name: "Guided reading", sort_order: 1 }]}
               students={[
                 { id: "student-1", class_id: "class-1", first_name: "Ana", last_name: "Silva" },
                 { id: "student-2", class_id: "class-1", first_name: "Zoe", last_name: "Brown" },
@@ -115,7 +118,7 @@ test("allows an activity to be saved after assessing only participating students
   );
 
   fireEvent.change(screen.getByLabelText("Subject"), {
-    target: { value: "Guided reading" },
+    target: { value: "subject-1" },
   });
   fireEvent.change(screen.getByLabelText("Brief activity description"), {
     target: { value: "Retold the main events." },

@@ -106,10 +106,14 @@ function getWorkspaceDomainsForPath(pathname) {
 
   if (path.startsWith("/classes/")) {
     domains.attendance = true;
+    if (path.includes("/assess-activity")) {
+      domains.assessment = true;
+    }
   }
 
   if (path.startsWith("/students/")) {
     domains.attendance = true;
+    domains.assessment = true;
   }
 
   if (path.startsWith("/rubrics")) {

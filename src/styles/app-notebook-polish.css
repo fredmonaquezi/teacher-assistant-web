@@ -174,6 +174,12 @@
 .activity-profile-subject { color: #65421f; font-size: 1.02rem; font-weight: 800; }
 .activity-profile-date { color: #806243; font-size: 0.78rem; font-weight: 700; }
 .activity-profile-observation { padding-top: 9px; border-top: 1px solid #ead9bb; color: #5f4c38; }
+.activity-subject-filter { display: flex; align-items: center; gap: 8px; color: #6f5236; font-size: 0.82rem; font-weight: 800; }
+.activity-performance-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid #ddc49f; border-radius: 12px; background: #ddc49f; }
+.activity-performance-summary article { display: grid; place-content: center; min-height: 72px; padding: 10px; text-align: center; background: #fff9ed; }
+.activity-performance-summary strong, .activity-performance-summary span { display: block; }
+.activity-performance-summary strong { color: #593d22; font-size: 1.2rem; }
+.activity-performance-summary span { color: #806243; font-size: 0.76rem; }
 .activity-outcome { padding: 3px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 800; text-transform: capitalize; }
 .activity-outcome.needs_support { color: #8d302a; background: #f7d9d4; }
 .activity-outcome.working_towards { color: #80531a; background: #f5e2bd; }
@@ -187,7 +193,9 @@
   .class-journal .simple-entry-form { grid-template-columns: 1fr; }
   .class-journal .simple-entry-form > button { grid-column: auto; }
   .activity-assessment-header, .activity-student-heading { align-items: flex-start; flex-direction: column; }
+  .activity-profile-section .simple-section-heading { align-items: flex-start; flex-direction: column; }
   .activity-details-grid, .activity-student-card { grid-template-columns: 1fr; }
+  .activity-performance-summary { grid-template-columns: 1fr; }
   .class-activity-card { align-items: flex-start; flex-direction: column; }
   .activity-student-note { grid-column: auto; }
 }

@@ -12,7 +12,13 @@ function activityDetailsForEntry(entry) {
     : entry.activity_assessments;
 }
 
-function StudentProfilePage({ students, classes, attendanceSessions, attendanceEntries, handleUpdateStudent }) {
+function activitySubjectKey(entry) {
+  const activity = activityDetailsForEntry(entry);
+  if (activity?.subject_id) return `subject:${activity.subject_id}`;
+  return `legacy:${(activity?.subject || "Activity").trim().toLocaleLowerCase()}`;
+}
+
+function StudentProfilePage({ students, classes, subjects = [], attendanceSessions, attendanceEntries, handleUpdateStudent }) {
   const { studentId } = useParams();
   const student = students.find((item) => item.id === studentId);
   const classItem = classes.find((item) => item.id === student?.class_id);
@@ -26,6 +32,10 @@ function StudentProfilePage({ students, classes, attendanceSessions, attendanceE
   const [entry, setEntry] = useState({ noteDate: today(), entryType: "anecdotal", developmentArea: "", developmentLevel: "on_track", body: "" });
   const [profileNote, setProfileNote] = useState("");
   const [showProfileNote, setShowProfileNote] = useState(false);
+  const [activitySubjectSelection, setActivitySubjectSelection] = useState({ studentId, value: "all" });
+  const activitySubjectFilter = activitySubjectSelection.studentId === studentId
+    ? activitySubjectSelection.value
+    : "all";
 
   const loadNotes = async () => {
     if (!studentId) return;
@@ -55,7 +65,7 @@ function StudentProfilePage({ students, classes, attendanceSessions, attendanceE
     setLoadingActivityAssessments(true);
     const { data, error } = await supabase
       .from("activity_assessment_entries")
-      .select("id,outcome,notes,created_at,activity_assessments!inner(id,activity_date,subject,description)")
+      .select("id,outcome,notes,created_at,activity_assessments!inner(id,activity_date,subject_id,subject,description)")
       .eq("student_id", studentId)
       .order("created_at", { ascending: false });
     if (error) setActivityAssessmentError(error.message);
@@ -72,6 +82,40 @@ function StudentProfilePage({ students, classes, attendanceSessions, attendanceE
   // The effect intentionally starts the async Supabase loader when its owner changes.
   // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => { loadActivityAssessments(); }, [studentId]);
+
+  const subjectNameById = useMemo(
+    () => new Map(subjects.map((subject) => [subject.id, subject.name])),
+    [subjects]
+  );
+  const activitySubjectOptions = useMemo(() => {
+    const options = new Map();
+    activityAssessments.forEach((assessmentEntry) => {
+      const activity = activityDetailsForEntry(assessmentEntry);
+      const key = activitySubjectKey(assessmentEntry);
+      const label = subjectNameById.get(activity?.subject_id) || activity?.subject || "Activity";
+      options.set(key, label);
+    });
+    return [...options.entries()]
+      .map(([value, label]) => ({ value, label }))
+      .sort((first, second) => first.label.localeCompare(second.label, undefined, { sensitivity: "base" }));
+  }, [activityAssessments, subjectNameById]);
+  const visibleActivityAssessments = useMemo(
+    () => activitySubjectFilter === "all"
+      ? activityAssessments
+      : activityAssessments.filter((assessmentEntry) => activitySubjectKey(assessmentEntry) === activitySubjectFilter),
+    [activityAssessments, activitySubjectFilter]
+  );
+  const activityPerformance = useMemo(() => {
+    const meetingExpectations = visibleActivityAssessments.filter(
+      (assessmentEntry) => assessmentEntry.outcome === "met" || assessmentEntry.outcome === "exceeded"
+    ).length;
+    return {
+      meetingExpectations,
+      percentage: visibleActivityAssessments.length
+        ? Math.round((meetingExpectations / visibleActivityAssessments.length) * 100)
+        : 0,
+    };
+  }, [visibleActivityAssessments]);
 
   const attendance = useMemo(() => {
     const sessionIds = new Set(attendanceSessions.filter((session) => session.class_id === student?.class_id).map((session) => session.id));
@@ -145,29 +189,53 @@ function StudentProfilePage({ students, classes, attendanceSessions, attendanceE
         <section className="simple-timeline-section activity-profile-section">
           <div className="simple-section-heading">
             <div><p className="simple-kicker">Class activities</p><h3>Activity assessments</h3></div>
+            {activitySubjectOptions.length > 0 && (
+              <label className="activity-subject-filter">
+                <span>Subject</span>
+                <select
+                  aria-label="Filter activity assessments by subject"
+                  value={activitySubjectFilter}
+                  onChange={(event) => setActivitySubjectSelection({ studentId, value: event.target.value })}
+                >
+                  <option value="all">All subjects</option>
+                  {activitySubjectOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
           {loadingActivityAssessments ? (
             <p className="muted">Loading activity assessments…</p>
           ) : activityAssessments.length === 0 ? (
             <div className="simple-empty"><h3>No activity assessments yet</h3><p>Assessments recorded from the class page will appear here.</p></div>
+          ) : visibleActivityAssessments.length === 0 ? (
+            <div className="simple-empty"><h3>No assessments for this subject</h3><p>Choose another subject to review this student's performance.</p></div>
           ) : (
-            <div className="simple-timeline">
-              {activityAssessments.map((assessmentEntry) => {
-                const assessment = activityDetailsForEntry(assessmentEntry);
-                return (
-                  <article key={assessmentEntry.id} className="simple-timeline-entry activity-profile-entry">
-                    <div className="simple-entry-meta">
-                      <strong>{assessmentEntry.created_at ? `Assessed ${format(parseISO(assessmentEntry.created_at), "d MMM yyyy")}` : "Assessment date not set"}</strong>
-                      <span className={`activity-outcome ${assessmentEntry.outcome}`}>{assessmentEntry.outcome.replaceAll("_", " ")}</span>
-                    </div>
-                    <p className="activity-profile-subject">{assessment?.subject || "Activity"}</p>
-                    {assessment?.activity_date && <p className="activity-profile-date">Activity started {format(parseISO(assessment.activity_date), "d MMM yyyy")}</p>}
-                    <p>{assessment?.description}</p>
-                    {assessmentEntry.notes && <p className="activity-profile-observation"><strong>Observation:</strong> {assessmentEntry.notes}</p>}
-                  </article>
-                );
-              })}
-            </div>
+            <>
+              <div className="activity-performance-summary" aria-label="Activity performance summary">
+                <article><strong>{visibleActivityAssessments.length}</strong><span>assessed activities</span></article>
+                <article><strong>{activityPerformance.meetingExpectations}</strong><span>met or exceeded</span></article>
+                <article><strong>{activityPerformance.percentage}%</strong><span>meeting expectations</span></article>
+              </div>
+              <div className="simple-timeline">
+                {visibleActivityAssessments.map((assessmentEntry) => {
+                  const assessment = activityDetailsForEntry(assessmentEntry);
+                  return (
+                    <article key={assessmentEntry.id} className="simple-timeline-entry activity-profile-entry">
+                      <div className="simple-entry-meta">
+                        <strong>{assessmentEntry.created_at ? `Assessed ${format(parseISO(assessmentEntry.created_at), "d MMM yyyy")}` : "Assessment date not set"}</strong>
+                        <span className={`activity-outcome ${assessmentEntry.outcome}`}>{assessmentEntry.outcome.replaceAll("_", " ")}</span>
+                      </div>
+                      <p className="activity-profile-subject">{subjectNameById.get(assessment?.subject_id) || assessment?.subject || "Activity"}</p>
+                      {assessment?.activity_date && <p className="activity-profile-date">Activity started {format(parseISO(assessment.activity_date), "d MMM yyyy")}</p>}
+                      <p>{assessment?.description}</p>
+                      {assessmentEntry.notes && <p className="activity-profile-observation"><strong>Observation:</strong> {assessmentEntry.notes}</p>}
+                    </article>
+                  );
+                })}
+              </div>
+            </>
           )}
         </section>
 
