@@ -49,5 +49,6 @@ test("does not render student status indicators in generated groups", () => {
   );
 
   expect(screen.getByText("Ana Silva")).toBeTruthy();
+  expect(screen.getByText("Random Picker")).toBeTruthy();
   expect(screen.queryByText("✋")).toBeNull();
 });

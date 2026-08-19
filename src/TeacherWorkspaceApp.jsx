@@ -49,6 +49,8 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     groups,
     groupMembers,
     groupConstraints,
+    randomPickerCustomCategories,
+    randomPickerRotationRows,
     loading,
     formError,
     setFormError,
@@ -78,6 +80,10 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     handleAddConstraint,
     handleDeleteConstraint,
     handleGenerateGroups,
+    handleCreateRandomPickerCustomCategory,
+    handleDeleteRandomPickerCustomCategory,
+    handleSetRandomPickerRotationUsedStudents,
+    handleImportLegacyRandomPickerState,
   } = workspace;
 
   return (
@@ -178,6 +184,12 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
                 isGeneratingGroups={isGeneratingGroups}
                 handleAddConstraint={handleAddConstraint}
                 handleDeleteConstraint={handleDeleteConstraint}
+                randomPickerCustomCategories={randomPickerCustomCategories}
+                randomPickerRotationRows={randomPickerRotationRows}
+                handleCreateRandomPickerCustomCategory={handleCreateRandomPickerCustomCategory}
+                handleDeleteRandomPickerCustomCategory={handleDeleteRandomPickerCustomCategory}
+                handleSetRandomPickerRotationUsedStudents={handleSetRandomPickerRotationUsedStudents}
+                handleImportLegacyRandomPickerState={handleImportLegacyRandomPickerState}
               />
             }
           />

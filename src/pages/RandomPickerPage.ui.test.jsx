@@ -172,3 +172,10 @@ test("does not show students from deleted classes when all classes is selected",
   expect(screen.getByText("Ada Lovelace")).toBeTruthy();
   expect(screen.queryByText("Deleted Student")).toBeNull();
 });
+
+test("uses the parent class without showing another class selector when embedded", () => {
+  renderPage({ embedded: true, selectedClassId: "class-1" });
+
+  expect(screen.queryByLabelText("Class")).toBeNull();
+  expect(screen.getByText("2 available")).toBeTruthy();
+});

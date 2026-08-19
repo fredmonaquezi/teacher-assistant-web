@@ -43,10 +43,12 @@ function RandomPickerPage({
   handleDeleteRandomPickerCustomCategory = async () => false,
   handleSetRandomPickerRotationUsedStudents = async () => false,
   handleImportLegacyRandomPickerState = async () => true,
+  embedded = false,
+  selectedClassId = "",
 }) {
   const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const classId = searchParams.get("classId") || "";
+  const classId = embedded ? selectedClassId : searchParams.get("classId") || "";
   const classLabel = classOptions.find((option) => option.id === classId)?.label;
   const validClassIds = useMemo(
     () => new Set(classOptions.map((option) => option.id).filter(Boolean)),
@@ -248,29 +250,33 @@ function RandomPickerPage({
 
   return (
     <>
-      {formError && <div className="error">{formError}</div>}
-      <section className="panel random-page">
-        <div className="random-page-header">
-          <div className="random-page-heading">
-            <span className="random-page-kicker">{t("random.kicker")}</span>
-            <h2>{t("random.title")}</h2>
-          </div>
-          <span className="random-scope-chip">
-            {classId ? classLabel || t("random.selectedClass") : t("random.allClasses")}
-          </span>
-        </div>
-        <label className="stack">
-          <span>{t("random.class")}</span>
-          <select value={classId} onChange={(event) => handleClassChange(event.target.value)}>
-            <option value="">{t("random.allClasses")}</option>
-            {classOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {!classId && <div className="muted">{t("random.rotationTrackedAllClasses")}</div>}
+      {!embedded && formError && <div className="error">{formError}</div>}
+      <section className={embedded ? "random-page random-page-embedded" : "panel random-page"}>
+        {!embedded && (
+          <>
+            <div className="random-page-header">
+              <div className="random-page-heading">
+                <span className="random-page-kicker">{t("random.kicker")}</span>
+                <h2>{t("random.title")}</h2>
+              </div>
+              <span className="random-scope-chip">
+                {classId ? classLabel || t("random.selectedClass") : t("random.allClasses")}
+              </span>
+            </div>
+            <label className="stack">
+              <span>{t("random.class")}</span>
+              <select value={classId} onChange={(event) => handleClassChange(event.target.value)}>
+                <option value="">{t("random.allClasses")}</option>
+                {classOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {!classId && <div className="muted">{t("random.rotationTrackedAllClasses")}</div>}
+          </>
+        )}
 
         <button
           type="button"

@@ -3,6 +3,11 @@
   gap: 14px;
 }
 
+.random-page-embedded {
+  max-width: none;
+  padding-top: 16px;
+}
+
 .random-page-header {
   display: flex;
   align-items: flex-start;

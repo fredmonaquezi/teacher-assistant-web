@@ -125,6 +125,7 @@ function getWorkspaceDomainsForPath(pathname) {
   if (path.startsWith("/groups")) {
     domains.group = true;
     domains.assessment = true;
+    domains.randomPicker = true;
   }
 
   if (path.startsWith("/useful-links")) {

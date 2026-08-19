@@ -2,6 +2,7 @@ import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, use
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+import RandomPickerPage from "./RandomPickerPage";
 
 const INITIAL_VISIBLE_GROUP_CARDS = 24;
 const VISIBLE_GROUP_CARD_STEP = 24;
@@ -55,10 +56,17 @@ function GroupsPage({
   isGeneratingGroups,
   handleAddConstraint,
   handleDeleteConstraint,
+  randomPickerCustomCategories = [],
+  randomPickerRotationRows = [],
+  handleCreateRandomPickerCustomCategory = async () => false,
+  handleDeleteRandomPickerCustomCategory = async () => false,
+  handleSetRandomPickerRotationUsedStudents = async () => false,
+  handleImportLegacyRandomPickerState = async () => true,
 }) {
   const { t } = useTranslation();
   const [showAdvancedHelp, setShowAdvancedHelp] = useState(false);
   const [constraintToDelete, setConstraintToDelete] = useState(null);
+  const [isRandomPickerOpen, setIsRandomPickerOpen] = useState(false);
   const [visibleGroupCardCount, setVisibleGroupCardCount] = useState(INITIAL_VISIBLE_GROUP_CARDS);
   const [searchParams] = useSearchParams();
   const classId = searchParams.get("classId") || "";
@@ -384,6 +392,41 @@ function GroupsPage({
             </div>
           )}
         </div>
+
+        <details
+          className="groups-random-tool"
+          onToggle={(event) => setIsRandomPickerOpen(event.currentTarget.open)}
+        >
+          <summary>
+            <span className="groups-random-tool-icon" aria-hidden="true">🎲</span>
+            <span className="groups-random-tool-copy">
+              <strong>{t("random.title")}</strong>
+              <small>{t("random.quick.subtitle")}</small>
+            </span>
+            <span className="groups-random-tool-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div className="groups-random-tool-content">
+            {isRandomPickerOpen && activeClassId ? (
+              <RandomPickerPage
+                embedded
+                selectedClassId={activeClassId}
+                formError=""
+                classOptions={deferredClassOptions}
+                students={deferredStudents}
+                randomPickerCustomCategories={randomPickerCustomCategories}
+                randomPickerRotationRows={randomPickerRotationRows}
+                handleCreateRandomPickerCustomCategory={handleCreateRandomPickerCustomCategory}
+                handleDeleteRandomPickerCustomCategory={handleDeleteRandomPickerCustomCategory}
+                handleSetRandomPickerRotationUsedStudents={handleSetRandomPickerRotationUsedStudents}
+                handleImportLegacyRandomPickerState={handleImportLegacyRandomPickerState}
+              />
+            ) : isRandomPickerOpen ? (
+              <p className="muted groups-random-tool-empty">
+                {t("groups.settings.selectClass")}
+              </p>
+            ) : null}
+          </div>
+        </details>
 
         {grouped.length === 0 ? (
           <div className="groups-empty">
