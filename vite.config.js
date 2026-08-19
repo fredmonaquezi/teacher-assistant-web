@@ -34,8 +34,11 @@ export default defineConfig({
     },
   },
   test: {
-    environment: 'jsdom',
+    environment: 'happy-dom',
     include: ['src/**/*.ui.test.jsx'],
     setupFiles: ['./src/test/setup-ui.js'],
+    pool: 'threads',
+    maxWorkers: 1,
+    fileParallelism: false,
   },
 })

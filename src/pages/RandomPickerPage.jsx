@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
+import TileIcon from "../components/navigation/TileIcon";
 
 const DEFAULT_CATEGORIES = ["Helper", "Guardian", "Line Leader", "Messenger"];
 const CATEGORY_ICONS = {
@@ -284,7 +285,9 @@ function RandomPickerPage({
           onClick={handleQuickPick}
           disabled={!filteredStudents.length}
         >
-          <div className="random-quick-icon">🎲</div>
+          <div className="random-quick-icon">
+            <TileIcon kind="random" />
+          </div>
           <div className="random-quick-copy">
             <div className="random-quick-title">{t("random.quick.title")}</div>
             <div className="random-quick-subtitle">{t("random.quick.subtitle")}</div>
@@ -321,7 +324,7 @@ function RandomPickerPage({
                   <button
                     type="button"
                     className={`random-category-chip ${isSelected ? "selected" : ""}`}
-                    style={isSelected ? { borderColor: color, background: `${color}22` } : {}}
+                    style={isSelected ? { borderColor: color, background: `${color}12` } : {}}
                     onClick={() => setSelectedCategory(category)}
                   >
                     <span className="random-chip-icon">{icon}</span>

@@ -80,7 +80,10 @@ test("opens inline grade modal and saves the updated score", async () => {
   if (!input) throw new Error("Expected grade input in modal.");
 
   fireEvent.change(input, { target: { value: "9.1" } });
-  fireEvent.click(screen.getByRole("button", { name: i18n.t("assessments.inlineEditor.save") }));
+  const saveButton = screen.getByRole("button", { name: i18n.t("assessments.inlineEditor.save") });
+  const gradeForm = saveButton.closest("form");
+  if (!gradeForm) throw new Error("Expected grade form in modal.");
+  fireEvent.submit(gradeForm);
 
   await waitFor(() =>
     expect(handleSetAssessmentEntryScore).toHaveBeenCalledWith("assessment-1", "student-1", 9.1)

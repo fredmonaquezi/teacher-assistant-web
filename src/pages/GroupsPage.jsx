@@ -2,6 +2,7 @@ import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, use
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+import TileIcon from "../components/navigation/TileIcon";
 import RandomPickerPage from "./RandomPickerPage";
 
 const INITIAL_VISIBLE_GROUP_CARDS = 24;
@@ -23,18 +24,8 @@ const genderColor = (gender) => {
   return "#94a3b8";
 };
 
-const gradientForGroup = (index) => {
-  const gradients = [
-    ["#f1dfbe", "#e7d0a6"],
-    ["#efe2c8", "#e4d3ad"],
-    ["#ead7b4", "#e0c596"],
-    ["#f0e3ca", "#e7d6b2"],
-    ["#ebddc1", "#dfcaa3"],
-    ["#f2e5cf", "#e7d7b7"],
-  ];
-  const pair = gradients[index % gradients.length];
-  return `linear-gradient(90deg, ${pair[0]}, ${pair[1]})`;
-};
+const groupAccent = (index) =>
+  ["#0071e3", "#34c759", "#ff9500", "#af52de", "#ff2d55", "#5ac8fa"][index % 6];
 
 function GroupsPage({
   formError,
@@ -220,9 +211,13 @@ function GroupsPage({
       {formError && <div className="error">{formError}</div>}
       <section className="panel groups-page">
         <div className="groups-header-card">
-          <div className="groups-header-icon">👥</div>
-          <h2>{t("groups.title")}</h2>
-          <p className="muted">{t("groups.subtitle")}</p>
+          <div className="groups-header-icon">
+            <TileIcon kind="groups" />
+          </div>
+          <div className="groups-header-copy">
+            <h2>{t("groups.title")}</h2>
+            <p className="muted">{t("groups.subtitle")}</p>
+          </div>
           <div className="groups-header-info">
             <div>
               <span className="muted">{t("groups.stats.students")}</span>
@@ -398,7 +393,9 @@ function GroupsPage({
           onToggle={(event) => setIsRandomPickerOpen(event.currentTarget.open)}
         >
           <summary>
-            <span className="groups-random-tool-icon" aria-hidden="true">🎲</span>
+            <span className="groups-random-tool-icon" aria-hidden="true">
+              <TileIcon kind="random" />
+            </span>
             <span className="groups-random-tool-copy">
               <strong>{t("random.title")}</strong>
               <small>{t("random.quick.subtitle")}</small>
@@ -441,8 +438,12 @@ function GroupsPage({
             </div>
             <div className="groups-grid">
               {visibleGrouped.map(({ group, members }, index) => (
-                <div key={group.id} className="group-card">
-                  <div className="group-card-header" style={{ background: gradientForGroup(index) }}>
+                <div
+                  key={group.id}
+                  className="group-card"
+                  style={{ "--group-accent": groupAccent(index) }}
+                >
+                  <div className="group-card-header">
                     <span>{t("groups.results.groupN", { number: index + 1 })}</span>
                     <span className="group-card-count">{members.length}</span>
                   </div>
