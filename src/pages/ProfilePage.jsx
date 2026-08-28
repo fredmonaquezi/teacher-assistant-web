@@ -211,20 +211,6 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
               <option value="24h">{t("profile.preferences.timeFormat24h")}</option>
             </select>
           </label>
-          <label className="stack profile-full">
-            <span>{t("profile.preferences.defaultLandingPage")}</span>
-            <select
-              value={preferences?.defaultLandingPath || "/"}
-              onChange={(event) =>
-                onPreferencesChange((prev) => ({ ...prev, defaultLandingPath: event.target.value }))
-              }
-            >
-              <option value="/">{t("profile.preferences.landing.dashboard")}</option>
-              <option value="/calendar">{t("profile.preferences.landing.calendar")}</option>
-              <option value="/classes">{t("profile.preferences.landing.classes")}</option>
-              <option value="/assessments">{t("profile.preferences.landing.gradebook")}</option>
-            </select>
-          </label>
           <div className="profile-preview profile-full">
             <strong>{t("profile.preferences.preview")}</strong>
             <span>{datePreview} · {timePreview}</span>

@@ -7,5 +7,4 @@ export const ATTENDANCE_STATUS_OPTIONS = ATTENDANCE_STATUS_VALUES;
 export const DEFAULT_PROFILE_PREFERENCES = {
   dateFormat: "MDY",
   timeFormat: "12h",
-  defaultLandingPath: "/",
 };

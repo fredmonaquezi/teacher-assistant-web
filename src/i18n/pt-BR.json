@@ -69,7 +69,7 @@
       "aria": "Alterar turma ativa",
       "placeholder": "Selecione uma turma",
       "noClasses": "Nenhuma turma ainda",
-      "manage": "Gerenciar",
+      "manage": "Gerenciar turmas",
       "pagePrompt": "Escolha uma turma na barra superior para usar esta ferramenta."
     },
     "mobileNav": {
@@ -86,6 +86,7 @@
       "signOut": "Sair"
     },
     "nav": {
+      "home": "Início",
       "dashboard": "Painel",
       "usefulLinks": "Links Úteis",
       "classes": "Turmas",
@@ -147,6 +148,62 @@
       "googleLoadFailed": "Falha ao carregar o login Google. Atualize e tente novamente.",
       "googleMissingCredential": "O Google não retornou uma credencial de login.",
       "googleSignInFailed": "Falha no login com Google. Tente novamente."
+    }
+  },
+  "home": {
+    "kicker": "Assistente do Professor",
+    "title": "Bem-vindo ao seu espaço de ensino",
+    "intro": "Selecione uma turma uma vez e navegue entre alunos, presença, avaliações, grupos e ferramentas sem precisar selecioná-la novamente.",
+    "class": {
+      "loading": "Carregando sua sala…",
+      "workingWith": "Trabalhando com",
+      "summary_one": "{{count}} aluno · {{grade}}",
+      "summary_other": "{{count}} alunos · {{grade}}",
+      "gradeNotSet": "Ano não informado",
+      "openStudents": "Abrir alunos",
+      "manage": "Gerenciar turmas",
+      "getStarted": "Primeiros passos",
+      "selectTitle": "Selecione uma turma para começar",
+      "selectDescription": "Escolha uma turma na barra superior ou abra o gerenciamento para criar a primeira."
+    },
+    "actions": {
+      "title": "Ações rápidas",
+      "subtitle": "Tudo aqui usa a turma ativa exibida na barra superior.",
+      "students": {
+        "title": "Alunos",
+        "description": "Abra a lista, as anotações e o diário da turma."
+      },
+      "attendance": {
+        "title": "Presença",
+        "description": "Faça a chamada ou consulte sessões anteriores."
+      },
+      "assessment": {
+        "title": "Avaliar uma atividade",
+        "description": "Registre os resultados de uma atividade da turma."
+      },
+      "groups": {
+        "title": "Criar grupos",
+        "description": "Monte grupos equilibrados com a turma ativa."
+      },
+      "random": {
+        "title": "Escolha Aleatória",
+        "description": "Escolha alunos e organize funções da sala."
+      }
+    },
+    "how": {
+      "title": "Como funciona",
+      "select": {
+        "title": "Selecione uma turma",
+        "description": "Use o seletor de turma na barra superior."
+      },
+      "tool": {
+        "title": "Escolha uma ferramenta",
+        "description": "Cada ferramenta usa essa turma automaticamente."
+      },
+      "switch": {
+        "title": "Troque quando quiser",
+        "description": "Altere a turma ativa de qualquer página."
+      }
     }
   },
   "dashboard": {

@@ -17,6 +17,7 @@ const SimpleClassesPage = lazy(() => import("./pages/SimpleClassesPage"));
 const SimpleClassDetailPage = lazy(() => import("./pages/SimpleClassDetailPage"));
 const StudentProfilePage = lazy(() => import("./pages/StudentProfilePage"));
 const ActivityAssessmentPage = lazy(() => import("./pages/ActivityAssessmentPage"));
+const TeacherHomePage = lazy(() => import("./pages/TeacherHomePage"));
 
 function RouteFallback() {
   const { t } = useTranslation();
@@ -164,7 +165,17 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
         >
           <Suspense fallback={<RouteFallback />}>
             <Routes>
-          <Route path="/" element={<Navigate to="/classes" replace />} />
+          <Route
+            path="/"
+            element={
+              <TeacherHomePage
+                activeClass={activeClass}
+                activeClassId={activeClassId}
+                students={students}
+                loading={loading}
+              />
+            }
+          />
           <Route
             path="/classes"
             element={
@@ -300,7 +311,7 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
               />
             }
           />
-          <Route path="*" element={<Navigate to="/classes" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
         </Layout>

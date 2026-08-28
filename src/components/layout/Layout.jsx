@@ -7,8 +7,12 @@ import { NavLink } from "react-router-dom";
 import "../../i18n";
 import { formatDisplayName } from "../../utils/formatDisplayName";
 import ClassSwitcher from "./ClassSwitcher";
+import { getClassesNavigationPath } from "./layoutNavigation";
 
 function NavIcon({ kind }) {
+  if (kind === "home") {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4.5 10 7.5-6 7.5 6v9H14v-5h-4v5H4.5v-9Z" /></svg>;
+  }
   if (kind === "classes") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="3" /><path d="M8 9h8M8 13h5" /></svg>;
   }
@@ -55,7 +59,12 @@ function Layout({
     ? format(now, "HH:mm", { locale })
     : format(now, "p", { locale });
   const navLinks = [
-    { label: t("layout.nav.classes"), path: "/classes", icon: "classes" },
+    { label: t("layout.nav.home"), path: "/", icon: "home", end: true },
+    {
+      label: t("layout.nav.classes"),
+      path: getClassesNavigationPath(activeClassId),
+      icon: "classes",
+    },
     { label: t("layout.nav.attendance"), path: "/attendance", icon: "attendance" },
     { label: t("layout.nav.groups"), path: "/groups", icon: "groups" },
     { label: t("layout.nav.randomPicker"), path: "/random", icon: "random" },
@@ -142,7 +151,7 @@ function Layout({
             <NavLink
               key={link.path}
               to={link.path}
-              end={link.path === "/"}
+              end={Boolean(link.end)}
               onClick={closeMobileSidebar}
             >
               <span className="sidebar-nav-icon"><NavIcon kind={link.icon} /></span>

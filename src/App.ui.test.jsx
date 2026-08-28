@@ -45,7 +45,7 @@ test("shows authentication inside the teacher assistant path", async () => {
 
   render(<App />);
 
-  expect(screen.getByRole("heading", { name: "Class Notes" })).toBeTruthy();
+  expect(await screen.findByRole("heading", { name: "Class Notes" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Sign in" })).toBeTruthy();
-  expect(screen.getByRole("link", { name: "Teacher Codex" }).getAttribute("href")).toBe("/");
+  expect(screen.getByRole("link", { name: /Teacher Codex/ }).getAttribute("href")).toBe("/");
 });

@@ -136,6 +136,57 @@ input:disabled { color: var(--ink-soft); background: #f2f2f4; }
   border: 0; border-radius: 18px; background: rgba(255,255,255,.96); box-shadow: 0 24px 80px rgba(0,0,0,.2);
 }
 
+/* Teacher Assistant home */
+.notebook-content .teacher-home-page { gap: 28px; }
+.teacher-home-hero { max-width: 780px; display: grid; gap: 8px; }
+.teacher-home-kicker {
+  margin: 0; color: var(--brand); font-size: .7rem; font-weight: 720; letter-spacing: .08em; text-transform: uppercase;
+}
+.teacher-home-hero h2 { margin: 0; color: var(--ink); font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.045em; }
+.teacher-home-hero > p:last-child { max-width: 720px; margin: 0; color: var(--ink-soft); font-size: 1rem; line-height: 1.6; }
+.teacher-home-class {
+  display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 22px 24px;
+  border: 1px dashed var(--line-strong); border-radius: 18px; background: rgba(255,255,255,.62);
+}
+.teacher-home-class.is-active { border-style: solid; border-color: #c7dff8; background: linear-gradient(135deg, #fff 0%, #f2f7ff 100%); box-shadow: var(--shadow-sm); }
+.teacher-home-class-copy { display: grid; gap: 4px; }
+.teacher-home-class-copy > span { color: var(--brand); font-size: .7rem; font-weight: 720; letter-spacing: .07em; text-transform: uppercase; }
+.teacher-home-class-copy h3 { margin: 0; color: var(--ink); font-size: 1.5rem; letter-spacing: -.025em; }
+.teacher-home-class-copy p { margin: 0; color: var(--ink-soft); font-size: .86rem; }
+.teacher-home-class-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.teacher-home-class-actions .button, .teacher-home-class > .button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.teacher-home-actions-section, .teacher-home-how { display: grid; gap: 14px; }
+.teacher-home-section-heading { display: grid; gap: 3px; }
+.teacher-home-section-heading h3 { margin: 0; color: var(--ink); font-size: 1.15rem; letter-spacing: -.02em; }
+.teacher-home-section-heading p { margin: 0; color: var(--ink-soft); font-size: .84rem; }
+.teacher-home-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 12px; }
+.teacher-home-action {
+  min-height: 92px; display: flex; align-items: center; gap: 13px; padding: 16px;
+  border: 1px solid var(--line); border-radius: 15px; color: var(--ink); background: #fff;
+  box-shadow: var(--shadow-sm); text-decoration: none; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.teacher-home-action:hover { border-color: #b9d8f7; box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.teacher-home-action.is-disabled { opacity: .5; box-shadow: none; cursor: not-allowed; }
+.teacher-home-action.is-disabled:hover { border-color: var(--line); transform: none; }
+.teacher-home-action-icon {
+  width: 44px; height: 44px; display: grid; place-items: center; flex: 0 0 44px;
+  border-radius: 12px; color: var(--brand); background: var(--brand-soft);
+}
+.teacher-home-action-icon .tile-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.teacher-home-action > span:nth-child(2) { min-width: 0; display: grid; gap: 3px; }
+.teacher-home-action strong { font-size: .92rem; }
+.teacher-home-action small { color: var(--ink-soft); font-size: .75rem; line-height: 1.35; }
+.teacher-home-action-arrow { margin-left: auto; color: var(--brand); font-size: 1rem; }
+.teacher-home-how ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.teacher-home-how li { display: flex; gap: 11px; padding: 16px; border-radius: 14px; background: var(--surface-soft); }
+.teacher-home-how li > span {
+  width: 27px; height: 27px; display: grid; place-items: center; flex: 0 0 27px;
+  border-radius: 50%; color: #075cae; background: var(--brand-soft); font-size: .76rem; font-weight: 720;
+}
+.teacher-home-how li div { display: grid; gap: 4px; }
+.teacher-home-how li strong { color: var(--ink); font-size: .84rem; }
+.teacher-home-how li p { margin: 0; color: var(--ink-soft); font-size: .76rem; line-height: 1.45; }
+
 /* Shared page surfaces */
 .simple-page { gap: 24px; }
 .simple-kicker, .simple-class-card-label { color: var(--ink-soft); font-size: .68rem; letter-spacing: .07em; }
@@ -608,6 +659,11 @@ input:disabled { color: var(--ink-soft); background: #f2f2f4; }
   .topbar, .content.notebook-board { width: calc(100% - 28px); }
   .content.notebook-board { padding-bottom: 32px; }
   .postit-title { font-size: 1.5rem; }
+  .teacher-home-class { align-items: stretch; flex-direction: column; gap: 16px; padding: 19px; }
+  .teacher-home-class-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .teacher-home-class-actions .button, .teacher-home-class > .button { width: 100%; }
+  .teacher-home-actions { grid-template-columns: 1fr; }
+  .teacher-home-how ol { grid-template-columns: 1fr; }
   .simple-page-header, .simple-class-header, .simple-profile-note { gap: 14px; }
   .student-overview-simple { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .student-overview-simple > * { border-bottom: 1px solid var(--line); }

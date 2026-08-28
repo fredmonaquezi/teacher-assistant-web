@@ -74,7 +74,7 @@ const WORKSPACE_DOMAIN_KEYS = [
   "randomPicker",
 ];
 
-function getWorkspaceDomainsForPath(pathname) {
+export function getWorkspaceDomainsForPath(pathname) {
   const path = typeof pathname === "string" && pathname ? pathname : "/";
   const domains = {
     core: false,
@@ -87,11 +87,11 @@ function getWorkspaceDomainsForPath(pathname) {
     randomPicker: false,
   };
 
-  if (path === "/" || path === "/timer" || path === "/profile") {
+  domains.core = true;
+
+  if (path === "/timer" || path === "/profile") {
     return domains;
   }
-
-  domains.core = true;
 
   if (path.startsWith("/attendance")) {
     domains.attendance = true;

@@ -69,7 +69,7 @@
       "aria": "Change active class",
       "placeholder": "Select a class",
       "noClasses": "No classes yet",
-      "manage": "Manage",
+      "manage": "Manage classes",
       "pagePrompt": "Choose a class from the top bar to use this tool."
     },
     "mobileNav": {
@@ -86,6 +86,7 @@
       "signOut": "Sign out"
     },
     "nav": {
+      "home": "Home",
       "dashboard": "Dashboard",
       "usefulLinks": "Useful Links",
       "classes": "Classes",
@@ -147,6 +148,62 @@
       "googleLoadFailed": "Failed to load Google sign-in. Refresh and try again.",
       "googleMissingCredential": "Google did not return a login credential.",
       "googleSignInFailed": "Google sign-in failed. Try again."
+    }
+  },
+  "home": {
+    "kicker": "Teacher Assistant",
+    "title": "Welcome to your teaching workspace",
+    "intro": "Select a class once, then move between students, attendance, assessments, groups, and classroom tools without selecting it again.",
+    "class": {
+      "loading": "Loading your classroom…",
+      "workingWith": "Working with",
+      "summary_one": "{{count}} student · {{grade}}",
+      "summary_other": "{{count}} students · {{grade}}",
+      "gradeNotSet": "Grade not set",
+      "openStudents": "Open students",
+      "manage": "Manage classes",
+      "getStarted": "Get started",
+      "selectTitle": "Select a class to begin",
+      "selectDescription": "Choose a class in the top bar, or open class management to create your first one."
+    },
+    "actions": {
+      "title": "Quick actions",
+      "subtitle": "Everything here follows the active class shown in the top bar.",
+      "students": {
+        "title": "Students",
+        "description": "Open the roster, notes, and class journal."
+      },
+      "attendance": {
+        "title": "Attendance",
+        "description": "Take attendance or review previous sessions."
+      },
+      "assessment": {
+        "title": "Assess an activity",
+        "description": "Record activity results for the class."
+      },
+      "groups": {
+        "title": "Make groups",
+        "description": "Create balanced groups from the active roster."
+      },
+      "random": {
+        "title": "Random Picker",
+        "description": "Choose students and manage classroom roles."
+      }
+    },
+    "how": {
+      "title": "How it works",
+      "select": {
+        "title": "Select a class",
+        "description": "Use the class selector in the top bar."
+      },
+      "tool": {
+        "title": "Choose a tool",
+        "description": "Every classroom tool automatically uses that class."
+      },
+      "switch": {
+        "title": "Switch anytime",
+        "description": "Change the active class from any page."
+      }
     }
   },
   "dashboard": {

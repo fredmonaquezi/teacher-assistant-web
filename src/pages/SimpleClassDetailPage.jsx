@@ -33,7 +33,7 @@ function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm,
         <div className="status">Activity assessment saved to the student profiles.</div>
       )}
       <section className="panel simple-page">
-        <NavLink className="simple-back" to="/classes">← All classes</NavLink>
+        <NavLink className="simple-back" to="/classes">← Manage classes</NavLink>
         <div className="simple-page-header simple-class-header">
           <div>
             <p className="simple-kicker">Class</p>
