@@ -82,7 +82,7 @@ Notes:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_ENABLE_GOOGLE_AUTH`
-- `VITE_PUBLIC_APP_URL` (set to your production app URL so auth email links use your domain)
+- `VITE_PUBLIC_APP_URL` (set to the canonical origin, such as `https://www.teachercodex.com`, so auth email links use `/teacherassistant/` on your domain)
 - `VITE_GOOGLE_CLIENT_ID` (only if Google auth enabled)
 4. Redeploy.
 

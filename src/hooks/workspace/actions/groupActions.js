@@ -74,13 +74,13 @@ function createGroupActions({
     });
   };
 
-  const handleGenerateGroups = async () => {
+  const handleGenerateGroups = async (selectedClassId = "") => {
     if (isGeneratingGroups) return;
     setIsGeneratingGroups(true);
     setFormError("");
 
     try {
-      const classId = groupGenForm.classId;
+      const classId = selectedClassId;
       const size = Number(groupGenForm.size);
       const prefix = groupGenForm.prefix.trim() || "Group";
       const clearExisting = groupGenForm.clearExisting;

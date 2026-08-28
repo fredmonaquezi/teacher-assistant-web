@@ -8,7 +8,8 @@ test("does not render student status indicators in generated groups", () => {
     <MemoryRouter initialEntries={["/groups?classId=class-1"]}>
       <GroupsPage
         formError=""
-        classOptions={[{ id: "class-1", label: "Class A" }]}
+        activeClass={{ id: "class-1", name: "Class A" }}
+        activeClassId="class-1"
         students={[
           {
             id: "student-1",
@@ -49,6 +50,6 @@ test("does not render student status indicators in generated groups", () => {
   );
 
   expect(screen.getByText("Ana Silva")).toBeTruthy();
-  expect(screen.getByText("Random Picker")).toBeTruthy();
+  expect(screen.queryByText("Random Picker")).toBeNull();
   expect(screen.queryByText("✋")).toBeNull();
 });

@@ -1,9 +1,7 @@
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import TileIcon from "../components/navigation/TileIcon";
-import RandomPickerPage from "./RandomPickerPage";
 
 const INITIAL_VISIBLE_GROUP_CARDS = 24;
 const VISIBLE_GROUP_CARD_STEP = 24;
@@ -29,7 +27,8 @@ const groupAccent = (index) =>
 
 function GroupsPage({
   formError,
-  classOptions,
+  activeClass,
+  activeClassId,
   students,
   groups,
   groupMembers,
@@ -47,25 +46,15 @@ function GroupsPage({
   isGeneratingGroups,
   handleAddConstraint,
   handleDeleteConstraint,
-  randomPickerCustomCategories = [],
-  randomPickerRotationRows = [],
-  handleCreateRandomPickerCustomCategory = async () => false,
-  handleDeleteRandomPickerCustomCategory = async () => false,
-  handleSetRandomPickerRotationUsedStudents = async () => false,
-  handleImportLegacyRandomPickerState = async () => true,
 }) {
   const { t } = useTranslation();
   const [showAdvancedHelp, setShowAdvancedHelp] = useState(false);
   const [constraintToDelete, setConstraintToDelete] = useState(null);
-  const [isRandomPickerOpen, setIsRandomPickerOpen] = useState(false);
   const [visibleGroupCardCount, setVisibleGroupCardCount] = useState(INITIAL_VISIBLE_GROUP_CARDS);
-  const [searchParams] = useSearchParams();
-  const classId = searchParams.get("classId") || "";
   const deferredStudents = useDeferredValue(students);
   const deferredGroups = useDeferredValue(groups);
   const deferredGroupMembers = useDeferredValue(groupMembers);
   const deferredGroupConstraints = useDeferredValue(groupConstraints);
-  const deferredClassOptions = useDeferredValue(classOptions);
 
   const openSeparationsModal = () => {
     if (typeof window !== "undefined") {
@@ -95,15 +84,6 @@ function GroupsPage({
     });
   }, [groupsShowSeparations, groupsScrollTopRef]);
 
-  useEffect(() => {
-    if (!classId) return;
-    setGroupGenForm((prev) => {
-      if (prev.classId === classId) return prev;
-      return { ...prev, classId };
-    });
-  }, [classId, setGroupGenForm]);
-
-  const activeClassId = classId || groupGenForm.classId;
   const studentsById = useMemo(
     () => new Map(deferredStudents.map((student) => [student.id, student])),
     [deferredStudents]
@@ -124,7 +104,7 @@ function GroupsPage({
             (constraint) =>
               classStudentIdSet.has(constraint.student_a) && classStudentIdSet.has(constraint.student_b)
           )
-        : deferredGroupConstraints,
+        : [],
     [activeClassId, classStudentIdSet, deferredGroupConstraints]
   );
   const constraintDisplayRows = useMemo(
@@ -183,15 +163,12 @@ function GroupsPage({
   const groupSize = Number(groupGenForm.size) || 4;
   const expectedGroupCount =
     classStudents.length > 0 ? Math.ceil(classStudents.length / groupSize) : 0;
-  const handleClassChange = useCallback(
-    (nextClassId) => {
-      startTransition(() => {
-        setGroupGenForm((prev) => ({ ...prev, classId: nextClassId }));
-        setVisibleGroupCardCount(INITIAL_VISIBLE_GROUP_CARDS);
-      });
-    },
-    [setGroupGenForm]
-  );
+  const selectedStudentA = classStudentIdSet.has(constraintForm.studentA)
+    ? constraintForm.studentA
+    : "";
+  const selectedStudentB = classStudentIdSet.has(constraintForm.studentB)
+    ? constraintForm.studentB
+    : "";
 
   const adjustGroupSize = useCallback(
     (delta) => {
@@ -217,6 +194,9 @@ function GroupsPage({
           <div className="groups-header-copy">
             <h2>{t("groups.title")}</h2>
             <p className="muted">{t("groups.subtitle")}</p>
+            <span className="groups-active-class">
+              {activeClass?.name || t("layout.classSwitcher.placeholder")}
+            </span>
           </div>
           <div className="groups-header-info">
             <div>
@@ -233,19 +213,6 @@ function GroupsPage({
         <div className="groups-controls-card">
           <div className="groups-controls-header">
             <h3>{t("groups.settings.title")}</h3>
-            {!classId && (
-              <select
-                value={groupGenForm.classId}
-                onChange={(event) => handleClassChange(event.target.value)}
-              >
-                <option value="">{t("groups.settings.selectClass")}</option>
-                {deferredClassOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            )}
           </div>
 
           <div className="groups-size-row">
@@ -279,9 +246,9 @@ function GroupsPage({
 
           <button
             type="button"
-            onClick={handleGenerateGroups}
+            onClick={() => handleGenerateGroups(activeClassId)}
             className={`groups-generate-btn ${isGeneratingGroups ? "button-with-spinner" : ""}`}
-            disabled={isGeneratingGroups}
+            disabled={!activeClassId || isGeneratingGroups}
             aria-busy={isGeneratingGroups}
           >
             {isGeneratingGroups && <span className="inline-spinner" aria-hidden="true" />}
@@ -351,7 +318,7 @@ function GroupsPage({
                 />
                 {t("groups.advanced.respectSeparations")}
               </label>
-              <button type="button" className="link" onClick={openSeparationsModal}>
+              <button type="button" className="link" onClick={openSeparationsModal} disabled={!activeClassId}>
                 {t("groups.advanced.separations")}
               </button>
               {showAdvancedHelp && (
@@ -388,48 +355,15 @@ function GroupsPage({
           )}
         </div>
 
-        <details
-          className="groups-random-tool"
-          onToggle={(event) => setIsRandomPickerOpen(event.currentTarget.open)}
-        >
-          <summary>
-            <span className="groups-random-tool-icon" aria-hidden="true">
-              <TileIcon kind="random" />
-            </span>
-            <span className="groups-random-tool-copy">
-              <strong>{t("random.title")}</strong>
-              <small>{t("random.quick.subtitle")}</small>
-            </span>
-            <span className="groups-random-tool-chevron" aria-hidden="true">⌄</span>
-          </summary>
-          <div className="groups-random-tool-content">
-            {isRandomPickerOpen && activeClassId ? (
-              <RandomPickerPage
-                embedded
-                selectedClassId={activeClassId}
-                formError=""
-                classOptions={deferredClassOptions}
-                students={deferredStudents}
-                randomPickerCustomCategories={randomPickerCustomCategories}
-                randomPickerRotationRows={randomPickerRotationRows}
-                handleCreateRandomPickerCustomCategory={handleCreateRandomPickerCustomCategory}
-                handleDeleteRandomPickerCustomCategory={handleDeleteRandomPickerCustomCategory}
-                handleSetRandomPickerRotationUsedStudents={handleSetRandomPickerRotationUsedStudents}
-                handleImportLegacyRandomPickerState={handleImportLegacyRandomPickerState}
-              />
-            ) : isRandomPickerOpen ? (
-              <p className="muted groups-random-tool-empty">
-                {t("groups.settings.selectClass")}
-              </p>
-            ) : null}
-          </div>
-        </details>
-
         {grouped.length === 0 ? (
           <div className="groups-empty">
             <div className="groups-empty-icon">✨</div>
-            <div className="groups-empty-title">{t("groups.empty.title")}</div>
-            <div className="muted">{t("groups.empty.description")}</div>
+            <div className="groups-empty-title">
+              {activeClassId ? t("groups.empty.title") : t("layout.classSwitcher.placeholder")}
+            </div>
+            <div className="muted">
+              {activeClassId ? t("groups.empty.description") : t("layout.classSwitcher.pagePrompt")}
+            </div>
           </div>
         ) : (
           <div className="groups-results">
@@ -493,7 +427,7 @@ function GroupsPage({
               <label className="stack">
                 <span>{t("groups.separations.studentA")}</span>
                 <select
-                  value={constraintForm.studentA}
+                  value={selectedStudentA}
                   onChange={(event) =>
                     setConstraintForm((prev) => ({ ...prev, studentA: event.target.value }))
                   }
@@ -510,7 +444,7 @@ function GroupsPage({
               <label className="stack">
                 <span>{t("groups.separations.studentB")}</span>
                 <select
-                  value={constraintForm.studentB}
+                  value={selectedStudentB}
                   onChange={(event) =>
                     setConstraintForm((prev) => ({ ...prev, studentB: event.target.value }))
                   }
@@ -524,7 +458,12 @@ function GroupsPage({
                   ))}
                 </select>
               </label>
-              <button type="button" className="separations-add-btn" onClick={handleAddConstraint}>
+              <button
+                type="button"
+                className="separations-add-btn"
+                onClick={handleAddConstraint}
+                disabled={!selectedStudentA || !selectedStudentB}
+              >
                 {t("groups.separations.add")}
               </button>
             </div>

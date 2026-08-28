@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import useWorkspaceActions from "./workspace/useWorkspaceActions";
 import useWorkspaceReads from "./workspace/useWorkspaceReads";
+import useActiveClassSelection from "./useActiveClassSelection";
 
 function useTeacherWorkspaceData(userId) {
   const {
@@ -55,6 +56,11 @@ function useTeacherWorkspaceData(userId) {
     refreshUsefulLinksData,
     refreshRandomPickerData,
   } = useWorkspaceReads(userId);
+
+  const { activeClass, activeClassId, setActiveClassId } = useActiveClassSelection(
+    userId,
+    classes
+  );
 
   const [seedingRubrics, setSeedingRubrics] = useState(false);
   const [classForm, setClassForm] = useState({
@@ -340,6 +346,9 @@ function useTeacherWorkspaceData(userId) {
   }, [handleCleanupOrphanedStudents, loading, orphanedStudentIds]);
 
   return {
+    activeClass,
+    activeClassId,
+    setActiveClassId,
     profilePreferences,
     setProfilePreferences,
     classes,

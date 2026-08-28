@@ -115,7 +115,7 @@ test("sends password reset email from forgot password flow", async () => {
 
   await waitFor(() =>
     expect(authMocks.resetPasswordForEmail).toHaveBeenCalledWith("teacher@example.com", {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${window.location.origin}/teacherassistant/reset-password`,
     })
   );
   expect(onSuccess).toHaveBeenCalledWith("Check your email for a password reset link.");

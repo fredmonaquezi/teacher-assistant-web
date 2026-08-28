@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   differenceInCalendarDays,
   format,
@@ -10,7 +10,7 @@ import {
 import { enUS } from "date-fns/locale/en-US";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { useTranslation } from "react-i18next";
-import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import {
   getAttendanceRate,
@@ -38,6 +38,7 @@ function CloseIcon() {
 
 const AttendancePage = ({
   classOptions,
+  activeClassId,
   students,
   attendanceSessions,
   attendanceEntries,
@@ -49,31 +50,13 @@ const AttendancePage = ({
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const locale = i18n.language === "pt-BR" ? ptBR : enUS;
-  const attendanceClassStorageKey = "ta_attendance_active_class";
-  const [searchParams] = useSearchParams();
-  const classId = searchParams.get("classId") || "";
-  const classLabel = classOptions.find((option) => option.id === classId)?.label;
-  const isClassLockedByQuery = Boolean(classId);
+  const classLabel = classOptions.find((option) => option.id === activeClassId)?.label;
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [deletingSessionId, setDeletingSessionId] = useState("");
   const [sessionToDelete, setSessionToDelete] = useState(null);
-  const [activeClassId, setActiveClassId] = useState(() => {
-    if (classId) return classId;
-    if (typeof window === "undefined") return "";
-    return window.sessionStorage.getItem(attendanceClassStorageKey) || "";
-  });
-  const effectiveClassId = classId || activeClassId;
+  const effectiveClassId = activeClassId;
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
-
-  useEffect(() => {
-    if (classId || typeof window === "undefined") return;
-    if (activeClassId) {
-      window.sessionStorage.setItem(attendanceClassStorageKey, activeClassId);
-    } else {
-      window.sessionStorage.removeItem(attendanceClassStorageKey);
-    }
-  }, [activeClassId, classId]);
 
   const classStudents = effectiveClassId
     ? students.filter((student) => student.class_id === effectiveClassId)
@@ -159,26 +142,13 @@ const AttendancePage = ({
             {classLabel && <div className="muted">{t("attendance.classLabel", { classLabel })}</div>}
           </div>
           <div className="attendance-actions">
-            {!isClassLockedByQuery && (
-              <select
-                value={activeClassId}
-                onChange={(event) => setActiveClassId(event.target.value)}
-              >
-                <option value="">{t("attendance.actions.selectClass")}</option>
-                {classOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            )}
             <button
               type="button"
               onClick={() => {
                 setSelectedDate(format(new Date(), "yyyy-MM-dd"));
                 setShowDatePicker(true);
               }}
-              disabled={isCreatingSession}
+              disabled={!effectiveClassId || isCreatingSession}
             >
               {t("attendance.actions.byDate")}
             </button>
@@ -216,7 +186,13 @@ const AttendancePage = ({
 
         <div className="attendance-section">
           <h3>{t("attendance.sessions.title")}</h3>
-          {classSessions.length === 0 ? (
+          {!effectiveClassId ? (
+            <div className="attendance-empty">
+              <div className="attendance-empty-icon"><CalendarIcon /></div>
+              <div className="attendance-empty-title">{t("layout.classSwitcher.placeholder")}</div>
+              <div className="muted">{t("layout.classSwitcher.pagePrompt")}</div>
+            </div>
+          ) : classSessions.length === 0 ? (
             <div className="attendance-empty">
               <div className="attendance-empty-icon"><CalendarIcon /></div>
               <div className="attendance-empty-title">{t("attendance.sessions.emptyTitle")}</div>
@@ -335,7 +311,7 @@ const AttendancePage = ({
                   const ok = await handleCreateSessionForDate(selectedDate);
                   if (ok) setShowDatePicker(false);
                 }}
-                disabled={!selectedDate || isCreatingSession}
+                disabled={!effectiveClassId || !selectedDate || isCreatingSession}
                 aria-busy={isCreatingSession}
               >
                 {isCreatingSession && <span className="inline-spinner" aria-hidden="true" />}

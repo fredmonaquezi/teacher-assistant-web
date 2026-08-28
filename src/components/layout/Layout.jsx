@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router-dom";
 import "../../i18n";
 import { formatDisplayName } from "../../utils/formatDisplayName";
+import ClassSwitcher from "./ClassSwitcher";
 
 function NavIcon({ kind }) {
   if (kind === "classes") {
@@ -17,10 +18,21 @@ function NavIcon({ kind }) {
   if (kind === "groups") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="2.5" /><circle cx="16.5" cy="9" r="2" /><path d="M4.5 18c.4-3.1 2.2-4.8 4.5-4.8s4.1 1.7 4.5 4.8M13.5 14.5c.8-.8 1.8-1.2 3-1.2 2 0 3.4 1.4 3.8 3.8" /></svg>;
   }
+  if (kind === "random") {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="3" /><circle cx="9" cy="9" r="1" /><circle cx="15" cy="9" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="9" cy="15" r="1" /><circle cx="15" cy="15" r="1" /></svg>;
+  }
   return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3" /><path d="M5.5 19c.5-3.4 3-5 6.5-5s6 1.6 6.5 5" /></svg>;
 }
 
-function Layout({ user, onSignOut, preferences, children }) {
+function Layout({
+  user,
+  onSignOut,
+  preferences,
+  classes,
+  activeClassId,
+  setActiveClassId,
+  children,
+}) {
   const { t, i18n } = useTranslation();
   const appName = "Class Notes";
   const userEmail = user?.email || "";
@@ -46,6 +58,7 @@ function Layout({ user, onSignOut, preferences, children }) {
     { label: t("layout.nav.classes"), path: "/classes", icon: "classes" },
     { label: t("layout.nav.attendance"), path: "/attendance", icon: "attendance" },
     { label: t("layout.nav.groups"), path: "/groups", icon: "groups" },
+    { label: t("layout.nav.randomPicker"), path: "/random", icon: "random" },
   ];
   const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
 
@@ -114,7 +127,7 @@ function Layout({ user, onSignOut, preferences, children }) {
         onClick={closeMobileSidebar}
       />
       <aside id="app-sidebar" className="sidebar">
-        <div className="sidebar-brand">
+        <a className="sidebar-brand" href="/" aria-label="Teacher Codex home">
           <span className="sidebar-app-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M5 5.5h10.5A3.5 3.5 0 0 1 19 9v9.5H8.5A3.5 3.5 0 0 1 5 15V5.5Z" /><path d="M9 9h6M9 12h4" /></svg>
           </span>
@@ -122,7 +135,7 @@ function Layout({ user, onSignOut, preferences, children }) {
             <p className="sidebar-kicker">{appName}</p>
             <h1 className="sidebar-title">{t("layout.sidebar.title")}</h1>
           </div>
-        </div>
+        </a>
         <p className="sidebar-email">{t("layout.sidebar.signedInAs", { identity: sidebarIdentity })}</p>
         <nav className="nav-links">
           {navLinks.map((link) => (
@@ -165,10 +178,15 @@ function Layout({ user, onSignOut, preferences, children }) {
       </aside>
       <div className="workspace">
         <header className="topbar">
-          <div>
+          <div className="topbar-greeting">
             <p className="postit-kicker">{appName}</p>
             <h2 className="postit-title">{t("layout.greeting.hello", { name: displayName })}</h2>
           </div>
+          <ClassSwitcher
+            classes={classes}
+            activeClassId={activeClassId}
+            setActiveClassId={setActiveClassId}
+          />
           <div className="topbar-date">
             <p className="postit-line">{t("layout.greeting.todayIs", { date: todayDateLabel })}</p>
             <p className="postit-line">{todayTimeLabel}</p>

@@ -11,6 +11,8 @@ function SimpleClassesPage({
   handleDeleteClass,
   formError,
   loading,
+  activeClassId,
+  setActiveClassId = () => {},
 }) {
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
@@ -47,13 +49,22 @@ function SimpleClassesPage({
             {classes.map((classItem) => {
               const studentCount = students.filter((student) => student.class_id === classItem.id).length;
               return (
-                <article key={classItem.id} className="simple-class-card">
+                <article
+                  key={classItem.id}
+                  className={`simple-class-card${activeClassId === classItem.id ? " active" : ""}`}
+                >
                   <button
                     type="button"
                     className="simple-class-card-main"
-                    onClick={() => navigate(`/classes/${classItem.id}`)}
+                    aria-current={activeClassId === classItem.id ? "true" : undefined}
+                    onClick={() => {
+                      setActiveClassId(classItem.id);
+                      navigate(`/classes/${classItem.id}`);
+                    }}
                   >
-                    <span className="simple-class-card-label">Class</span>
+                    <span className="simple-class-card-label">
+                      {activeClassId === classItem.id ? "Active class" : "Class"}
+                    </span>
                     <strong>{classItem.name}</strong>
                     <span>{classItem.grade_level || "Grade not set"}{classItem.school_year ? ` · ${classItem.school_year}` : ""}</span>
                     <small>{studentCount} {studentCount === 1 ? "student" : "students"}</small>

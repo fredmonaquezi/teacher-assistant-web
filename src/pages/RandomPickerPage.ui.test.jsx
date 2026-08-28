@@ -19,10 +19,11 @@ const STUDENTS = [
   },
 ];
 
-function renderPage(overrides = {}, route = "/random?classId=class-1") {
+function renderPage(overrides = {}, route = "/random") {
   const props = {
     formError: "",
     classOptions: CLASS_OPTIONS,
+    activeClassId: "class-1",
     students: STUDENTS,
     randomPickerCustomCategories: [],
     randomPickerRotationRows: [],
@@ -146,7 +147,7 @@ test("deletes custom category in selected class scope", async () => {
   });
 });
 
-test("does not show students from deleted classes when all classes is selected", () => {
+test("does not show students from deleted classes for the active class", () => {
   renderPage(
     {
       classOptions: [{ id: "class-1", label: "Class 1" }],
@@ -173,9 +174,13 @@ test("does not show students from deleted classes when all classes is selected",
   expect(screen.queryByText("Deleted Student")).toBeNull();
 });
 
-test("uses the parent class without showing another class selector when embedded", () => {
-  renderPage({ embedded: true, selectedClassId: "class-1" });
+test("does not allow class-scoped actions without an active class", () => {
+  const handleCreateRandomPickerCustomCategory = vi.fn().mockResolvedValue(true);
 
-  expect(screen.queryByLabelText("Class")).toBeNull();
-  expect(screen.getByText("2 available")).toBeTruthy();
+  renderPage({ activeClassId: "", handleCreateRandomPickerCustomCategory });
+
+  expect(screen.getByText(/Choose a class from the top bar/i)).toBeTruthy();
+  expect(screen.getByRole("button", { name: /Quick Random Pick/i }).disabled).toBe(true);
+  expect(screen.getByRole("button", { name: /Add custom/i }).disabled).toBe(true);
+  expect(handleCreateRandomPickerCustomCategory).not.toHaveBeenCalled();
 });

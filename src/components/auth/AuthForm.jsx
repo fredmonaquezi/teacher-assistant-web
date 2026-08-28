@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { loadAuthEnv } from "../../config/env";
 import "../../i18n";
+import { APP_PATHS } from "../../config/paths";
 import { supabase } from "../../supabaseClient";
+import "../../App.css";
 
 const { enableGoogleAuth, googleClientId, publicAppUrl } = loadAuthEnv();
 const GOOGLE_IDENTITY_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
@@ -27,9 +29,9 @@ const getAuthRedirectUrl = (pathname = "/") => {
   return new URL(pathname, baseUrl).toString();
 };
 
-const getSignUpEmailRedirect = () => getAuthRedirectUrl("/");
+const getSignUpEmailRedirect = () => getAuthRedirectUrl(APP_PATHS.teacherAssistantHome);
 const getPasswordResetRedirect = () => {
-  return getAuthRedirectUrl("/reset-password");
+  return getAuthRedirectUrl(APP_PATHS.teacherAssistantResetPassword);
 };
 
 function AuthForm({ onSuccess, forcedMode, onPasswordResetComplete }) {

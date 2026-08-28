@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
 import TileIcon from "../components/navigation/TileIcon";
 
 const DEFAULT_CATEGORIES = ["Helper", "Guardian", "Line Leader", "Messenger"];
@@ -37,6 +36,7 @@ function RandomPickerPage({
   formError,
   loading = false,
   classOptions,
+  activeClassId = "",
   students,
   randomPickerCustomCategories = [],
   randomPickerRotationRows = [],
@@ -44,12 +44,9 @@ function RandomPickerPage({
   handleDeleteRandomPickerCustomCategory = async () => false,
   handleSetRandomPickerRotationUsedStudents = async () => false,
   handleImportLegacyRandomPickerState = async () => true,
-  embedded = false,
-  selectedClassId = "",
 }) {
   const { t, i18n } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const classId = embedded ? selectedClassId : searchParams.get("classId") || "";
+  const classId = activeClassId;
   const classLabel = classOptions.find((option) => option.id === classId)?.label;
   const validClassIds = useMemo(
     () => new Set(classOptions.map((option) => option.id).filter(Boolean)),
@@ -58,9 +55,9 @@ function RandomPickerPage({
   const filteredStudents = useMemo(
     () =>
       students.filter((student) => {
+        if (!classId) return false;
         if (!validClassIds.has(student.class_id)) return false;
-        if (classId) return student.class_id === classId;
-        return true;
+        return student.class_id === classId;
       }),
     [classId, students, validClassIds]
   );
@@ -91,17 +88,10 @@ function RandomPickerPage({
     return categoryDisplayLabel(category);
   };
 
-  const handleClassChange = (nextClassId) => {
-    if (nextClassId) {
-      setSearchParams({ classId: nextClassId });
-      return;
-    }
-    setSearchParams({});
-  };
-
   const customCategories = useMemo(() => {
+    if (!classId) return [];
     return randomPickerCustomCategories
-      .filter((item) => sameScope(item.class_id, classId || null))
+      .filter((item) => sameScope(item.class_id, classId))
       .sort((first, second) => {
         const firstSort = Number(first.sort_order ?? 0);
         const secondSort = Number(second.sort_order ?? 0);
@@ -120,12 +110,14 @@ function RandomPickerPage({
   const activeCategory = categories.includes(selectedCategory) ? selectedCategory : "Helper";
 
   const selectedRotationRow = useMemo(
-    () =>
-      randomPickerRotationRows.find(
+    () => {
+      if (!classId) return null;
+      return randomPickerRotationRows.find(
         (item) =>
-          sameScope(item.class_id, classId || null) &&
+          sameScope(item.class_id, classId) &&
           String(item.category || "") === activeCategory
-      ) || null,
+      ) || null;
+    },
     [activeCategory, classId, randomPickerRotationRows]
   );
 
@@ -170,14 +162,14 @@ function RandomPickerPage({
   };
 
   const markUsed = async () => {
-    if (!pickedStudent) return;
+    if (!classId || !pickedStudent) return;
 
     const nextUsedStudentIds = Array.from(
       new Set([...normalizeUsedStudentIds(selectedRotationRow?.used_student_ids || []), pickedStudent.id])
     );
 
     const didSave = await handleSetRandomPickerRotationUsedStudents({
-      classId: classId || null,
+      classId,
       category: activeCategory,
       usedStudentIds: nextUsedStudentIds,
     });
@@ -187,8 +179,9 @@ function RandomPickerPage({
   };
 
   const clearUsed = async () => {
+    if (!classId) return;
     const didClear = await handleSetRandomPickerRotationUsedStudents({
-      classId: classId || null,
+      classId,
       category: activeCategory,
       usedStudentIds: [],
     });
@@ -213,12 +206,13 @@ function RandomPickerPage({
   }, [rotationFeedback]);
 
   const addCustomCategory = async () => {
+    if (!classId) return;
     const cleaned = newCategoryName.trim();
     if (!cleaned) return;
     if (categories.includes(cleaned)) return;
 
     const didCreate = await handleCreateRandomPickerCustomCategory({
-      classId: classId || null,
+      classId,
       name: cleaned,
     });
 
@@ -235,11 +229,11 @@ function RandomPickerPage({
   };
 
   const deleteCustomCategory = async () => {
-    if (!isSelectedCategoryCustom) return;
+    if (!classId || !isSelectedCategoryCustom) return;
 
     const categoryToDelete = activeCategory;
     const didDelete = await handleDeleteRandomPickerCustomCategory({
-      classId: classId || null,
+      classId,
       name: categoryToDelete,
     });
 
@@ -251,33 +245,18 @@ function RandomPickerPage({
 
   return (
     <>
-      {!embedded && formError && <div className="error">{formError}</div>}
-      <section className={embedded ? "random-page random-page-embedded" : "panel random-page"}>
-        {!embedded && (
-          <>
-            <div className="random-page-header">
-              <div className="random-page-heading">
-                <span className="random-page-kicker">{t("random.kicker")}</span>
-                <h2>{t("random.title")}</h2>
-              </div>
-              <span className="random-scope-chip">
-                {classId ? classLabel || t("random.selectedClass") : t("random.allClasses")}
-              </span>
-            </div>
-            <label className="stack">
-              <span>{t("random.class")}</span>
-              <select value={classId} onChange={(event) => handleClassChange(event.target.value)}>
-                <option value="">{t("random.allClasses")}</option>
-                {classOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {!classId && <div className="muted">{t("random.rotationTrackedAllClasses")}</div>}
-          </>
-        )}
+      {formError && <div className="error">{formError}</div>}
+      <section className="panel random-page">
+        <div className="random-page-header">
+          <div className="random-page-heading">
+            <span className="random-page-kicker">{t("random.kicker")}</span>
+            <h2>{t("random.title")}</h2>
+          </div>
+          <span className="random-scope-chip">
+            {classId ? classLabel || t("random.selectedClass") : t("layout.classSwitcher.placeholder")}
+          </span>
+        </div>
+        {!classId && <div className="random-class-prompt muted">{t("layout.classSwitcher.pagePrompt")}</div>}
 
         <button
           type="button"
@@ -308,6 +287,7 @@ function RandomPickerPage({
                 type="button"
                 className="secondary random-add-custom-btn"
                 onClick={() => setShowAddCategory(true)}
+                disabled={!classId}
               >
                 {t("random.rotation.addCustom")}
               </button>
@@ -467,7 +447,7 @@ function RandomPickerPage({
               <button type="button" className="link" onClick={() => setShowAddCategory(false)}>
                 {t("common.actions.cancel")}
               </button>
-              <button type="button" onClick={addCustomCategory} disabled={!newCategoryName.trim()}>
+              <button type="button" onClick={addCustomCategory} disabled={!classId || !newCategoryName.trim()}>
                 {t("common.actions.create")}
               </button>
             </div>

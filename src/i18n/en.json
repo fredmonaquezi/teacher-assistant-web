@@ -30,7 +30,48 @@
   "route": {
     "loadingPage": "Loading page..."
   },
+  "landing": {
+    "navigationLabel": "Main navigation",
+    "homeLabel": "Teacher Codex home",
+    "signedIn": "Account connected",
+    "eyebrow": "Two tools. One teaching home.",
+    "title": "A calmer way to run your classroom.",
+    "intro": "Organize the work that matters, then bring the room to life with ready-to-play activities. Choose where you want to begin.",
+    "productsLabel": "Teacher Codex products",
+    "assistant": {
+      "kicker": "Plan & organize",
+      "title": "Teacher Assistant",
+      "description": "Keep the everyday details of teaching clear, private, and close at hand.",
+      "featureOne": "Classes and student records",
+      "featureTwo": "Attendance and activity notes",
+      "featureThree": "Groups and classroom tools",
+      "accessTitle": "Teacher account required",
+      "accessDescription": "Your workspace stays private and synced.",
+      "signInAction": "Sign in to continue",
+      "openAction": "Open your workspace"
+    },
+    "toolbox": {
+      "kicker": "Play & engage",
+      "title": "Teacher Toolbox",
+      "description": "Open a classroom game, put it on the screen, and start playing in minutes.",
+      "featureOne": "Ready-to-use classroom games",
+      "featureTwo": "No student devices needed",
+      "featureThree": "Optional saved custom prompts",
+      "accessTitle": "No account required",
+      "accessDescription": "Sign in only when you want to save extras.",
+      "openAction": "Explore the games"
+    },
+    "footer": "Built for the moments between planning and teaching"
+  },
   "layout": {
+    "classSwitcher": {
+      "label": "Active class",
+      "aria": "Change active class",
+      "placeholder": "Select a class",
+      "noClasses": "No classes yet",
+      "manage": "Manage",
+      "pagePrompt": "Choose a class from the top bar to use this tool."
+    },
     "mobileNav": {
       "openAria": "Open navigation menu",
       "closeAria": "Close navigation menu",

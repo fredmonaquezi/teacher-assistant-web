@@ -1,11 +1,12 @@
 import { Suspense, lazy, useEffect, useState } from "react";
-import AuthForm from "./components/auth/AuthForm";
 import { queryClient } from "./lib/queryClient";
 import { supabase } from "./supabaseClient";
-import "./App.css";
+import { APP_PATHS, isTeacherAssistantPath } from "./config/paths";
+import LandingPage from "./pages/LandingPage";
 
+const AuthForm = lazy(() => import("./components/auth/AuthForm"));
 const TeacherWorkspaceApp = lazy(() => import("./TeacherWorkspaceApp"));
-const PASSWORD_RECOVERY_PATH = "/reset-password";
+const LEGACY_PASSWORD_RECOVERY_PATH = "/reset-password";
 
 function getInitialAuthMode() {
   if (typeof window === "undefined") return "signin";
@@ -76,28 +77,44 @@ function App() {
     queryClient.clear();
     setAuthMode("signin");
     if (typeof window !== "undefined") {
-      const nextPath =
-        window.location.pathname === PASSWORD_RECOVERY_PATH ? "/" : window.location.pathname;
+      const nextPath = [
+        APP_PATHS.teacherAssistantResetPassword,
+        LEGACY_PASSWORD_RECOVERY_PATH,
+      ].includes(window.location.pathname)
+        ? APP_PATHS.teacherAssistantHome
+        : window.location.pathname;
       window.history.replaceState({}, document.title, nextPath);
     }
   };
 
   const showRecovery = authMode === "reset";
+  const pathname = typeof window === "undefined" ? APP_PATHS.home : window.location.pathname;
+  const showTeacherAssistant =
+    isTeacherAssistantPath(pathname) || pathname === LEGACY_PASSWORD_RECOVERY_PATH;
+
+  if (!showTeacherAssistant) {
+    return <LandingPage user={user} />;
+  }
 
   return (
-    <div className="page">
-      {statusMessage && <div className="status">{statusMessage}</div>}
+    <div className="page teacher-assistant-page">
       {user && !showRecovery ? (
-        <Suspense fallback={<WorkspaceFallback />}>
-          <TeacherWorkspaceApp user={user} onSignOut={handleSignOut} />
-        </Suspense>
-      ) : (
-        <AuthForm
-          onSuccess={setStatusMessage}
-          forcedMode={showRecovery ? "reset" : undefined}
-          onPasswordResetComplete={handlePasswordResetComplete}
-        />
-      )}
+          <Suspense fallback={<WorkspaceFallback />}>
+            <TeacherWorkspaceApp user={user} onSignOut={handleSignOut} />
+          </Suspense>
+        ) : (
+          <div className="auth-page-shell">
+            <a className="auth-home-link" href={APP_PATHS.home}>← Teacher Codex</a>
+            {statusMessage && <div className="status">{statusMessage}</div>}
+            <Suspense fallback={<WorkspaceFallback />}>
+              <AuthForm
+                onSuccess={setStatusMessage}
+                forcedMode={showRecovery ? "reset" : undefined}
+                onPasswordResetComplete={handlePasswordResetComplete}
+              />
+            </Suspense>
+          </div>
+        )}
     </div>
   );
 }

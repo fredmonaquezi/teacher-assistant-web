@@ -30,7 +30,48 @@
   "route": {
     "loadingPage": "Carregando página..."
   },
+  "landing": {
+    "navigationLabel": "Navegação principal",
+    "homeLabel": "Página inicial do Teacher Codex",
+    "signedIn": "Conta conectada",
+    "eyebrow": "Duas ferramentas. Um só lugar para ensinar.",
+    "title": "Uma forma mais tranquila de conduzir sua sala de aula.",
+    "intro": "Organize o que importa e dê vida à aula com atividades prontas para jogar. Escolha por onde quer começar.",
+    "productsLabel": "Produtos Teacher Codex",
+    "assistant": {
+      "kicker": "Planeje e organize",
+      "title": "Teacher Assistant",
+      "description": "Mantenha os detalhes do dia a dia escolar organizados, privados e sempre à mão.",
+      "featureOne": "Turmas e registros dos alunos",
+      "featureTwo": "Presença e anotações de atividades",
+      "featureThree": "Grupos e ferramentas de sala",
+      "accessTitle": "Conta de professor necessária",
+      "accessDescription": "Seu espaço fica privado e sincronizado.",
+      "signInAction": "Entrar para continuar",
+      "openAction": "Abrir seu espaço"
+    },
+    "toolbox": {
+      "kicker": "Jogue e envolva",
+      "title": "Teacher Toolbox",
+      "description": "Abra um jogo, coloque na tela e comece uma atividade com a turma em poucos minutos.",
+      "featureOne": "Jogos prontos para a sala de aula",
+      "featureTwo": "Sem dispositivos para os alunos",
+      "featureThree": "Perguntas personalizadas opcionais",
+      "accessTitle": "Não precisa de conta",
+      "accessDescription": "Entre somente se quiser salvar extras.",
+      "openAction": "Explorar os jogos"
+    },
+    "footer": "Feito para os momentos entre planejar e ensinar"
+  },
   "layout": {
+    "classSwitcher": {
+      "label": "Turma ativa",
+      "aria": "Alterar turma ativa",
+      "placeholder": "Selecione uma turma",
+      "noClasses": "Nenhuma turma ainda",
+      "manage": "Gerenciar",
+      "pagePrompt": "Escolha uma turma na barra superior para usar esta ferramenta."
+    },
     "mobileNav": {
       "openAria": "Abrir menu de navegação",
       "closeAria": "Fechar menu de navegação",
