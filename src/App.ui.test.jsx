@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import App from "./App";
 
@@ -48,4 +48,29 @@ test("shows authentication inside the teacher assistant path", async () => {
   expect(await screen.findByRole("heading", { name: "Class Notes" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Sign in" })).toBeTruthy();
   expect(screen.getByRole("link", { name: /Teacher Codex/ }).getAttribute("href")).toBe("/");
+});
+
+test("shows the connected account with profile and sign-out actions on the landing page", async () => {
+  authMocks.getSession.mockResolvedValue({
+    data: {
+      session: {
+        user: {
+          email: "ana@example.com",
+          user_metadata: { full_name: "Ana Martins" },
+        },
+      },
+    },
+  });
+
+  render(<App />);
+
+  const profileLink = await screen.findByRole("link", {
+    name: "Open the profile for ana@example.com",
+  });
+  expect(profileLink.getAttribute("href")).toBe("/teacherassistant/profile");
+  expect(screen.getByText("Ana Martins")).toBeTruthy();
+  expect(screen.getByText("ana@example.com")).toBeTruthy();
+
+  fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+  await waitFor(() => expect(authMocks.signOut).toHaveBeenCalledTimes(1));
 });

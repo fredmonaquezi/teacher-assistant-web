@@ -93,7 +93,7 @@ function App() {
     isTeacherAssistantPath(pathname) || pathname === LEGACY_PASSWORD_RECOVERY_PATH;
 
   if (!showTeacherAssistant) {
-    return <LandingPage user={user} />;
+    return <LandingPage user={user} onSignOut={handleSignOut} />;
   }
 
   return (

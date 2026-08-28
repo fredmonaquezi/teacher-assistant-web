@@ -34,6 +34,12 @@
     "navigationLabel": "Navegação principal",
     "homeLabel": "Página inicial do Teacher Codex",
     "signedIn": "Conta conectada",
+    "account": {
+      "signIn": "Entrar",
+      "signOut": "Sair",
+      "signingOut": "Saindo",
+      "openProfile": "Abrir o perfil de {{identity}}"
+    },
     "eyebrow": "Duas ferramentas. Um só lugar para ensinar.",
     "title": "Uma forma mais tranquila de conduzir sua sala de aula.",
     "intro": "Organize o que importa e dê vida à aula com atividades prontas para jogar. Escolha por onde quer começar.",

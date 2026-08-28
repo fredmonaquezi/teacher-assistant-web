@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import "../i18n";
 import "../styles/landing.css";
@@ -6,20 +7,96 @@ function LanguageToggle() {
   const { t, i18n } = useTranslation();
 
   return (
-    <div className="language-toggle landing-language-toggle" aria-label={t("common.language.label")}>
+    <div className="landing-language-control">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M3.8 12h16.4M12 3.5c2.1 2.3 3.2 5.1 3.2 8.5S14.1 18.2 12 20.5M12 3.5C9.9 5.8 8.8 8.6 8.8 12s1.1 6.2 3.2 8.5" />
+      </svg>
+      <div className="language-toggle landing-language-toggle" aria-label={t("common.language.label")}>
+        <button
+          type="button"
+          className={i18n.language === "en" ? "active" : ""}
+          aria-pressed={i18n.language === "en"}
+          onClick={() => i18n.changeLanguage("en")}
+        >
+          {t("common.language.en")}
+        </button>
+        <button
+          type="button"
+          className={i18n.language === "pt-BR" ? "active" : ""}
+          aria-pressed={i18n.language === "pt-BR"}
+          onClick={() => i18n.changeLanguage("pt-BR")}
+        >
+          {t("common.language.ptBR")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AccountControls({ user, onSignOut }) {
+  const { t } = useTranslation();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  if (!user) {
+    return (
+      <a className="landing-sign-in" href="/teacherassistant/">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M14 5h3.5A1.5 1.5 0 0 1 19 6.5v11a1.5 1.5 0 0 1-1.5 1.5H14M10 8l4 4-4 4M14 12H4" />
+        </svg>
+        {t("landing.account.signIn")}
+      </a>
+    );
+  }
+
+  const metadata = user.user_metadata || {};
+  const accountName =
+    metadata.display_name || metadata.full_name || metadata.name || user.email || "Teacher";
+  const accountEmail = user.email || "";
+  const initials = accountName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+
+  const handleSignOut = async () => {
+    if (!onSignOut || isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      await onSignOut();
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
+  return (
+    <div className="landing-account-controls">
+      <a
+        className="landing-account-link"
+        href="/teacherassistant/profile"
+        aria-label={t("landing.account.openProfile", { identity: accountEmail || accountName })}
+      >
+        <span className="landing-account-avatar" aria-hidden="true">{initials}</span>
+        <span className="landing-account-copy">
+          <strong>{accountName}</strong>
+          {accountEmail && accountEmail !== accountName && <small>{accountEmail}</small>}
+        </span>
+        <svg className="landing-account-chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 5 7 7-7 7" />
+        </svg>
+      </a>
       <button
         type="button"
-        className={i18n.language === "en" ? "active" : ""}
-        onClick={() => i18n.changeLanguage("en")}
+        className="landing-sign-out"
+        onClick={handleSignOut}
+        disabled={isSigningOut}
+        aria-label={isSigningOut ? t("landing.account.signingOut") : t("landing.account.signOut")}
+        title={isSigningOut ? t("landing.account.signingOut") : t("landing.account.signOut")}
       >
-        {t("common.language.en")}
-      </button>
-      <button
-        type="button"
-        className={i18n.language === "pt-BR" ? "active" : ""}
-        onClick={() => i18n.changeLanguage("pt-BR")}
-      >
-        {t("common.language.ptBR")}
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 5H6.5A1.5 1.5 0 0 0 5 6.5v11A1.5 1.5 0 0 0 6.5 19H10M14 8l4 4-4 4M18 12H9" />
+        </svg>
       </button>
     </div>
   );
@@ -63,7 +140,7 @@ function ToolboxPreview() {
   );
 }
 
-function LandingPage({ user }) {
+function LandingPage({ user, onSignOut }) {
   const { t } = useTranslation();
 
   return (
@@ -74,13 +151,9 @@ function LandingPage({ user }) {
           <span>Teacher Codex</span>
         </a>
         <div className="landing-nav-actions">
-          {user?.email && (
-            <span className="landing-session-pill">
-              <span aria-hidden="true" />
-              {t("landing.signedIn")}
-            </span>
-          )}
           <LanguageToggle />
+          <span className="landing-nav-divider" aria-hidden="true" />
+          <AccountControls user={user} onSignOut={onSignOut} />
         </div>
       </nav>
 

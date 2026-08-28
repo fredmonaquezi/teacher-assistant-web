@@ -34,6 +34,12 @@
     "navigationLabel": "Main navigation",
     "homeLabel": "Teacher Codex home",
     "signedIn": "Account connected",
+    "account": {
+      "signIn": "Sign in",
+      "signOut": "Sign out",
+      "signingOut": "Signing out",
+      "openProfile": "Open the profile for {{identity}}"
+    },
     "eyebrow": "Two tools. One teaching home.",
     "title": "A calmer way to run your classroom.",
     "intro": "Organize the work that matters, then bring the room to life with ready-to-play activities. Choose where you want to begin.",
