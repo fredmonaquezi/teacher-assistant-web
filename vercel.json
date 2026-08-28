@@ -18,6 +18,10 @@
   ],
   "rewrites": [
     {
+      "source": "/toolbox/",
+      "destination": "https://teachertoolbox.vercel.app/"
+    },
+    {
       "source": "/toolbox/:path*",
       "destination": "https://teachertoolbox.vercel.app/:path*"
     },
