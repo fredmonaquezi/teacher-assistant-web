@@ -360,6 +360,8 @@
 
 .landing-product-card {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid rgba(20, 35, 63, 0.1);
   border-radius: 26px;
@@ -373,8 +375,8 @@
 
 .landing-product-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(52, 94, 164, 0.22);
-  box-shadow: 0 26px 70px rgba(32, 48, 80, 0.14);
+  border-color: rgba(105, 88, 153, 0.24);
+  box-shadow: 0 26px 70px rgba(74, 55, 103, 0.14);
 }
 
 .landing-product-preview {
@@ -577,8 +579,10 @@
 }
 
 .landing-product-copy {
-  display: grid;
-  gap: 18px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   padding: 26px 28px 28px;
 }
 
@@ -597,13 +601,13 @@
 }
 
 .assistant-mark {
-  background: linear-gradient(145deg, #318cf0, #3158bd);
-  box-shadow: 0 8px 18px rgba(51, 112, 205, 0.24);
+  background: linear-gradient(145deg, #7e74bd, #5d5b9e);
+  box-shadow: 0 8px 18px rgba(92, 84, 154, 0.24);
 }
 
 .toolbox-mark {
-  background: linear-gradient(145deg, #e9a741, #d6794c);
-  box-shadow: 0 8px 18px rgba(204, 123, 54, 0.24);
+  background: linear-gradient(145deg, #a8687d, #85586f);
+  box-shadow: 0 8px 18px rgba(139, 82, 108, 0.22);
 }
 
 .landing-product-heading p {
@@ -623,7 +627,6 @@
 }
 
 .landing-product-description {
-  min-height: 52px;
   margin: 0;
   color: var(--landing-muted);
   font-size: 0.94rem;
@@ -655,16 +658,16 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  color: #3575c8;
-  background: #e9f2ff;
+  color: #655eaa;
+  background: #eeebfb;
   content: "✓";
   font-size: 0.62rem;
   font-weight: 800;
 }
 
 .toolbox-card .landing-feature-list li::before {
-  color: #b86a34;
-  background: #fff0df;
+  color: #925d76;
+  background: #f9eaf0;
 }
 
 .landing-card-footer {
@@ -672,8 +675,8 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
-  margin-top: 2px;
-  padding-top: 19px;
+  margin-top: auto;
+  padding-top: 18px;
   border-top: 1px solid var(--landing-line);
 }
 
@@ -693,13 +696,13 @@
 }
 
 .access-dot.is-protected {
-  background: #487ccc;
-  box-shadow: 0 0 0 4px rgba(72, 124, 204, 0.11);
+  background: #6961aa;
+  box-shadow: 0 0 0 4px rgba(105, 97, 170, 0.11);
 }
 
 .access-dot.is-open {
-  background: #32a267;
-  box-shadow: 0 0 0 4px rgba(50, 162, 103, 0.11);
+  background: #9a637b;
+  box-shadow: 0 0 0 4px rgba(154, 99, 123, 0.11);
 }
 
 .landing-access-note strong,
@@ -726,29 +729,30 @@
   justify-content: center;
   gap: 9px;
   padding: 10px 15px;
-  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 13px;
   color: #fff;
   font-size: 0.78rem;
   font-weight: 720;
   text-decoration: none;
   white-space: nowrap;
-  transition: transform 150ms ease, filter 150ms ease;
+  transition: transform 150ms ease, filter 150ms ease, box-shadow 150ms ease;
 }
 
 .landing-card-action:hover {
   color: #fff;
-  filter: brightness(1.05);
+  filter: saturate(1.04) brightness(0.98);
   transform: translateY(-1px);
 }
 
 .assistant-action {
-  background: linear-gradient(135deg, #2c80e4, #3158bd);
-  box-shadow: 0 9px 18px rgba(48, 100, 191, 0.22);
+  background: linear-gradient(135deg, #7168b0, #565692);
+  box-shadow: 0 9px 20px rgba(78, 72, 139, 0.24);
 }
 
 .toolbox-action {
-  background: linear-gradient(135deg, #df9838, #cf704a);
-  box-shadow: 0 9px 18px rgba(191, 110, 53, 0.21);
+  background: linear-gradient(135deg, #9b637b, #80566f);
+  box-shadow: 0 9px 20px rgba(126, 78, 101, 0.22);
 }
 
 .landing-footer {
@@ -774,10 +778,6 @@
   .landing-products {
     max-width: 620px;
     grid-template-columns: 1fr;
-  }
-
-  .landing-product-description {
-    min-height: 0;
   }
 }
 
