@@ -1,0 +1,82 @@
+:root{
+  --ocean-deep:#03045e;--ocean-blue:#0077b6;--ocean-turquoise:#00b4d8;--ocean-frost:#90e0ef;--ocean-mist:#caf0f8;
+  --bg:#f3fbfd;--surface:#fff;--surface-soft:#eaf8fb;--ink:var(--ocean-deep);--ink-soft:#526b80;
+  --line:rgba(0,119,182,.16);--line-strong:rgba(0,119,182,.28);--brand:var(--ocean-blue);--brand-hover:#005f92;
+  --brand-soft:rgba(144,224,239,.24);--shadow-sm:0 8px 24px rgba(3,4,94,.07);--shadow-md:0 18px 46px rgba(3,4,94,.11)
+}
+html,body{background:var(--bg)}
+body{color:var(--ink)}
+.teacher-assistant-page{background:radial-gradient(circle at 86% 6%,rgba(144,224,239,.25),transparent 27rem),linear-gradient(#f8fdff,var(--bg))}
+.app-shell{grid-template-columns:264px minmax(0,1fr);background:transparent}
+.sidebar{
+  width:264px;padding:26px 18px 20px;gap:22px;border:0;color:#fff;
+  background:radial-gradient(circle at 10% 92%,rgba(0,180,216,.22),transparent 15rem),linear-gradient(165deg,#03045e,#062078);
+  box-shadow:12px 0 38px rgba(3,4,94,.12);backdrop-filter:none
+}
+.sidebar-brand{padding:0 9px 16px;border-bottom:1px solid #caf0f829}
+.sidebar-app-icon{color:var(--ink);background:linear-gradient(145deg,var(--ocean-frost),var(--ocean-turquoise))}
+:is(.sidebar-kicker,.sidebar-email){color:#caf0f8b8}
+.sidebar-title{color:#fff}
+.nav-links{gap:7px}
+:is(.nav-links a,.sidebar-account-link){min-height:44px;padding:10px 12px;border:1px solid transparent;border-radius:12px;color:#ffffffc7;background:transparent;font-weight:620}
+:is(.nav-links a.active,.sidebar-account-link.active){border-color:#90e0ef47;color:#fff;background:linear-gradient(135deg,#00b4d847,#0077b657);box-shadow:inset 3px 0 var(--ocean-frost)}
+.sidebar-nav-icon{color:var(--ocean-frost)}
+.language-toggle{padding:3px;border:1px solid #caf0f81f;border-radius:12px;background:#caf0f81a}
+.language-toggle button{color:#ffffffad;background:transparent;box-shadow:none}
+.language-toggle button.active{color:var(--ink);background:var(--ocean-mist);box-shadow:0 4px 12px #00000024}
+:is(.sidebar-signout,.sidebar-signout.secondary){min-height:40px;border:1px solid #caf0f81f;color:#ffffffb8;background:#caf0f812}
+.mobile-nav-toggle,.mobile-nav-backdrop{display:none}
+.topbar{
+  width:min(1180px,calc(100% - 56px));min-height:96px;align-items:center;gap:22px;margin:22px auto 0;padding:17px 20px;
+  border:1px solid #0077b621;border-radius:20px;background:#ffffffd6;box-shadow:var(--shadow-sm);backdrop-filter:blur(20px) saturate(1.2)
+}
+.postit-kicker{color:var(--brand)}
+.postit-title{color:var(--ink);font-size:1.62rem}
+.class-switcher{min-width:min(330px,34vw)}
+.class-switcher>label{color:var(--brand)}
+.class-switcher select{border-color:var(--line-strong);color:var(--ink);background:#fff}
+.content.notebook-board{width:min(1180px,calc(100% - 56px));padding:28px 0 64px}
+:is(button.secondary,.button.secondary){border:1px solid var(--line-strong);color:var(--ink);background:#caf0f894;box-shadow:none}
+:is(button.secondary,.button.secondary):hover{color:var(--ink);background:var(--ocean-mist)}
+.teacher-home-hero{
+  position:relative;max-width:none;min-height:210px;display:grid;align-content:center;gap:9px;overflow:hidden;padding:34px 36px;border-radius:24px;color:#fff;
+  background:radial-gradient(circle at 88% 24%,#00b4d86b,transparent 16rem),linear-gradient(135deg,var(--ink),var(--brand));box-shadow:0 22px 50px #03045e2e
+}
+.teacher-home-hero h2{position:relative;z-index:1;max-width:760px;color:#fff;font-size:clamp(2.15rem,4vw,3.25rem);line-height:1.02}
+.teacher-home-hero>p:last-child{position:relative;z-index:1;color:#caf0f8d1}
+.teacher-home-kicker{position:relative;z-index:1;color:var(--ocean-frost)}
+.teacher-home-class{padding:22px 24px;border:1px solid var(--line-strong);border-radius:20px;background:linear-gradient(135deg,#fff,#caf0f875);box-shadow:var(--shadow-sm)}
+.teacher-home-class-actions,.attendance-actions{display:grid;grid-template-columns:repeat(2,minmax(130px,1fr));gap:10px}
+.teacher-home-actions{grid-template-columns:repeat(6,minmax(0,1fr));gap:14px}
+.teacher-home-action{grid-column:span 2;min-height:108px;padding:18px;border:1px solid var(--line);border-radius:18px;color:var(--ink);background:#fffffff0;box-shadow:var(--shadow-sm)}
+.teacher-home-action:nth-last-child(-n+2){grid-column:span 3}
+.teacher-home-action-icon{color:var(--brand);background:linear-gradient(145deg,#caf0f8db,#90e0ef4d)}
+.simple-header-actions{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:10px}
+.simple-class-grid{grid-template-columns:repeat(auto-fit,minmax(176px,1fr));gap:16px}
+.simple-class-card.active{border-color:var(--ocean-turquoise)!important;box-shadow:0 0 0 3px #00b4d81f,var(--shadow-md)!important}
+.simple-class-card-main{color:var(--ink);background:transparent;box-shadow:none}
+.activity-performance-summary{gap:1px;border-color:var(--line);background:var(--line)}
+.activity-performance-summary article{color:var(--ink);background:#caf0f842}
+.modal-actions.profile-actions{grid-column:1/-1;grid-template-columns:1fr}
+.groups-header-card{padding:22px 24px!important;background:linear-gradient(135deg,#fff,#caf0f87a)!important}
+.groups-advanced-header .link{min-width:72px;min-height:36px;border:1px solid var(--line-strong);color:var(--ink);background:#caf0f880;box-shadow:none}
+.group-card-header{color:#fff;background:linear-gradient(135deg,var(--ink),var(--brand))}
+.random-rotation-card{--role-color:var(--ocean-turquoise)!important}
+.random-rotation-card::before{background:var(--ocean-turquoise)!important}
+.modal-overlay{background:#03045e57}
+.modal-actions{display:grid;grid-template-columns:repeat(2,minmax(120px,1fr));gap:10px}
+.modal-actions>*{width:100%}
+.page:has(.auth-card){background:radial-gradient(circle at 15% 14%,#00b4d83d,transparent 24rem),linear-gradient(145deg,#f8fdff,var(--ocean-mist))}
+.mobile-nav-toggle{color:var(--ink)!important;background:var(--ocean-mist)!important}
+@media(max-width:1040px){
+  .app-shell{grid-template-columns:230px minmax(0,1fr)}.sidebar{width:230px}:is(.topbar,.content.notebook-board){width:min(100% - 40px,1180px)}
+  .topbar-date{display:none}.teacher-home-actions{grid-template-columns:repeat(2,minmax(0,1fr))}:is(.teacher-home-action,.teacher-home-action:nth-last-child(-n+2)){grid-column:auto}.teacher-home-action:last-child{grid-column:1/-1}
+}
+@media(max-width:720px){
+  .app-shell{display:block}.sidebar{width:min(300px,86vw);padding-top:76px;border-radius:0 22px 22px 0}.mobile-nav-toggle{display:grid;width:44px;height:44px}.mobile-nav-backdrop{display:block}
+  .topbar{width:calc(100% - 28px);min-height:0;margin-top:14px;padding:64px 16px 16px;border-radius:18px}.content.notebook-board{width:calc(100% - 28px);padding-top:18px}.class-switcher{width:100%}
+  .teacher-home-hero{min-height:0;padding:28px 22px;border-radius:20px}.teacher-home-hero h2{font-size:clamp(2rem,10vw,2.65rem)}
+  :is(.teacher-home-class,.simple-page-header,.attendance-header){align-items:stretch;flex-direction:column}:is(.teacher-home-class-actions,.simple-header-actions,.modal-actions,.teacher-home-actions){grid-template-columns:1fr}
+  :is(.teacher-home-action,.teacher-home-action:last-child){grid-column:auto}.teacher-home-how ol{grid-template-columns:1fr}.attendance-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:440px){.topbar-greeting{padding-left:48px}.attendance-stats,.simple-class-grid{grid-template-columns:1fr}}
