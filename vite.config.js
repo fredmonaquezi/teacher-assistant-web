@@ -46,6 +46,12 @@ export default defineConfig({
     environment: 'happy-dom',
     include: ['src/**/*.ui.test.jsx'],
     setupFiles: ['./src/test/setup-ui.js'],
+    env: {
+      VITE_SUPABASE_URL: 'http://127.0.0.1:54321',
+      VITE_SUPABASE_ANON_KEY: 'test-public-anon-key',
+      VITE_ENABLE_GOOGLE_AUTH: 'false',
+      VITE_PUBLIC_APP_URL: 'http://127.0.0.1:5173',
+    },
     pool: 'threads',
     maxWorkers: 1,
     fileParallelism: false,

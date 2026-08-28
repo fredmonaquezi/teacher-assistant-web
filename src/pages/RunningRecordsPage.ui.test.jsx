@@ -4,6 +4,10 @@ import { afterEach, expect, test, vi } from "vitest";
 import i18n from "../i18n";
 import RunningRecordsPage from "./RunningRecordsPage";
 
+vi.mock("react-day-picker", () => ({
+  DayPicker: () => null,
+}));
+
 afterEach(() => {
   cleanup();
 });

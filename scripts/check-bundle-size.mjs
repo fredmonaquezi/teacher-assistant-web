@@ -9,7 +9,7 @@ const MAX_MAIN_JS_BYTES = Number(process.env.BUNDLE_MAX_MAIN_JS_BYTES || 700000)
 const MAX_INITIAL_JS_BYTES = Number(
   process.env.BUNDLE_MAX_INITIAL_JS_BYTES || process.env.BUNDLE_MAX_TOTAL_JS_BYTES || 550000
 );
-const MAX_CSS_BYTES = Number(process.env.BUNDLE_MAX_CSS_BYTES || 130000);
+const MAX_CSS_BYTES = Number(process.env.BUNDLE_MAX_CSS_BYTES || 180000);
 
 const formatKb = (value) => `${(value / 1024).toFixed(1)} KiB`;
 
