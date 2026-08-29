@@ -13,6 +13,7 @@ function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm,
   const location = useLocation();
   const classItem = classes.find((item) => item.id === classId);
   const [showStudentForm, setShowStudentForm] = useState(false);
+  const [rosterView, setRosterView] = useState("list");
   const classStudents = students.filter((student) => student.class_id === classId).sort(byName);
 
   if (!classItem) {
@@ -42,17 +43,38 @@ function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm,
           </div>
           <div className="simple-header-actions">
             <button type="button" onClick={() => navigate(`/classes/${classId}/assess-activity`)}>Assess an activity</button>
-            <button type="button" className="secondary" onClick={() => navigate(`/attendance?classId=${classId}`)}>Attendance</button>
-            <button type="button" className="secondary" onClick={() => navigate(`/groups?classId=${classId}`)}>Make groups</button>
             <button type="button" onClick={() => setShowStudentForm(true)}>Add student</button>
           </div>
         </div>
 
-        <div className="simple-roster-heading"><h3>Students</h3><span>{classStudents.length}</span></div>
+        <div className="simple-roster-heading">
+          <h3>Students</h3>
+          <div className="simple-roster-heading-tools">
+            <span className="simple-roster-count">{classStudents.length}</span>
+            <div className="simple-view-toggle" role="group" aria-label="Student view">
+              <button
+                type="button"
+                className={rosterView === "list" ? "active" : ""}
+                aria-pressed={rosterView === "list"}
+                onClick={() => setRosterView("list")}
+              >
+                List
+              </button>
+              <button
+                type="button"
+                className={rosterView === "grid" ? "active" : ""}
+                aria-pressed={rosterView === "grid"}
+                onClick={() => setRosterView("grid")}
+              >
+                Grid
+              </button>
+            </div>
+          </div>
+        </div>
         {classStudents.length === 0 ? (
           <div className="simple-empty"><h3>No students yet</h3><p>Add students to begin keeping their notes and development records.</p></div>
         ) : (
-          <div className="simple-roster">
+          <div className={`simple-roster simple-roster-${rosterView}`}>
             {classStudents.map((student) => (
               <NavLink key={student.id} className="simple-student-row" to={`/students/${student.id}`}>
                 <span className="simple-avatar">{`${student.first_name?.[0] || ""}${student.last_name?.[0] || ""}`}</span>

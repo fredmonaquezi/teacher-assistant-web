@@ -68,6 +68,14 @@ body{color:var(--ink)}
 .modal-actions>*{width:100%}
 .page:has(.auth-card){background:radial-gradient(circle at 15% 14%,#00b4d83d,transparent 24rem),linear-gradient(145deg,#f8fdff,var(--ocean-mist))}
 .mobile-nav-toggle{color:var(--ink)!important;background:var(--ocean-mist)!important}
+.simple-roster-heading-tools{display:flex;align-items:center;gap:12px}
+.simple-view-toggle{display:grid;grid-template-columns:repeat(2,1fr);gap:3px;padding:3px;border:1px solid var(--line);border-radius:12px;background:#caf0f866}
+.simple-view-toggle button{min-height:34px;padding:6px 13px;border:0;border-radius:9px;color:var(--ink-soft);background:transparent;box-shadow:none;font-size:.78rem}
+.simple-view-toggle button:hover{color:var(--ink);background:#ffffff99;box-shadow:none;transform:none}
+.simple-view-toggle button.active{color:#fff;background:var(--brand);box-shadow:0 5px 12px #0077b629}
+.simple-roster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;overflow:visible;border:0;background:transparent;box-shadow:none}
+.simple-roster-grid .simple-student-row{min-height:88px;border:1px solid var(--line);border-radius:16px;background:#fffffff0;box-shadow:var(--shadow-sm)}
+.simple-roster-grid .simple-student-row:hover{border-color:var(--line-strong);background:#fff;box-shadow:var(--shadow-md);transform:translateY(-1px)}
 @media(max-width:1040px){
   .app-shell{grid-template-columns:230px minmax(0,1fr)}.sidebar{width:230px}:is(.topbar,.content.notebook-board){width:min(100% - 40px,1180px)}
   .topbar-date{display:none}.teacher-home-actions{grid-template-columns:repeat(2,minmax(0,1fr))}:is(.teacher-home-action,.teacher-home-action:nth-last-child(-n+2)){grid-column:auto}.teacher-home-action:last-child{grid-column:1/-1}
@@ -79,4 +87,4 @@ body{color:var(--ink)}
   :is(.teacher-home-class,.simple-page-header,.attendance-header){align-items:stretch;flex-direction:column}:is(.teacher-home-class-actions,.simple-header-actions,.modal-actions,.teacher-home-actions){grid-template-columns:1fr}
   :is(.teacher-home-action,.teacher-home-action:last-child){grid-column:auto}.teacher-home-how ol{grid-template-columns:1fr}.attendance-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-@media(max-width:440px){.topbar-greeting{padding-left:48px}.attendance-stats,.simple-class-grid{grid-template-columns:1fr}}
+@media(max-width:440px){.topbar-greeting{padding-left:48px}.attendance-stats,.simple-class-grid{grid-template-columns:1fr}.simple-roster-heading{align-items:flex-start;gap:10px}.simple-roster-heading-tools{align-items:flex-end;flex-direction:column;gap:8px}.simple-roster-grid{grid-template-columns:1fr}}
