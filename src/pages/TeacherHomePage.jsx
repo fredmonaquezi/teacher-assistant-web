@@ -8,6 +8,7 @@ const HOME_ACTIONS = [
   { key: "assessment", icon: "gradebook", getPath: (classId) => `/classes/${classId}/assess-activity` },
   { key: "groups", icon: "groups", getPath: () => "/groups" },
   { key: "random", icon: "random", getPath: () => "/random" },
+  { key: "usefulLinks", icon: "links", getPath: () => "/useful-links", availableWithoutClass: true },
 ];
 
 function TeacherHomePage({ activeClass, activeClassId, students, loading }) {
@@ -83,7 +84,7 @@ function TeacherHomePage({ activeClass, activeClassId, students, loading }) {
               </>
             );
 
-            if (!activeClassId) {
+            if (!activeClassId && !action.availableWithoutClass) {
               return (
                 <div key={action.key} className="teacher-home-action is-disabled" aria-disabled="true">
                   {content}

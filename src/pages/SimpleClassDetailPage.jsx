@@ -2,17 +2,22 @@ import { useState } from "react";
 import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import ActivityAssessmentHistory from "../components/ActivityAssessmentHistory";
 import ClassJournal from "../components/ClassJournal";
+import EditClassModal from "../components/common/EditClassModal";
+import ClassSubjectsModal from "../components/common/ClassSubjectsModal";
+import "../styles/student-create.css";
 
 function byName(first, second) {
   return `${first.first_name || ""} ${first.last_name || ""}`.localeCompare(`${second.first_name || ""} ${second.last_name || ""}`, undefined, { sensitivity: "base" });
 }
 
-function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm, handleCreateStudent, formError }) {
+function SimpleClassDetailPage({ classes, students, subjects = [], handleAddClassSubjects, handleRenameClassSubject, studentForm, setStudentForm, handleCreateStudent, handleUpdateClass, formError, setFormError }) {
   const { classId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const classItem = classes.find((item) => item.id === classId);
   const [showStudentForm, setShowStudentForm] = useState(false);
+  const [editingClassId, setEditingClassId] = useState(null);
+  const [showSubjects, setShowSubjects] = useState(false);
   const [rosterView, setRosterView] = useState("list");
   const classStudents = students.filter((student) => student.class_id === classId).sort(byName);
 
@@ -42,6 +47,11 @@ function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm,
             <p className="muted">{classItem.grade_level || "Grade not set"}{classItem.school_year ? ` · ${classItem.school_year}` : ""}</p>
           </div>
           <div className="simple-header-actions">
+            <button type="button" className="secondary" onClick={() => {
+              setFormError("");
+              setEditingClassId(classId);
+            }}>Edit class</button>
+            <button type="button" className="secondary" onClick={() => { setFormError(""); setShowSubjects(true); }}>Manage subjects</button>
             <button type="button" onClick={() => navigate(`/classes/${classId}/assess-activity`)}>Assess an activity</button>
             <button type="button" onClick={() => setShowStudentForm(true)}>Add student</button>
           </div>
@@ -94,12 +104,27 @@ function SimpleClassDetailPage({ classes, students, studentForm, setStudentForm,
         <ClassJournal classId={classId} />
       </section>
 
+      {editingClassId === classId && (
+        <EditClassModal
+          key={classId}
+          classItem={classItem}
+          handleUpdateClass={handleUpdateClass}
+          formError={formError}
+          onClose={() => setEditingClassId(null)}
+        />
+      )}
+
+      {showSubjects && <ClassSubjectsModal classItem={classItem}
+        subjects={subjects.filter((item) => item.class_id === classId).sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0) || a.name.localeCompare(b.name))}
+        onAdd={handleAddClassSubjects} onRename={handleRenameClassSubject} formError={formError} onClose={() => setShowSubjects(false)} />}
       {showStudentForm && (
         <div className="modal-overlay">
-          <form className="modal-card simple-form" onSubmit={submitStudent}>
-            <h3>Add a student</h3>
-            <label className="stack"><span>First name</span><input autoFocus required value={studentForm.firstName} onChange={(event) => setStudentForm((current) => ({ ...current, firstName: event.target.value }))} /></label>
-            <label className="stack"><span>Last name</span><input required value={studentForm.lastName} onChange={(event) => setStudentForm((current) => ({ ...current, lastName: event.target.value }))} /></label>
+          <form className="modal-card simple-form student-create-form" onSubmit={submitStudent} role="dialog" aria-labelledby="student-create-title">
+            <h3 id="student-create-title">Add a student</h3>
+            <div className="student-create-fields">
+              <label className="stack"><span>First name</span><input autoFocus required value={studentForm.firstName} onChange={(event) => setStudentForm((current) => ({ ...current, firstName: event.target.value }))} /></label>
+              <label className="stack"><span>Last name</span><input required value={studentForm.lastName} onChange={(event) => setStudentForm((current) => ({ ...current, lastName: event.target.value }))} /></label>
+            </div>
             <div className="modal-actions"><button type="button" className="secondary" onClick={() => setShowStudentForm(false)}>Cancel</button><button type="submit">Add student</button></div>
           </form>
         </div>

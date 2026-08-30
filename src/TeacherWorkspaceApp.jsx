@@ -18,6 +18,7 @@ const SimpleClassDetailPage = lazy(() => import("./pages/SimpleClassDetailPage")
 const StudentProfilePage = lazy(() => import("./pages/StudentProfilePage"));
 const ActivityAssessmentPage = lazy(() => import("./pages/ActivityAssessmentPage"));
 const TeacherHomePage = lazy(() => import("./pages/TeacherHomePage"));
+const UsefulLinksPage = lazy(() => import("./pages/UsefulLinksPage"));
 
 function RouteFallback() {
   const { t } = useTranslation();
@@ -107,6 +108,7 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     groups,
     groupMembers,
     groupConstraints,
+    usefulLinks,
     randomPickerCustomCategories,
     randomPickerRotationRows,
     loading,
@@ -129,6 +131,9 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     classOptions,
     ensureDataForPath,
     handleCreateClass,
+    handleAddClassSubjects,
+    handleRenameClassSubject,
+    handleUpdateClass,
     handleCreateStudent,
     handleUpdateStudent,
     handleDeleteClass,
@@ -142,6 +147,10 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     handleDeleteRandomPickerCustomCategory,
     handleSetRandomPickerRotationUsedStudents,
     handleImportLegacyRandomPickerState,
+    handleCreateUsefulLink,
+    handleUpdateUsefulLink,
+    handleDeleteUsefulLink,
+    handleSwapUsefulLinkSortOrder,
   } = workspace;
 
   return (
@@ -181,9 +190,12 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
             element={
               <SimpleClassesPage
                 formError={formError}
+                setFormError={setFormError}
                 classForm={classForm}
                 setClassForm={setClassForm}
                 handleCreateClass={handleCreateClass}
+                handleAddClassSubjects={handleAddClassSubjects}
+                handleUpdateClass={handleUpdateClass}
                 handleDeleteClass={handleDeleteClass}
                 classes={classes}
                 students={students}
@@ -197,7 +209,12 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
             path="/classes/:classId"
             element={
               <SimpleClassDetailPage
+                subjects={subjects}
+                handleAddClassSubjects={handleAddClassSubjects}
+                handleRenameClassSubject={handleRenameClassSubject}
                 formError={formError}
+                setFormError={setFormError}
+                handleUpdateClass={handleUpdateClass}
                 classes={classes}
                 students={students}
                 studentForm={studentForm}
@@ -298,6 +315,19 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
                 attendanceSessions={attendanceSessions}
                 attendanceEntries={attendanceEntries}
                 handleUpdateStudent={handleUpdateStudent}
+              />
+            }
+          />
+          <Route
+            path="/useful-links"
+            element={
+              <UsefulLinksPage
+                formError={formError}
+                usefulLinks={usefulLinks}
+                handleCreateUsefulLink={handleCreateUsefulLink}
+                handleUpdateUsefulLink={handleUpdateUsefulLink}
+                handleDeleteUsefulLink={handleDeleteUsefulLink}
+                handleSwapUsefulLinkSortOrder={handleSwapUsefulLinkSortOrder}
               />
             }
           />

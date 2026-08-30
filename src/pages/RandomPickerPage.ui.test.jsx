@@ -102,6 +102,33 @@ test("clears used students for selected class/category", async () => {
   });
 });
 
+test("shows a named result dialog and skips without changing rotation records", async () => {
+  vi.useFakeTimers();
+  vi.spyOn(Math, "random").mockReturnValue(0);
+  const props = renderPage();
+
+  fireEvent.click(screen.getByRole("button", { name: /Pick next Helper/i }));
+  await act(async () => { vi.advanceTimersByTime(1000); });
+
+  expect(screen.getByRole("dialog", { name: "Ada Lovelace" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: /Skip absent/i }).className).toBe("secondary");
+  fireEvent.click(screen.getByRole("button", { name: /Skip absent/i }));
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(props.handleSetRandomPickerRotationUsedStudents).not.toHaveBeenCalled();
+});
+
+test("quick-pick result has one dismissal action and does not update rotation", async () => {
+  vi.useFakeTimers();
+  const props = renderPage();
+  fireEvent.click(screen.getByRole("button", { name: /Quick Random Pick/i }));
+  await act(async () => { vi.advanceTimersByTime(1000); });
+
+  expect(screen.getByRole("dialog").querySelectorAll("button")).toHaveLength(1);
+  fireEvent.click(screen.getByRole("button", { name: /^Done$/i }));
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(props.handleSetRandomPickerRotationUsedStudents).not.toHaveBeenCalled();
+});
+
 test("creates custom category in selected class scope", async () => {
   const handleCreateRandomPickerCustomCategory = vi.fn().mockResolvedValue(true);
 
@@ -145,6 +172,19 @@ test("deletes custom category in selected class scope", async () => {
     classId: "class-1",
     name: "Speaker",
   });
+});
+
+test("cancel closes the custom rotation form without creating a role", () => {
+  const props = renderPage();
+  fireEvent.click(screen.getByRole("button", { name: /Add custom/i }));
+  fireEvent.change(screen.getByPlaceholderText(/Materials Captain/i), {
+    target: { value: "Speaker" },
+  });
+  const cancel = screen.getByRole("button", { name: /^Cancel$/i });
+  expect(cancel.classList.contains("random-cancel")).toBe(true);
+  fireEvent.click(cancel);
+  expect(screen.queryByPlaceholderText(/Materials Captain/i)).toBeNull();
+  expect(props.handleCreateRandomPickerCustomCategory).not.toHaveBeenCalled();
 });
 
 test("does not show students from deleted classes for the active class", () => {

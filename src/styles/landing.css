@@ -321,7 +321,7 @@
 
 .landing-hero {
   max-width: 790px;
-  padding: clamp(38px, 5vw, 58px) 0 clamp(28px, 4vw, 42px);
+  padding: clamp(24px, 2.75vw, 34px) 0 clamp(28px, 4vw, 42px);
   text-align: center;
 }
 
@@ -845,7 +845,7 @@
   }
 
   .landing-hero {
-    padding-top: 36px;
+    padding-top: 28px;
     padding-bottom: 28px;
     text-align: left;
   }

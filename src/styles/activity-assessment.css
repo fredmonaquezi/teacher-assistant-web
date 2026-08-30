@@ -1,0 +1,138 @@
+.activity-assessment-page {
+  container-type: inline-size;
+  min-width: 0;
+}
+.activity-assessment-page .activity-assessment-header {
+  gap: 24px;
+  align-items: center;
+}
+.activity-assessment-header > div:first-child { min-width: 0; flex: 1; }
+.activity-assessment-page .activity-assessment-header h2 { color: var(--ink); }
+.activity-assessment-header .muted { max-width: 64ch; margin: 8px 0 0; line-height: 1.55; }
+.activity-assessment-progress {
+  flex: 0 0 168px;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-soft);
+}
+.activity-assessment-progress .activity-assessment-count {
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: .82rem;
+  text-align: center;
+}
+.activity-assessment-progress progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  border: 0;
+  border-radius: 99px;
+  overflow: hidden;
+  appearance: none;
+  background: var(--ocean-mist);
+  accent-color: var(--brand);
+}
+.activity-assessment-progress progress::-webkit-progress-bar { background: var(--ocean-mist); }
+.activity-assessment-progress progress::-webkit-progress-value { background: var(--brand); border-radius: 99px; }
+.activity-assessment-progress progress::-moz-progress-bar { background: var(--brand); border-radius: 99px; }
+.activity-assessment-page .activity-assessment-form { gap: 24px; }
+.activity-assessment-page .activity-details-card {
+  padding: 22px;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.activity-details-card h3 { margin: 0; color: var(--ink); font-size: 1.05rem; }
+.activity-assessment-page .activity-details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.activity-assessment-page .stack { min-width: 0; gap: 7px; }
+.activity-assessment-page :is(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: none;
+}
+.activity-assessment-page :is(input, select) { min-height: 44px; }
+.activity-assessment-page textarea { min-height: 88px; }
+.activity-assessment-page :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.activity-assessment-page .activity-student-section { gap: 0; }
+.activity-assessment-page .activity-student-heading {
+  padding: 20px;
+  gap: 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px 18px 0 0;
+  background: var(--surface-soft);
+}
+.activity-student-heading h3 { color: var(--ink); font-size: 1.1rem; line-height: 1.3; }
+.activity-assessment-page .activity-student-heading > label {
+  display: grid;
+  gap: 7px;
+  min-width: 190px;
+  color: var(--ink-soft);
+}
+.activity-assessment-page .activity-student-list {
+  gap: 0;
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 18px 18px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.activity-assessment-page .activity-student-card {
+  grid-template-columns: minmax(120px, .85fr) minmax(170px, 1fr) minmax(180px, 1.3fr);
+  gap: 16px;
+  padding: 16px 20px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.activity-assessment-page .activity-student-card:last-child { border-bottom: 0; }
+.activity-assessment-page .activity-student-card:focus-within { background: var(--surface-soft); }
+.activity-assessment-page .activity-student-card.assessed { background: #f1faf7; }
+.activity-student-identity { min-width: 0; }
+.activity-student-identity > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.activity-student-identity .simple-avatar { flex-shrink: 0; }
+.activity-assessment-page .activity-assessment-actions {
+  position: sticky;
+  bottom: 12px;
+  z-index: 5;
+  padding: 14px 16px;
+  gap: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: var(--shadow-md);
+}
+.activity-save-summary { margin-right: auto; color: var(--ink-soft); font-size: .82rem; font-weight: 600; }
+.activity-save-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: min(100%, 360px); }
+.activity-save-buttons :is(button, .button) { min-height: 44px; border-radius: 10px; padding: 10px 16px; text-align: center; text-decoration: none; }
+.activity-save-buttons .button.secondary { background: var(--ocean-mist); }
+.activity-save-buttons .button.secondary:hover { background: var(--ocean-frost); }
+@container (max-width: 620px) {
+  .activity-assessment-page .activity-student-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .activity-student-identity { grid-column: 1 / -1; }
+  .activity-assessment-page .activity-assessment-header { flex-direction: column; align-items: stretch; gap: 16px; }
+  .activity-assessment-progress { flex-basis: auto; grid-template-columns: auto 1fr; align-items: center; }
+}
+@container (max-width: 440px) {
+  .activity-assessment-page .activity-details-card { padding: 16px; }
+  .activity-assessment-page .activity-details-grid { grid-template-columns: 1fr; }
+  .activity-assessment-page .activity-student-heading { padding: 16px; flex-direction: column; align-items: stretch; gap: 16px; }
+  .activity-assessment-page .activity-student-card { padding: 16px; grid-template-columns: 1fr; gap: 12px; }
+  .activity-assessment-page .activity-assessment-actions { flex-direction: column; gap: 10px; bottom: 8px; padding: 12px; }
+  .activity-save-summary { margin: 0; }
+  .activity-save-buttons { width: 100%; }
+}

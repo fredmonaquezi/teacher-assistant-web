@@ -60,6 +60,9 @@ test("saves one class activity and an outcome for every student", async () => {
   fireEvent.change(screen.getByLabelText("Set outcome for all students"), {
     target: { value: "met" },
   });
+  expect(screen.getByRole("progressbar", { name: "Assessment progress" }).value).toBe(2);
+  expect(screen.getByRole("progressbar", { name: "Assessment progress" }).max).toBe(2);
+  expect(screen.getByRole("textbox", { name: "Observation for Ana Silva" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Save activity" }));
 
   await waitFor(() => expect(screen.getByText("Class page")).toBeTruthy());

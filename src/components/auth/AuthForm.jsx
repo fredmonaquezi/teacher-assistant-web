@@ -198,16 +198,16 @@ function AuthForm({ onSuccess, forcedMode, onPasswordResetComplete }) {
       ux_mode: "popup",
     });
 
-    const buttonWidth = Math.max(
-      260,
-      Math.min(380, Math.floor(googleButtonElement.getBoundingClientRect().width || 360))
+    const buttonWidth = Math.min(
+      400,
+      Math.floor(googleButtonElement.getBoundingClientRect().width || 360)
     );
 
     googleIdentity.renderButton(googleButtonElement, {
       type: "standard",
       theme: "outline",
       size: "large",
-      shape: "pill",
+      shape: "rectangular",
       text: isSignUp ? "signup_with" : "signin_with",
       logo_alignment: "left",
       width: buttonWidth,

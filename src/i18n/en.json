@@ -174,7 +174,7 @@
     },
     "actions": {
       "title": "Quick actions",
-      "subtitle": "Everything here follows the active class shown in the top bar.",
+      "subtitle": "Tools for your active class and teaching links for every day.",
       "students": {
         "title": "Students",
         "description": "Open the roster, notes, and class journal."
@@ -194,6 +194,10 @@
       "random": {
         "title": "Random Picker",
         "description": "Choose students and manage classroom roles."
+      },
+      "usefulLinks": {
+        "title": "Useful Links",
+        "description": "Keep your teaching resources within reach."
       }
     },
     "how": {
@@ -235,6 +239,7 @@
       "edit": "Edit"
     },
     "form": {
+      "heading": "Add a teaching link",
       "titleLabel": "Link title",
       "titlePlaceholder": "District Portal",
       "urlLabel": "Secure URL",
@@ -814,7 +819,7 @@
       "markUsed": "Mark used",
       "randomPick": "Random pick",
       "skipAbsent": "Skip absent",
-      "todaysRole": "Todays role {{role}}"
+      "todaysRole": "Today's role: {{role}}"
     },
     "rotation": {
       "addCustom": "Add custom",

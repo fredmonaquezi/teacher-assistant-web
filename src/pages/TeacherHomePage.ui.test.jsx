@@ -45,4 +45,7 @@ test("guides the teacher and disables class tools when no class is active", () =
     "/classes"
   );
   expect(container.querySelectorAll('[aria-disabled="true"]')).toHaveLength(5);
+  expect(screen.getByRole("link", { name: /Useful Links/i }).getAttribute("href")).toBe(
+    "/useful-links"
+  );
 });

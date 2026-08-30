@@ -444,7 +444,7 @@ function RandomPickerPage({
               </div>
             )}
             <div className="modal-actions">
-              <button type="button" className="link" onClick={() => setShowAddCategory(false)}>
+              <button type="button" className="secondary random-cancel" onClick={() => setShowAddCategory(false)}>
                 {t("common.actions.cancel")}
               </button>
               <button type="button" onClick={addCustomCategory} disabled={!classId || !newCategoryName.trim()}>
@@ -463,7 +463,7 @@ function RandomPickerPage({
               {t("random.custom.deleteDescription", { role: categoryDisplayLabel(selectedCategory) })}
             </p>
             <div className="modal-actions">
-              <button type="button" className="link" onClick={() => setShowDeleteCategory(false)}>
+              <button type="button" className="secondary random-cancel" onClick={() => setShowDeleteCategory(false)}>
                 {t("common.actions.cancel")}
               </button>
               <button type="button" className="danger" onClick={deleteCustomCategory}>
@@ -476,26 +476,31 @@ function RandomPickerPage({
 
       {pickedStudent && (
         <div className="modal-overlay">
-          <div className="modal-card random-result">
-            <div className="random-result-icon-wrap">
+          <div
+            className="modal-card random-result"
+            role="dialog"
+            aria-labelledby="random-result-name"
+            aria-describedby="random-result-kicker"
+          >
+            <div className="random-result-icon-wrap" aria-hidden="true">
               <div className="random-result-icon">{isRotationMode ? categoryIcon : "🔀"}</div>
             </div>
-            <div className="random-result-kicker">
+            <div className="random-result-kicker" id="random-result-kicker">
               {isRotationMode
                 ? t("random.result.todaysRole", { role: categoryDisplayLabel(activeCategory) })
                 : t("random.result.randomPick")}
             </div>
-            <h2 className="random-result-name">
+            <h2 className="random-result-name" id="random-result-name">
               {pickedStudent.first_name} {pickedStudent.last_name}
             </h2>
-            <div className="random-result-emoji">🎉</div>
+            <div className="random-result-emoji" aria-hidden="true">🎉</div>
             <div className="modal-actions random-result-actions">
               {isRotationMode ? (
                 <>
-                  <button type="button" onClick={markUsed} style={{ background: categoryColor }}>
+                  <button type="button" onClick={markUsed}>
                     {t("random.result.markUsed")}
                   </button>
-                  <button type="button" className="link" onClick={() => setPickedStudent(null)}>
+                  <button type="button" className="secondary" onClick={() => setPickedStudent(null)}>
                     {t("random.result.skipAbsent")}
                   </button>
                 </>

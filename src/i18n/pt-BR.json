@@ -174,7 +174,7 @@
     },
     "actions": {
       "title": "Ações rápidas",
-      "subtitle": "Tudo aqui usa a turma ativa exibida na barra superior.",
+      "subtitle": "Ferramentas para a turma ativa e links de ensino para o dia a dia.",
       "students": {
         "title": "Alunos",
         "description": "Abra a lista, as anotações e o diário da turma."
@@ -194,6 +194,10 @@
       "random": {
         "title": "Escolha Aleatória",
         "description": "Escolha alunos e organize funções da sala."
+      },
+      "usefulLinks": {
+        "title": "Links Úteis",
+        "description": "Tenha seus recursos de ensino sempre à mão."
       }
     },
     "how": {
@@ -235,6 +239,7 @@
       "edit": "Editar"
     },
     "form": {
+      "heading": "Adicionar um link de ensino",
       "titleLabel": "Título do link",
       "titlePlaceholder": "Portal da Escola",
       "urlLabel": "URL segura",

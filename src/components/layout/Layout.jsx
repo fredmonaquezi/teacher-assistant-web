@@ -10,6 +10,9 @@ import ClassSwitcher from "./ClassSwitcher";
 import { getClassesNavigationPath } from "./layoutNavigation";
 
 function NavIcon({ kind }) {
+  if (kind === "links") {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.8 7.5h2.4a4 4 0 1 1 0 8h-2.4M9.2 16.5H6.8a4 4 0 1 1 0-8h2.4M8.8 12h6.4" /></svg>;
+  }
   if (kind === "home") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4.5 10 7.5-6 7.5 6v9H14v-5h-4v5H4.5v-9Z" /></svg>;
   }
@@ -68,6 +71,7 @@ function Layout({
     { label: t("layout.nav.attendance"), path: "/attendance", icon: "attendance" },
     { label: t("layout.nav.groups"), path: "/groups", icon: "groups" },
     { label: t("layout.nav.randomPicker"), path: "/random", icon: "random" },
+    { label: t("layout.nav.usefulLinks"), path: "/useful-links", icon: "links" },
   ];
   const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
 

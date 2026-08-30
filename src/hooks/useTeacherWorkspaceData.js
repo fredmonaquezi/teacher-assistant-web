@@ -132,6 +132,9 @@ function useTeacherWorkspaceData(userId) {
 
   const {
     handleCreateClass,
+    handleAddClassSubjects,
+    handleRenameClassSubject,
+    handleUpdateClass,
     handleCreateStudent,
     handleUpdateStudent,
     handleDeleteClass,
@@ -412,6 +415,9 @@ function useTeacherWorkspaceData(userId) {
     refreshCalendarData,
     refreshUsefulLinksData,
     handleCreateClass,
+    handleAddClassSubjects,
+    handleRenameClassSubject,
+    handleUpdateClass,
     handleCreateStudent,
     handleUpdateStudent,
     handleDeleteClass,

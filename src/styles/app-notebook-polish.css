@@ -84,6 +84,14 @@
 }
 
 .simple-delete-button { position: absolute; right: 10px; bottom: 8px; }
+.simple-class-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 16px 14px;
+}
+.simple-class-card-actions .simple-delete-button { position: static; }
 .simple-delete-button:hover,
 .simple-entry-delete:hover { color: #7c3028; background: transparent; }
 

@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import "../styles/activity-assessment.css";
 
 const OUTCOME_OPTIONS = [
   { value: "needs_support", label: "Needs support" },
@@ -231,9 +232,10 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
             Assess only the students who did this activity today. Leave the others blank and return later.
           </p>
         </div>
-        <span className="activity-assessment-count">
-          {assessedCount} of {classStudents.length} assessed
-        </span>
+        <div className="activity-assessment-progress">
+          <span className="activity-assessment-count">{assessedCount} of {classStudents.length} assessed</span>
+          <progress aria-label="Assessment progress" value={assessedCount} max={classStudents.length || 1} />
+        </div>
       </header>
 
       {error && <div className="error">{error}</div>}
@@ -241,6 +243,7 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
 
       {!loadingActivity && <form className="activity-assessment-form" onSubmit={saveAssessment}>
         <section className="activity-details-card">
+          <h3>Activity details</h3>
           <div className="activity-details-grid">
             <label className="stack">
               <span>Date</span>
@@ -372,6 +375,7 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
                     <label className="stack activity-student-note">
                       <span>Observation (optional)</span>
                       <input
+                        aria-label={`Observation for ${student.first_name} ${student.last_name}`}
                         value={result.notes}
                         onChange={(event) =>
                           updateStudentResult(student.id, "notes", event.target.value)
@@ -387,10 +391,13 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
         )}
 
         <div className="activity-assessment-actions">
-          <NavLink className="button secondary" to={`/classes/${classId}`}>Cancel</NavLink>
-          <button type="submit" disabled={saving || classStudents.length === 0}>
-            {saving ? "Saving assessments…" : isExistingActivity ? "Save progress" : "Save activity"}
-          </button>
+          <span className="activity-save-summary">{assessedCount} of {classStudents.length} assessed</span>
+          <div className="activity-save-buttons">
+            <NavLink className="button secondary" to={`/classes/${classId}`}>Cancel</NavLink>
+            <button type="submit" disabled={saving || classStudents.length === 0}>
+              {saving ? "Saving assessments…" : isExistingActivity ? "Save progress" : "Save activity"}
+            </button>
+          </div>
         </div>
       </form>}
     </section>

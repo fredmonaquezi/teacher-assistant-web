@@ -80,14 +80,19 @@ a { color: var(--brand); }
 .class-switcher > label {
   color: var(--ink-soft); font-size: .68rem; font-weight: 650; letter-spacing: .06em; text-transform: uppercase;
 }
-.class-switcher-row { display: flex; align-items: center; gap: 9px; }
+.class-switcher-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
 .class-switcher select {
   width: 100%; min-width: 0; height: 40px; padding: 8px 34px 8px 12px; border-color: var(--line);
   border-radius: 10px; color: var(--ink); background-color: rgba(255,255,255,.92); font-weight: 620;
   box-shadow: var(--shadow-sm);
 }
-.class-switcher-manage { color: var(--brand); font-size: .76rem; font-weight: 620; white-space: nowrap; text-decoration: none; }
-.class-switcher-manage:hover { color: var(--brand-hover); }
+.class-switcher-manage {
+  display: flex; align-items: center; justify-content: center; min-height: 28px; padding: 3px 10px;
+  border-radius: 8px; color: var(--brand); background: var(--brand-soft);
+  font-size: .76rem; font-weight: 620; text-align: center; text-decoration: none;
+}
+.class-switcher-manage:hover { color: var(--brand-hover); background: var(--surface-soft); text-decoration: underline; text-underline-offset: 3px; }
+.class-switcher-manage:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .postit-kicker { margin: 0 0 5px; color: var(--ink-soft); font-family: inherit; font-size: .7rem; font-weight: 650; letter-spacing: .07em; }
 .postit-title { margin: 0; color: var(--ink); font-family: inherit; font-size: 1.75rem; font-weight: 720; letter-spacing: -.025em; }
 .topbar-date { text-align: right; }
@@ -640,7 +645,6 @@ input:disabled { color: var(--ink-soft); background: #f2f2f4; }
 @media (max-width: 900px) {
   .app-shell { grid-template-columns: 220px minmax(0, 1fr); }
   .topbar, .content.notebook-board { width: min(100% - 40px, 1180px); }
-  .class-switcher-manage { display: none; }
 }
 @media (max-width: 720px) {
   .app-shell { display: block; }
@@ -654,7 +658,6 @@ input:disabled { color: var(--ink-soft); background: #f2f2f4; }
   .topbar { min-height: 158px; flex-wrap: wrap; align-items: flex-end; gap: 14px; padding-top: 68px; }
   .topbar-greeting { flex: 1; }
   .class-switcher { order: 3; width: 100%; min-width: 0; margin-left: 0; }
-  .class-switcher-manage { display: inline; }
   .topbar-date { display: none; }
   .topbar, .content.notebook-board { width: calc(100% - 28px); }
   .content.notebook-board { padding-bottom: 32px; }

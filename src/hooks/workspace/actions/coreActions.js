@@ -148,17 +148,52 @@ function createCoreActions({
       return;
     }
 
-    const didCreate = await runMutation({
-      setFormError,
-      execute: () => supabase.from("classes").insert(payload),
-      refresh: refreshCoreData,
-      fallbackErrorMessage: "Failed to create class.",
-    });
-    if (!didCreate) {
-      return;
+    setFormError("");
+    let createdClass;
+    try {
+      const { data, error } = await supabase.from("classes").insert(payload).select("id").single();
+      if (error || !data?.id) throw error || new Error("Failed to create class.");
+      createdClass = data;
+    } catch (error) {
+      setFormError(error.message || "Failed to create class.");
+      return false;
+    }
+    setClassForm({ name: "", gradeLevel: "", schoolYear: "", sortOrder: "" });
+    // Once inserted, return its ID even if refresh fails: never invite a duplicate insert.
+    try {
+      if (await refreshCoreData() === false) throw new Error("Refresh failed");
+    } catch {
+      setFormError("Class created, but the class list could not be reloaded. Refresh the page to see it.");
+    }
+    return createdClass.id;
+  };
+
+  const handleUpdateClass = async (classId, updates) => {
+    if (!classId || !classes.some((item) => item.id === classId)) {
+      setFormError("Class not found.");
+      return false;
     }
 
-    setClassForm({ name: "", gradeLevel: "", schoolYear: "", sortOrder: "" });
+    const payload = {
+      name: (updates?.name || "").trim(),
+      grade_level: updates?.gradeLevel?.trim() || null,
+      school_year: updates?.schoolYear?.trim() || null,
+    };
+    if (!payload.name) {
+      setFormError("Class name is required.");
+      return false;
+    }
+
+    return runMutation({
+      setFormError,
+      execute: () => supabase.from("classes").update(payload).eq("id", classId).select("id").single(),
+      refresh: async () => {
+        if (await refreshCoreData() === false) {
+          throw new Error("Class saved, but the updated details could not be loaded. Please try again.");
+        }
+      },
+      fallbackErrorMessage: "Failed to update class.",
+    });
   };
 
   const handleCreateStudent = async (event, overrides = {}) => {
@@ -564,6 +599,7 @@ function createCoreActions({
 
   return {
     handleCreateClass,
+    handleUpdateClass,
     handleCreateStudent,
     handleUpdateStudent,
     handleDeleteClass,

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import ReorderModeToggle from "../components/common/ReorderModeToggle";
+import TileIcon from "../components/navigation/TileIcon";
 import { useHandleDrag } from "../hooks/useHandleDrag";
 import { useReorderMode } from "../hooks/useReorderMode";
 
@@ -126,7 +127,7 @@ function UsefulLinksPage({
       {formError && <div className="error">{formError}</div>}
 
       <section className="panel useful-links-page">
-        <div className="useful-links-header">
+        <header className="useful-links-header">
           <div className="useful-links-copy">
             <h2>{t("usefulLinks.title")}</h2>
             <p>{t("usefulLinks.subtitle")}</p>
@@ -134,9 +135,11 @@ function UsefulLinksPage({
           {isMobileLayout && sortedLinks.length > 1 && (
             <ReorderModeToggle isReorderMode={isReorderMode} setIsReorderMode={setIsReorderMode} />
           )}
-        </div>
+          <span className="useful-links-header-icon" aria-hidden="true"><TileIcon kind="links" /></span>
+        </header>
 
         <form className="useful-links-form" onSubmit={onSubmitCreate} noValidate>
+          <h3>{t("usefulLinks.form.heading")}</h3>
           <label className="stack">
             <span>{t("usefulLinks.form.titleLabel")}</span>
             <input
@@ -158,7 +161,7 @@ function UsefulLinksPage({
               inputMode="url"
             />
           </label>
-          <label className="stack">
+          <label className="stack useful-links-description-field">
             <span>{t("usefulLinks.form.descriptionLabel")}</span>
             <input
               value={createForm.description}
@@ -169,12 +172,15 @@ function UsefulLinksPage({
             />
           </label>
           <div className="useful-links-form-actions">
-            <button type="submit">{t("usefulLinks.form.addButton")}</button>
+            <button type="submit"><span aria-hidden="true">+ </span>{t("usefulLinks.form.addButton")}</button>
           </div>
         </form>
 
         {sortedLinks.length === 0 ? (
-          <div className="useful-links-empty">{t("usefulLinks.empty")}</div>
+          <div className="useful-links-empty">
+            <span className="useful-links-empty-icon" aria-hidden="true"><TileIcon kind="links" /></span>
+            <p>{t("usefulLinks.empty")}</p>
+          </div>
         ) : (
           <div className="useful-links-grid">
             {sortedLinks.map((link, index) => {
@@ -187,9 +193,9 @@ function UsefulLinksPage({
                   key={link.id}
                   className={`useful-link-card draggable${isMobileReorderActive ? " mobile-reorder-active" : " openable"}`}
                   draggable={isReorderEnabled && !isMobileLayout}
-                  role="link"
-                  tabIndex={0}
-                  aria-label={`${t("usefulLinks.actions.open")}: ${link.title}`}
+                  role={isMobileReorderActive ? undefined : "link"}
+                  tabIndex={isMobileReorderActive ? undefined : 0}
+                  aria-label={isMobileReorderActive ? undefined : `${t("usefulLinks.actions.open")}: ${link.title}`}
                   onClick={(event) => {
                     if (isMobileReorderActive) return;
                     if (isInteractiveTarget(event.target)) return;
@@ -295,6 +301,11 @@ function UsefulLinksPage({
                     </div>
                   </div>
                   {link.description && <p className="useful-link-description">{link.description}</p>}
+                  {!isMobileReorderActive && (
+                    <span className="useful-link-open" aria-hidden="true">
+                      {t("usefulLinks.actions.open")} <span>↗</span>
+                    </span>
+                  )}
                 </article>
               );
             })}
@@ -304,8 +315,9 @@ function UsefulLinksPage({
 
       {editingLink && (
         <div className="modal-overlay">
-          <div className="modal-card useful-links-edit-modal">
+          <div className="modal-card useful-links-edit-modal" role="dialog" aria-modal="true" aria-label={t("usefulLinks.editModal.title")}>
             <h3>{t("usefulLinks.editModal.title")}</h3>
+            {formError && <div className="error" role="alert">{formError}</div>}
             <form className="stack" onSubmit={onSubmitEdit} noValidate>
               <label className="stack">
                 <span>{t("usefulLinks.form.titleLabel")}</span>
@@ -336,7 +348,7 @@ function UsefulLinksPage({
                 />
               </label>
               <div className="modal-actions">
-                <button type="button" className="link" onClick={closeEditModal}>
+                <button type="button" className="secondary" onClick={closeEditModal}>
                   {t("common.actions.cancel")}
                 </button>
                 <button type="submit">{t("usefulLinks.form.saveButton")}</button>

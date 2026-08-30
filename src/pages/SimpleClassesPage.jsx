@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+import EditClassModal from "../components/common/EditClassModal";
+import CreateClassModal from "../components/common/CreateClassModal";
 
 function SimpleClassesPage({
   classes,
@@ -8,8 +10,11 @@ function SimpleClassesPage({
   classForm,
   setClassForm,
   handleCreateClass,
+  handleAddClassSubjects,
+  handleUpdateClass,
   handleDeleteClass,
   formError,
+  setFormError,
   loading,
   activeClassId,
   setActiveClassId = () => {},
@@ -17,12 +22,7 @@ function SimpleClassesPage({
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [classToDelete, setClassToDelete] = useState(null);
-
-  const submitClass = async (event) => {
-    event.preventDefault();
-    await handleCreateClass(event);
-    setShowForm(false);
-  };
+  const [classToEdit, setClassToEdit] = useState(null);
 
   return (
     <>
@@ -34,7 +34,7 @@ function SimpleClassesPage({
             <h2>Classes</h2>
             <p className="muted">Choose a class to see its students, notes, development, and attendance.</p>
           </div>
-          <button type="button" onClick={() => setShowForm(true)}>Add class</button>
+          <button type="button" onClick={() => { setFormError(""); setShowForm(true); }}>Add class</button>
         </div>
 
         {loading ? (
@@ -69,14 +69,27 @@ function SimpleClassesPage({
                     <span>{classItem.grade_level || "Grade not set"}{classItem.school_year ? ` · ${classItem.school_year}` : ""}</span>
                     <small>{studentCount} {studentCount === 1 ? "student" : "students"}</small>
                   </button>
-                  <button
-                    type="button"
-                    className="simple-delete-button"
-                    onClick={() => setClassToDelete(classItem)}
-                    aria-label={`Delete ${classItem.name}`}
-                  >
-                    Delete
-                  </button>
+                  <div className="simple-class-card-actions">
+                    <button
+                      type="button"
+                      className="secondary"
+                      aria-label={`Edit ${classItem.name}`}
+                      onClick={() => {
+                        setFormError("");
+                        setClassToEdit(classItem);
+                      }}
+                    >
+                      Edit class
+                    </button>
+                    <button
+                      type="button"
+                      className="simple-delete-button"
+                      onClick={() => setClassToDelete(classItem)}
+                      aria-label={`Delete ${classItem.name}`}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </article>
               );
             })}
@@ -84,28 +97,19 @@ function SimpleClassesPage({
         )}
       </section>
 
+      {classToEdit && (
+        <EditClassModal
+          key={classToEdit.id}
+          classItem={classToEdit}
+          handleUpdateClass={handleUpdateClass}
+          formError={formError}
+          onClose={() => setClassToEdit(null)}
+        />
+      )}
+
       {showForm && (
-        <div className="modal-overlay">
-          <form className="modal-card simple-form" onSubmit={submitClass}>
-            <h3>Add a class</h3>
-            <label className="stack">
-              <span>Class name</span>
-              <input autoFocus required value={classForm.name} onChange={(event) => setClassForm((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. 4A" />
-            </label>
-            <label className="stack">
-              <span>Grade or group <em>(optional)</em></span>
-              <input value={classForm.gradeLevel} onChange={(event) => setClassForm((current) => ({ ...current, gradeLevel: event.target.value }))} placeholder="e.g. Grade 4" />
-            </label>
-            <label className="stack">
-              <span>School year <em>(optional)</em></span>
-              <input value={classForm.schoolYear} onChange={(event) => setClassForm((current) => ({ ...current, schoolYear: event.target.value }))} placeholder="e.g. 2026–27" />
-            </label>
-            <div className="modal-actions">
-              <button type="button" className="secondary" onClick={() => setShowForm(false)}>Cancel</button>
-              <button type="submit">Add class</button>
-            </div>
-          </form>
-        </div>
+        <CreateClassModal classForm={classForm} setClassForm={setClassForm} handleCreateClass={handleCreateClass}
+          handleAddClassSubjects={handleAddClassSubjects} formError={formError} onClose={() => setShowForm(false)} />
       )}
 
       <ConfirmDialog
