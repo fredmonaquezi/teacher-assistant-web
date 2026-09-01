@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import EditClassModal from "../components/common/EditClassModal";
 import CreateClassModal from "../components/common/CreateClassModal";
+import "../styles/class-cards.css";
 
 function SimpleClassesPage({
   classes,
@@ -45,7 +46,7 @@ function SimpleClassesPage({
             <p>Add a class, then add the students in it.</p>
           </div>
         ) : (
-          <div className="simple-class-grid">
+          <div className="simple-class-grid polished-class-grid">
             {classes.map((classItem) => {
               const studentCount = students.filter((student) => student.class_id === classItem.id).length;
               return (

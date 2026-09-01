@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import "../../styles/edit-class.css";
 
 function EditClassModal({ classItem, handleUpdateClass, formError, onClose }) {
   const titleId = useId();
@@ -69,7 +70,7 @@ function EditClassModal({ classItem, handleUpdateClass, formError, onClose }) {
     <div className="modal-overlay">
       <form
         ref={formRef}
-        className="modal-card simple-form"
+        className="modal-card simple-form edit-class-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -82,14 +83,16 @@ function EditClassModal({ classItem, handleUpdateClass, formError, onClose }) {
           <span>Class name</span>
           <input required readOnly={saving} value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. 4A" />
         </label>
-        <label className="stack">
-          <span>Grade or group <em>(optional)</em></span>
-          <input readOnly={saving} value={form.gradeLevel} onChange={(event) => setForm((current) => ({ ...current, gradeLevel: event.target.value }))} placeholder="e.g. Grade 4" />
-        </label>
-        <label className="stack">
-          <span>School year <em>(optional)</em></span>
-          <input readOnly={saving} value={form.schoolYear} onChange={(event) => setForm((current) => ({ ...current, schoolYear: event.target.value }))} placeholder="e.g. 2026–27" />
-        </label>
+        <div className="edit-class-details">
+          <label className="stack">
+            <span>Grade or group <em>(optional)</em></span>
+            <input readOnly={saving} value={form.gradeLevel} onChange={(event) => setForm((current) => ({ ...current, gradeLevel: event.target.value }))} placeholder="e.g. Grade 4" />
+          </label>
+          <label className="stack">
+            <span>School year <em>(optional)</em></span>
+            <input readOnly={saving} value={form.schoolYear} onChange={(event) => setForm((current) => ({ ...current, schoolYear: event.target.value }))} placeholder="e.g. 2026–27" />
+          </label>
+        </div>
         {visibleError && <div className="error" role="alert">{visibleError}</div>}
         <div className="modal-actions">
           <button type="button" className="secondary" disabled={saving} onClick={onClose}>Cancel</button>

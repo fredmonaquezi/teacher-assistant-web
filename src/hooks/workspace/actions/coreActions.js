@@ -281,6 +281,32 @@ function createCoreActions({
     });
   };
 
+  const handleUpdateStudentAcademicLevel = async (studentId, academicLevelOverride) => {
+    if (!studentId || !students.some((student) => student.id === studentId)) {
+      setFormError("Student not found.");
+      return false;
+    }
+    const allowedOverrides = new Set(["needs_support", "developing", "on_track", "extending"]);
+    const normalizedOverride = academicLevelOverride || null;
+    if (normalizedOverride && !allowedOverrides.has(normalizedOverride)) {
+      setFormError("Choose a valid learning profile.");
+      return false;
+    }
+
+    return runMutation({
+      setFormError,
+      execute: () =>
+        supabase
+          .from("students")
+          .update({ academic_level_override: normalizedOverride })
+          .eq("id", studentId)
+          .select("id")
+          .single(),
+      refresh: refreshCoreData,
+      fallbackErrorMessage: "Failed to update the student's learning profile.",
+    });
+  };
+
   const handleDeleteClass = async (classId) => {
     const removedStudentIds = students
       .filter((student) => student.class_id === classId)
@@ -602,6 +628,7 @@ function createCoreActions({
     handleUpdateClass,
     handleCreateStudent,
     handleUpdateStudent,
+    handleUpdateStudentAcademicLevel,
     handleDeleteClass,
     handleCleanupOrphanedStudents,
     handleUpdateSortOrder,

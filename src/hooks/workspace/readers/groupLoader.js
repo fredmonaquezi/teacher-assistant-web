@@ -1,7 +1,7 @@
 const GROUP_COLUMNS = "id,name,class_id,created_at";
 const GROUP_MEMBER_COLUMNS = "id,group_id,student_id,created_at";
 const GROUP_CONSTRAINT_COLUMNS = "id,student_a,student_b,created_at";
-const ACTIVITY_ASSESSMENT_COLUMNS = "id,class_id,activity_date,created_at";
+const ACTIVITY_ASSESSMENT_COLUMNS = "id,class_id,subject_id,activity_date,created_at";
 const ACTIVITY_ASSESSMENT_ENTRY_COLUMNS =
   "id,activity_assessment_id,student_id,outcome,created_at";
 

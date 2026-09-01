@@ -61,6 +61,23 @@ const ACTIVITY_OUTCOME_PERCENT = {
   exceeded: 100,
 };
 
+export const ACADEMIC_PROFILE_KEYS = ["needs_support", "developing", "on_track", "extending"];
+
+const ACADEMIC_PROFILE_RANK = {
+  needs_support: 0,
+  developing: 1,
+  on_track: 2,
+  extending: 3,
+};
+
+function inferredAcademicProfile(averagePercent) {
+  if (!Number.isFinite(averagePercent)) return "unknown";
+  if (averagePercent < 50) return "needs_support";
+  if (averagePercent < 70) return "developing";
+  if (averagePercent < 85) return "on_track";
+  return "extending";
+}
+
 export function buildAbilityProfiles(
   classId,
   classStudents,
@@ -74,83 +91,73 @@ export function buildAbilityProfiles(
       .filter((assessment) => assessment.class_id === classId)
       .map((assessment) => [assessment.id, assessment])
   );
-  const classActivityAssessmentIds = new Set(
+  const classActivityAssessmentMap = new Map(
     activityAssessments
       .filter((assessment) => assessment.class_id === classId)
-      .map((assessment) => assessment.id)
+      .map((assessment) => [assessment.id, assessment])
   );
-  const scoreSamplesByStudent = new Map();
+  const scoreSamplesByStudentAndSubject = new Map();
 
-  const addScoreSample = (studentId, percent) => {
+  const addScoreSample = (studentId, subjectId, percent) => {
     if (!Number.isFinite(percent)) return;
-    if (!scoreSamplesByStudent.has(studentId)) {
-      scoreSamplesByStudent.set(studentId, []);
+    if (!scoreSamplesByStudentAndSubject.has(studentId)) {
+      scoreSamplesByStudentAndSubject.set(studentId, new Map());
     }
-    scoreSamplesByStudent.get(studentId).push(percent);
+    const subjectSamples = scoreSamplesByStudentAndSubject.get(studentId);
+    const subjectKey = subjectId || "general";
+    if (!subjectSamples.has(subjectKey)) subjectSamples.set(subjectKey, []);
+    subjectSamples.get(subjectKey).push(percent);
   };
 
   assessmentEntries.forEach((entry) => {
     const assessment = classAssessmentMap.get(entry.assessment_id);
     if (!assessment) return;
     const percent = scoreToPercent(entry.score, getAssessmentMaxScore(assessment));
-    addScoreSample(entry.student_id, percent);
+    addScoreSample(entry.student_id, assessment.subject_id, percent);
   });
 
   activityAssessmentEntries.forEach((entry) => {
-    if (!classActivityAssessmentIds.has(entry.activity_assessment_id)) return;
-    addScoreSample(entry.student_id, ACTIVITY_OUTCOME_PERCENT[entry.outcome]);
+    const activityAssessment = classActivityAssessmentMap.get(entry.activity_assessment_id);
+    if (!activityAssessment) return;
+    addScoreSample(
+      entry.student_id,
+      activityAssessment.subject_id,
+      ACTIVITY_OUTCOME_PERCENT[entry.outcome]
+    );
   });
-
-  const averages = classStudents
-    .map((student) => {
-      const samples = scoreSamplesByStudent.get(student.id) || [];
-      if (samples.length === 0) return null;
-      return averageFromPercents(samples);
-    })
-    .filter((value) => Number.isFinite(value))
-    .sort((a, b) => a - b);
-
-  const lowerIndex = averages.length
-    ? Math.max(0, Math.floor((averages.length - 1) * 0.33))
-    : -1;
-  const upperIndex = averages.length
-    ? Math.max(0, Math.floor((averages.length - 1) * 0.66))
-    : -1;
-  const lowerThreshold = lowerIndex >= 0 ? averages[lowerIndex] : null;
-  const upperThreshold = upperIndex >= 0 ? averages[upperIndex] : null;
 
   const abilityByStudentId = new Map();
 
   classStudents.forEach((student) => {
-    const samples = scoreSamplesByStudent.get(student.id) || [];
-    const avgPercent = samples.length ? averageFromPercents(samples) : null;
-    let abilityBand = "unknown";
-    let abilityRank = 1;
-
-    if (Number.isFinite(avgPercent)) {
-      if (!Number.isFinite(lowerThreshold) || !Number.isFinite(upperThreshold)) {
-        abilityBand = "proficient";
-        abilityRank = 1;
-      } else if (avgPercent <= lowerThreshold) {
-        abilityBand = "developing";
-        abilityRank = 0;
-      } else if (avgPercent >= upperThreshold) {
-        abilityBand = "advanced";
-        abilityRank = 2;
-      } else {
-        abilityBand = "proficient";
-        abilityRank = 1;
-      }
-    }
+    const samplesBySubject = scoreSamplesByStudentAndSubject.get(student.id) || new Map();
+    const subjectAverages = [...samplesBySubject.entries()]
+      .map(([subjectId, samples]) => ({
+        subjectId,
+        averagePercent: averageFromPercents(samples),
+        sampleCount: samples.length,
+      }))
+      .filter((item) => Number.isFinite(item.averagePercent));
+    const avgPercent = subjectAverages.length
+      ? averageFromPercents(subjectAverages.map((item) => item.averagePercent))
+      : null;
+    const manualProfile = ACADEMIC_PROFILE_KEYS.includes(student.academic_level_override)
+      ? student.academic_level_override
+      : null;
+    const abilityBand = manualProfile || inferredAcademicProfile(avgPercent);
+    const abilityRank = ACADEMIC_PROFILE_RANK[abilityBand] ?? 2;
 
     abilityByStudentId.set(student.id, {
       averagePercent: avgPercent,
+      subjectAverages,
+      subjectCount: subjectAverages.length,
+      sampleCount: subjectAverages.reduce((total, item) => total + item.sampleCount, 0),
       band: abilityBand,
       rank: abilityRank,
+      source: manualProfile ? "manual" : Number.isFinite(avgPercent) ? "assessment" : "unknown",
       isSupportPartner:
         !student.needs_help &&
-        Number.isFinite(avgPercent) &&
-        (abilityBand === "advanced" || avgPercent >= 75),
+        (abilityBand === "extending" ||
+          (abilityBand !== "needs_support" && Number.isFinite(avgPercent) && avgPercent >= 75)),
     });
   });
 
@@ -172,20 +179,22 @@ function pickBestStudent(candidates, group, constraintSet, options, abilityByStu
   }
 
   if (options.pairSupportPartners && group.length > 0) {
-    const hasNeedsHelp = group.some((student) => student.needs_help);
+    const needsAcademicSupport = (student) =>
+      student.needs_help || abilityByStudentId.get(student.id)?.band === "needs_support";
+    const hasNeedsHelp = group.some(needsAcademicSupport);
     const hasSupportPartner = group.some(
       (student) => abilityByStudentId.get(student.id)?.isSupportPartner
     );
 
     if (hasNeedsHelp && !hasSupportPartner) {
       const candidate = filtered.find(
-        (student) => !student.needs_help && abilityByStudentId.get(student.id)?.isSupportPartner
+        (student) => !needsAcademicSupport(student) && abilityByStudentId.get(student.id)?.isSupportPartner
       );
       if (candidate) return candidate;
     }
 
     if (hasSupportPartner && !hasNeedsHelp) {
-      const candidate = filtered.find((student) => student.needs_help);
+      const candidate = filtered.find(needsAcademicSupport);
       if (candidate) return candidate;
     }
   }
@@ -228,6 +237,21 @@ export function generateGroups(
   maxAttempts = 200
 ) {
   if (studentList.length === 0) return [];
+  if (options.separateGender) {
+    const pools = new Map();
+    for (const student of studentList) {
+      const gender = normalizeGender(student.gender) || "prefer not to say";
+      if (!pools.has(gender)) pools.set(gender, []);
+      pools.get(gender).push(student);
+    }
+    const groups = [];
+    for (const pool of pools.values()) {
+      const result = generateGroups(pool, groupSize, constraintSet, { ...options, separateGender: false, balanceGender: false }, abilityByStudentId, maxAttempts);
+      if (!result) return null;
+      groups.push(...result);
+    }
+    return groups;
+  }
   const size = Math.max(2, groupSize);
   const targetGroupCount = Math.max(1, Math.ceil(studentList.length / size));
   const attemptLimit = Math.max(
@@ -258,7 +282,11 @@ export function generateGroups(
       return aAvg - bAvg;
     });
   } else if (options.pairSupportPartners) {
-    available.sort((a, b) => (a.needs_help ? 0 : 1) - (b.needs_help ? 0 : 1));
+    const needsAcademicSupport = (student) =>
+      student.needs_help || abilityByStudentId.get(student.id)?.band === "needs_support";
+    available.sort((a, b) =>
+      (needsAcademicSupport(a) ? 0 : 1) - (needsAcademicSupport(b) ? 0 : 1)
+    );
   } else {
     available = shuffleArray(available);
   }

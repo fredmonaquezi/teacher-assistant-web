@@ -1,8 +1,11 @@
 import { format, parseISO } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../supabaseClient";
 import { summarizeAttendanceEntries } from "../utils/attendanceMetrics";
+import EditStudentModal from "../components/student-detail/EditStudentModal";
+import "../styles/student-profile.css";
 
 const today = () => format(new Date(), "yyyy-MM-dd");
 
@@ -19,6 +22,7 @@ function activitySubjectKey(entry) {
 }
 
 function StudentProfilePage({ students, classes, subjects = [], attendanceSessions, attendanceEntries, handleUpdateStudent }) {
+  const { t } = useTranslation();
   const { studentId } = useParams();
   const student = students.find((item) => item.id === studentId);
   const classItem = classes.find((item) => item.id === student?.class_id);
@@ -32,6 +36,8 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
   const [entry, setEntry] = useState({ noteDate: today(), entryType: "anecdotal", developmentArea: "", developmentLevel: "on_track", body: "" });
   const [profileNote, setProfileNote] = useState("");
   const [showProfileNote, setShowProfileNote] = useState(false);
+  const [showEditInfo, setShowEditInfo] = useState(false);
+  const [editForm, setEditForm] = useState({});
   const [activitySubjectSelection, setActivitySubjectSelection] = useState({ studentId, value: "all" });
   const activitySubjectFilter = activitySubjectSelection.studentId === studentId
     ? activitySubjectSelection.value
@@ -171,21 +177,29 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
         <NavLink className="simple-back" to={`/classes/${student.class_id}`}>← {classItem?.name || "Class"}</NavLink>
         <header className="student-profile-simple-header">
           <span className="simple-avatar large">{`${student.first_name?.[0] || ""}${student.last_name?.[0] || ""}`}</span>
-          <div><p className="simple-kicker">Student</p><h2>{student.first_name} {student.last_name}</h2><p className="muted">{classItem?.name || "No class"}</p></div>
+          <div className="student-profile-identity"><p className="simple-kicker">Student</p><h2>{student.first_name} {student.last_name}</h2><p className="muted">{classItem?.name || "No class"}</p></div>
+          <div className="student-profile-actions">
+          <button type="button" className="secondary" onClick={() => {
+            setEditForm({ firstName: student.first_name || "", lastName: student.last_name || "", gender: student.gender || "Prefer not to say", notes: student.notes || "",
+              isParticipatingWell: !!student.is_participating_well, needsHelp: !!student.needs_help, missingHomework: !!student.missing_homework });
+            setShowEditInfo(true);
+          }}>{t("studentEdit.title")}</button>
+          <NavLink className="button" to={`/attendance?classId=${student.class_id}`}>Take attendance</NavLink>
+          </div>
         </header>
 
         <section className="student-overview-simple">
           <article><strong>{attendanceTotal}</strong><span>attendance records</span></article>
           <article><strong>{attendance.present}</strong><span>present</span></article>
           <article><strong>{attendance.absent}</strong><span>absent</span></article>
-          <NavLink to={`/attendance?classId=${student.class_id}`}>Take attendance →</NavLink>
         </section>
 
         <section className="simple-profile-note">
           <div><h3>Profile note</h3><p>{student.notes || "Add a short, ongoing note about this student."}</p></div>
-          <button type="button" className="secondary" onClick={() => { setProfileNote(student.notes || ""); setShowProfileNote(true); }}>Edit</button>
+          <button type="button" className="secondary" aria-label="Edit profile note" onClick={() => { setProfileNote(student.notes || ""); setShowProfileNote(true); }}>Edit note</button>
         </section>
 
+        <div className="student-profile-columns">
         <section className="simple-timeline-section activity-profile-section">
           <div className="simple-section-heading">
             <div><p className="simple-kicker">Class activities</p><h3>Activity assessments</h3></div>
@@ -240,7 +254,7 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
           )}
         </section>
 
-        <section className="simple-timeline-section">
+        <section className="simple-timeline-section student-journal-section">
           <div className="simple-section-heading"><div><p className="simple-kicker">Private record</p><h3>Notes & development</h3></div></div>
           <form className="simple-entry-form" onSubmit={saveEntry}>
             <div className="simple-entry-controls">
@@ -260,9 +274,11 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
             </article>)}
           </div>}
         </section>
+        </div>
       </section>
 
-      {showProfileNote && <div className="modal-overlay"><div className="modal-card simple-form"><h3>Profile note</h3><label className="stack"><span>Keep this short—a quick reference, not a dated observation.</span><textarea rows="5" value={profileNote} onChange={(event) => setProfileNote(event.target.value)} /></label><div className="modal-actions"><button type="button" className="secondary" onClick={() => setShowProfileNote(false)}>Cancel</button><button type="button" onClick={saveProfileNote}>Save</button></div></div></div>}
+      <EditStudentModal showEditInfo={showEditInfo} setShowEditInfo={setShowEditInfo} student={student} studentId={studentId} editForm={editForm} setEditForm={setEditForm} handleUpdateStudent={handleUpdateStudent} />
+      {showProfileNote && <div className="modal-overlay"><div className="modal-card simple-form student-profile-note-modal" role="dialog" aria-modal="true" aria-labelledby="profile-note-title"><h3 id="profile-note-title">Profile note</h3><label className="stack"><span>Keep this short—a quick reference, not a dated observation.</span><textarea rows="4" value={profileNote} onChange={(event) => setProfileNote(event.target.value)} /></label><div className="modal-actions"><button type="button" className="secondary" onClick={() => setShowProfileNote(false)}>Cancel</button><button type="button" onClick={saveProfileNote}>Save</button></div></div></div>}
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import TileIcon from "../components/navigation/TileIcon";
+import "../styles/random-picker.css";
 
 const DEFAULT_CATEGORIES = ["Helper", "Guardian", "Line Leader", "Messenger"];
 const CATEGORY_ICONS = {
@@ -10,11 +11,11 @@ const CATEGORY_ICONS = {
   Messenger: "✉️",
 };
 const CATEGORY_COLORS = {
-  Helper: "#7c3aed",
-  Guardian: "#2563eb",
-  "Line Leader": "#16a34a",
-  Messenger: "#f97316",
-  Custom: "#ec4899",
+  Helper: "#0077b6",
+  Guardian: "#03045e",
+  "Line Leader": "#00b4d8",
+  Messenger: "#168aad",
+  Custom: "#0096c7",
 };
 
 function sameScope(firstClassId, secondClassId) {
@@ -246,8 +247,9 @@ function RandomPickerPage({
   return (
     <>
       {formError && <div className="error">{formError}</div>}
-      <section className="panel random-page">
+      <section className="panel random-page polished-random-page">
         <div className="random-page-header">
+          <div className="random-page-icon" aria-hidden="true"><TileIcon kind="random" /></div>
           <div className="random-page-heading">
             <span className="random-page-kicker">{t("random.kicker")}</span>
             <h2>{t("random.title")}</h2>
@@ -272,11 +274,15 @@ function RandomPickerPage({
             <div className="random-quick-subtitle">{t("random.quick.subtitle")}</div>
             <div className="random-quick-note">{t("random.quick.note")}</div>
           </div>
+          <span className="random-quick-cta">{t("random.quick.action")} <span aria-hidden="true">→</span></span>
         </button>
 
         <div className="random-section">
           <div className="random-section-header">
-            <h3>{t("random.rotation.title")}</h3>
+            <div>
+              <h3>{t("random.rotation.title")}</h3>
+              <p>{t("random.rotation.description")}</p>
+            </div>
             <div className="random-section-actions">
               {isSelectedCategoryCustom && (
                 <button type="button" className="link danger" onClick={() => setShowDeleteCategory(true)}>
@@ -322,7 +328,7 @@ function RandomPickerPage({
                       aria-label={t("random.rotation.deleteRoleAria", { role: categoryDisplayLabel(category) })}
                       onClick={() => requestDeleteCategory(category)}
                     >
-                      🗑
+                      ×
                     </button>
                   )}
                 </div>
@@ -362,10 +368,10 @@ function RandomPickerPage({
             </div>
           </div>
 
-          <div className="random-spinner" style={{ borderColor: categoryColor }}>
-            <div className={`random-spinner-icon ${isSpinning ? "spin" : ""}`}>{categoryIcon}</div>
-          </div>
-
+          <div className="random-picker-action-row">
+            <div className="random-spinner" style={{ borderColor: categoryColor }}>
+              <div className={`random-spinner-icon ${isSpinning ? "spin" : ""}`}>{categoryIcon}</div>
+            </div>
           {availableStudents.length === 0 && filteredStudents.length > 0 ? (
             <div className="random-reset">
               <div className="random-reset-title">
@@ -388,6 +394,7 @@ function RandomPickerPage({
               {t("random.rotation.pickNext", { role: categoryDisplayLabel(activeCategory) })}
             </button>
           )}
+          </div>
 
           {(availableStudents.length > 0 || usedStudents.length > 0) && (
             <div className="random-lists">

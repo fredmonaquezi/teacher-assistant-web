@@ -736,11 +736,34 @@
       "generateGroups": "Gerar grupos",
       "regenerateGroups": "Gerar novamente grupos"
     },
+    "academicProfiles": {
+      "assessmentSummary_one": "Média das avaliações: {{average}}% em {{count}} matéria",
+      "assessmentSummary_other": "Média das avaliações: {{average}}% em {{count}} matérias",
+      "description": "Cada matéria tem o mesmo peso. Escolha um perfil somente quando seu julgamento profissional deve substituir a média das avaliações.",
+      "empty": "Adicione alunos para revisar os perfis de aprendizagem.",
+      "generalSubject": "Geral",
+      "levels": {
+        "developing": "Em desenvolvimento",
+        "extending": "Ampliando",
+        "needs_support": "Precisa de apoio",
+        "on_track": "No caminho certo",
+        "unknown": "Dados insuficientes"
+      },
+      "noAssessments": "Ainda não há dados de avaliações",
+      "profileFor": "Perfil de aprendizagem de {{name}}",
+      "studentCount_one": "{{count}} aluno",
+      "studentCount_other": "{{count}} alunos",
+      "title": "Perfis de aprendizagem dos alunos",
+      "useAssessment": "Usar média das avaliações",
+      "useAssessmentWithProfile": "Usar média das avaliações — {{profile}}"
+    },
     "advanced": {
-      "balanceAcademic": "Equilibrar por Nível Acadêmico",
+      "balanceAcademic": "Equilibrar por perfil de aprendizagem",
       "balanceGender": "Equilibrar os gêneros",
+      "separateGender": "Separar por gênero",
+      "separateGenderHelp": "Cada gênero forma grupos separados. Alunos sem gênero informado ficam em um conjunto próprio. Alguns grupos podem ser menores, inclusive com apenas um aluno.",
       "help": "Ajuda",
-      "helpAcademic": "Usa o desempenho recente nas avaliações para distribuir níveis de aprendizagem entre os grupos.",
+      "helpAcademic": "Calcula a média em cada matéria, dá o mesmo peso a todas e distribui os perfis de aprendizagem entre os grupos.",
       "helpGender": "Tenta misturar a representação de gênero em cada grupo, quando possível.",
       "helpPairPartners": "Agrupa alunos que precisam de apoio com um colega que pode ajudar.",
       "helpRespectSeparations": "Mantém em grupos diferentes os alunos das suas regras de separação.",
@@ -763,17 +786,24 @@
     },
     "resultsSummary": "Mostrando {{shown}} de {{total}} grupos",
     "separations": {
-      "add": "Adicionar",
+      "add": "Adicionar separação",
+      "description": "Mantenha estes alunos em grupos diferentes quando “Respeitar separações” estiver ativado.",
+      "saved": "Separações salvas",
+      "empty": "Nenhuma regra de separação ainda. Escolha dois alunos acima para adicionar uma.",
+      "deletePair": "Excluir separação entre {{first}} e {{second}}",
+      "deleteConfirm": "Excluir esta regra de separação?",
       "selectStudent": "Selecionar aluno",
-      "studentA": "Aluno a",
-      "studentB": "Aluno b",
+      "studentA": "Primeiro aluno",
+      "studentB": "Segundo aluno",
       "studentFallback": "Aluno",
       "title": "Separações"
     },
     "settings": {
-      "expectedGroups": "Esperado grupos ({{count}})",
+      "decreaseSize": "Diminuir alunos por grupo",
+      "increaseSize": "Aumentar alunos por grupo",
+      "expectedGroups": "Grupos previstos ({{count}})",
       "selectClass": "Selecionar turma",
-      "studentsPerGroup": "Alunos per grupo",
+      "studentsPerGroup": "Alunos por grupo",
       "title": "Configurações"
     },
     "stats": {
@@ -781,7 +811,7 @@
       "students": "Alunos"
     },
     "showMore": "Mostrar mais grupos",
-    "subtitle": "Criar grupos balanceados com opções avançadas",
+    "subtitle": "Grupos bem pensados para cada turma.",
     "title": "Gerador Inteligente de Grupos",
     "updatingResults": "(atualizando grupos...)"
   },
@@ -813,6 +843,7 @@
       "availableCount": "{{count}} disponíveis"
     },
     "quick": {
+      "action": "Sortear um aluno",
       "note": "(qualquer aluno, sem seguir nenhuma regra de escolha)",
       "subtitle": "Clique aqui para uma escolha aleatória instantânea",
       "title": "Escolha Aleatória Rápida"
@@ -825,6 +856,7 @@
     },
     "rotation": {
       "addCustom": "Rotação Personalizada",
+      "description": "Escolha uma função e passe por todos os alunos de forma justa.",
       "clearUsed": "Limpar usados",
       "deleteCustom": "Excluir personalizado",
       "deleteRoleAria": "Excluir função aria {{role}}",
@@ -1012,6 +1044,7 @@
     "notFoundTitle": "Aluno não encontrado"
   },
   "studentEdit": {
+    "saveError": "Não foi possível salvar o aluno. Confira os dados e tente novamente.",
     "description": "Atualize os dados de {{name}}.",
     "firstName": "Primeiro nome",
     "firstNamePlaceholder": "Ex.: Ana",

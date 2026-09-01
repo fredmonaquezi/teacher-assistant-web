@@ -7,6 +7,7 @@ import useTeacherWorkspaceData from "./hooks/useTeacherWorkspaceData";
 import { APP_PATHS } from "./config/paths";
 import "./App.css";
 import "react-day-picker/dist/style.css";
+import LoadingState from "./components/common/LoadingState";
 
 const AttendancePage = lazy(() => import("./pages/AttendancePage"));
 const AttendanceSessionDetailPage = lazy(() => import("./pages/AttendanceSessionDetailPage"));
@@ -22,11 +23,7 @@ const UsefulLinksPage = lazy(() => import("./pages/UsefulLinksPage"));
 
 function RouteFallback() {
   const { t } = useTranslation();
-  return (
-    <section className="panel">
-      <p className="muted">{t("route.loadingPage")}</p>
-    </section>
-  );
+  return <LoadingState>{t("route.loadingPage")}</LoadingState>;
 }
 
 function WorkspaceRouteDataLoader({ ensureDataForPath }) {
@@ -104,10 +101,14 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     students,
     attendanceSessions,
     attendanceEntries,
+    assessments,
+    assessmentEntries,
     subjects,
     groups,
     groupMembers,
     groupConstraints,
+    activityAssessmentsForGrouping,
+    activityAssessmentEntriesForGrouping,
     usefulLinks,
     randomPickerCustomCategories,
     randomPickerRotationRows,
@@ -136,6 +137,7 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
     handleUpdateClass,
     handleCreateStudent,
     handleUpdateStudent,
+    handleUpdateStudentAcademicLevel,
     handleDeleteClass,
     handleUpdateAttendanceEntry,
     handleCreateAttendanceSessionForDate,
@@ -267,6 +269,11 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
                 activeClass={activeClass}
                 activeClassId={activeClassId}
                 students={students}
+                assessments={assessments}
+                assessmentEntries={assessmentEntries}
+                activityAssessments={activityAssessmentsForGrouping}
+                activityAssessmentEntries={activityAssessmentEntriesForGrouping}
+                subjects={subjects}
                 groups={groups}
                 groupMembers={groupMembers}
                 groupConstraints={groupConstraints}
@@ -283,6 +290,7 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
                 isGeneratingGroups={isGeneratingGroups}
                 handleAddConstraint={handleAddConstraint}
                 handleDeleteConstraint={handleDeleteConstraint}
+                handleUpdateStudentAcademicLevel={handleUpdateStudentAcademicLevel}
               />
             }
           />

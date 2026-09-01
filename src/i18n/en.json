@@ -735,11 +735,34 @@
       "generateGroups": "Generate groups",
       "regenerateGroups": "Regenerate groups"
     },
+    "academicProfiles": {
+      "assessmentSummary_one": "Assessment average: {{average}}% across {{count}} subject",
+      "assessmentSummary_other": "Assessment average: {{average}}% across {{count}} subjects",
+      "description": "Each subject counts equally. Choose a profile only when your professional judgment should replace the assessment average.",
+      "empty": "Add students to review learning profiles.",
+      "generalSubject": "General",
+      "levels": {
+        "developing": "Developing",
+        "extending": "Extending",
+        "needs_support": "Needs support",
+        "on_track": "On track",
+        "unknown": "Not enough data"
+      },
+      "noAssessments": "No assessment data yet",
+      "profileFor": "Learning profile for {{name}}",
+      "studentCount_one": "{{count}} student",
+      "studentCount_other": "{{count}} students",
+      "title": "Student learning profiles",
+      "useAssessment": "Use assessment average",
+      "useAssessmentWithProfile": "Use assessment average — {{profile}}"
+    },
     "advanced": {
-      "balanceAcademic": "Balance by Academic Level",
+      "balanceAcademic": "Balance by learning profile",
       "balanceGender": "Balance by Gender",
+      "separateGender": "Separate by gender",
+      "separateGenderHelp": "Each gender is grouped separately. Students with unspecified gender stay in their own pool. Some groups may be smaller, including single-student groups.",
       "help": "Help",
-      "helpAcademic": "Uses recent assessment performance to spread learning levels across groups.",
+      "helpAcademic": "Averages performance within each subject, gives every subject equal weight, then spreads learning profiles across groups.",
       "helpGender": "Tries to mix gender representation within each group when possible.",
       "helpPairPartners": "Pairs students who need support with a peer who can help.",
       "helpRespectSeparations": "Keeps students from your separation rules in different groups.",
@@ -762,15 +785,22 @@
     },
     "resultsSummary": "Showing {{shown}} of {{total}} groups",
     "separations": {
-      "add": "Add",
+      "add": "Add separation",
+      "description": "Keep these students in different groups when “Respect separations” is enabled.",
+      "saved": "Saved separations",
+      "empty": "No separation rules yet. Choose two students above to add one.",
+      "deletePair": "Delete separation between {{first}} and {{second}}",
+      "deleteConfirm": "Delete this separation rule?",
       "selectStudent": "Select student",
-      "studentA": "Student a",
-      "studentB": "Student b",
+      "studentA": "First student",
+      "studentB": "Second student",
       "studentFallback": "Student",
       "title": "Separations"
     },
     "settings": {
       "expectedGroups": "Expected groups ({{count}})",
+      "decreaseSize": "Decrease students per group",
+      "increaseSize": "Increase students per group",
       "selectClass": "Select class",
       "studentsPerGroup": "Students per group",
       "title": "Settings"
@@ -780,7 +810,7 @@
       "students": "Students"
     },
     "showMore": "Show more groups",
-    "subtitle": "Create balanced groups with advanced option",
+    "subtitle": "Thoughtful groups for every classroom.",
     "title": "Smart Group Generator",
     "updatingResults": "(updating groups...)"
   },
@@ -811,6 +841,7 @@
       "availableCount": "{{count}} available"
     },
     "quick": {
+      "action": "Pick a student",
       "note": "(any student, no rotation tracking)",
       "subtitle": "Click here for instant random pick",
       "title": "Quick Random Pick"
@@ -823,6 +854,7 @@
     },
     "rotation": {
       "addCustom": "Add custom",
+      "description": "Choose a role, then work through every student fairly.",
       "clearUsed": "Clear used",
       "deleteCustom": "Delete custom",
       "deleteRoleAria": "Delete role aria {{role}}",
@@ -1010,6 +1042,7 @@
     "notFoundTitle": "Not found title"
   },
   "studentEdit": {
+    "saveError": "Could not save the student. Please check the details and try again.",
     "description": "Update profile details for {{name}}.",
     "firstName": "First name",
     "firstNamePlaceholder": "Maya",

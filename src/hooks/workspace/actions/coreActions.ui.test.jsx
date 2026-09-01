@@ -97,3 +97,33 @@ test("does not report full success if the refreshed data could not be loaded", a
   expect(await actions.handleUpdateClass(classItem.id, { name: "5B" })).toBe(false);
   expect(setFormError).toHaveBeenLastCalledWith("Class saved, but the updated details could not be loaded. Please try again.");
 });
+
+test("saves and clears a teacher-selected academic profile", async () => {
+  const studentActions = createCoreActions({
+    classes: [classItem],
+    students: [{ id: "student-1" }],
+    refreshCoreData,
+    setFormError,
+  });
+
+  expect(await studentActions.handleUpdateStudentAcademicLevel("student-1", "extending")).toBe(true);
+  expect(query.update).toHaveBeenLastCalledWith({ academic_level_override: "extending" });
+  expect(query.eq).toHaveBeenLastCalledWith("id", "student-1");
+
+  expect(await studentActions.handleUpdateStudentAcademicLevel("student-1", null)).toBe(true);
+  expect(query.update).toHaveBeenLastCalledWith({ academic_level_override: null });
+  expect(refreshCoreData).toHaveBeenCalledTimes(2);
+});
+
+test("rejects invalid academic profile overrides", async () => {
+  const studentActions = createCoreActions({
+    classes: [classItem],
+    students: [{ id: "student-1" }],
+    refreshCoreData,
+    setFormError,
+  });
+
+  expect(await studentActions.handleUpdateStudentAcademicLevel("student-1", "top_student")).toBe(false);
+  expect(setFormError).toHaveBeenLastCalledWith("Choose a valid learning profile.");
+  expect(supabase.from).not.toHaveBeenCalled();
+});

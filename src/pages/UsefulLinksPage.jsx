@@ -5,6 +5,7 @@ import ReorderModeToggle from "../components/common/ReorderModeToggle";
 import TileIcon from "../components/navigation/TileIcon";
 import { useHandleDrag } from "../hooks/useHandleDrag";
 import { useReorderMode } from "../hooks/useReorderMode";
+import "../styles/useful-links.css";
 
 const EMPTY_FORM = {
   title: "",
@@ -126,8 +127,9 @@ function UsefulLinksPage({
     <>
       {formError && <div className="error">{formError}</div>}
 
-      <section className="panel useful-links-page">
+      <section className="panel useful-links-page polished-useful-links">
         <header className="useful-links-header">
+          <span className="useful-links-header-icon" aria-hidden="true"><TileIcon kind="links" /></span>
           <div className="useful-links-copy">
             <h2>{t("usefulLinks.title")}</h2>
             <p>{t("usefulLinks.subtitle")}</p>
@@ -135,7 +137,6 @@ function UsefulLinksPage({
           {isMobileLayout && sortedLinks.length > 1 && (
             <ReorderModeToggle isReorderMode={isReorderMode} setIsReorderMode={setIsReorderMode} />
           )}
-          <span className="useful-links-header-icon" aria-hidden="true"><TileIcon kind="links" /></span>
         </header>
 
         <form className="useful-links-form" onSubmit={onSubmitCreate} noValidate>
@@ -226,6 +227,18 @@ function UsefulLinksPage({
                   onDrop={() => handleSwapUsefulLinkSortOrder(sortedLinks, dragLinkId, link.id)}
                 >
                   <div className="useful-link-card-head">
+                    <div className="useful-link-card-copy">
+                      <h3>{link.title}</h3>
+                      <p className="useful-link-domain">{domainLabel}</p>
+                    </div>
+                  </div>
+                  {link.description && <p className="useful-link-description">{link.description}</p>}
+                  <div className="useful-link-card-footer">
+                  {!isMobileReorderActive && (
+                    <span className="useful-link-open" aria-hidden="true">
+                      {t("usefulLinks.actions.open")} <span>↗</span>
+                    </span>
+                  )}
                     <div className="useful-link-card-topbar">
                       <div className="useful-link-card-actions-left">
                         <button
@@ -295,17 +308,7 @@ function UsefulLinksPage({
                         </button>
                       </div>
                     </div>
-                    <div className="useful-link-card-copy">
-                      <h3>{link.title}</h3>
-                      <p className="useful-link-domain">{domainLabel}</p>
-                    </div>
                   </div>
-                  {link.description && <p className="useful-link-description">{link.description}</p>}
-                  {!isMobileReorderActive && (
-                    <span className="useful-link-open" aria-hidden="true">
-                      {t("usefulLinks.actions.open")} <span>↗</span>
-                    </span>
-                  )}
                 </article>
               );
             })}

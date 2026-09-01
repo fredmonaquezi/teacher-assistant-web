@@ -85,6 +85,7 @@ function createGroupActions({
       const prefix = groupGenForm.prefix.trim() || "Group";
       const clearExisting = groupGenForm.clearExisting;
       const balanceGender = groupGenForm.balanceGender;
+      const separateGender = groupGenForm.separateGender;
       const balanceAbility = groupGenForm.balanceAbility;
       const pairSupportPartners = groupGenForm.pairSupportPartners;
       const respectSeparations = groupGenForm.respectSeparations;
@@ -121,7 +122,7 @@ function createGroupActions({
         classStudents,
         size,
         constraintSet,
-        { balanceGender, balanceAbility, pairSupportPartners, respectSeparations },
+        { balanceGender, separateGender, balanceAbility, pairSupportPartners, respectSeparations },
         abilityByStudentId
       );
 

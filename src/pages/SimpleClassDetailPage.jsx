@@ -4,6 +4,7 @@ import ActivityAssessmentHistory from "../components/ActivityAssessmentHistory";
 import ClassJournal from "../components/ClassJournal";
 import EditClassModal from "../components/common/EditClassModal";
 import ClassSubjectsModal from "../components/common/ClassSubjectsModal";
+import StudentGenderField from "../components/common/StudentGenderField";
 import "../styles/student-create.css";
 
 function byName(first, second) {
@@ -125,6 +126,7 @@ function SimpleClassDetailPage({ classes, students, subjects = [], handleAddClas
               <label className="stack"><span>First name</span><input autoFocus required value={studentForm.firstName} onChange={(event) => setStudentForm((current) => ({ ...current, firstName: event.target.value }))} /></label>
               <label className="stack"><span>Last name</span><input required value={studentForm.lastName} onChange={(event) => setStudentForm((current) => ({ ...current, lastName: event.target.value }))} /></label>
             </div>
+            <StudentGenderField value={studentForm.gender} onChange={(gender) => setStudentForm((current) => ({ ...current, gender }))} />
             <div className="modal-actions"><button type="button" className="secondary" onClick={() => setShowStudentForm(false)}>Cancel</button><button type="submit">Add student</button></div>
           </form>
         </div>

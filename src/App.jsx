@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { supabase } from "./supabaseClient";
 import { APP_PATHS, isTeacherAssistantPath } from "./config/paths";
 import LandingPage from "./pages/LandingPage";
+import LoadingState from "./components/common/LoadingState";
 
 const AuthForm = lazy(() => import("./components/auth/AuthForm"));
 const TeacherWorkspaceApp = lazy(() => import("./TeacherWorkspaceApp"));
@@ -20,11 +21,7 @@ function getInitialAuthMode() {
 }
 
 function WorkspaceFallback() {
-  return (
-    <section className="panel">
-      <p className="muted">Loading workspace...</p>
-    </section>
-  );
+  return <LoadingState fullPage>Loading workspace…</LoadingState>;
 }
 
 function App() {

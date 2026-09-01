@@ -21,6 +21,36 @@ function orderedResult(data) {
   return result;
 }
 
+test("edits gender without clearing existing notes or status flags", async () => {
+  supabaseMock.from.mockImplementation(() => ({
+    select: vi.fn(() => ({ eq: vi.fn(() => orderedResult([])) })),
+  }));
+  const handleUpdateStudent = vi.fn().mockResolvedValue(true);
+  render(
+    <MemoryRouter initialEntries={["/students/student-1"]}>
+      <Routes>
+        <Route path="/students/:studentId" element={
+          <StudentProfilePage
+            students={[{ id: "student-1", class_id: "class-1", first_name: "Alex", last_name: "Silva", gender: "Male", notes: "Keep this note", is_participating_well: true, needs_help: true, missing_homework: true }]}
+            classes={[{ id: "class-1", name: "Year 3" }]}
+            subjects={[]} attendanceSessions={[]} attendanceEntries={[]}
+            handleUpdateStudent={handleUpdateStudent}
+          />
+        } />
+      </Routes>
+    </MemoryRouter>
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Edit student" }));
+  expect(screen.getByLabelText("Gender").value).toBe("Male");
+  fireEvent.change(screen.getByLabelText("Gender"), { target: { value: "Non-binary" } });
+  fireEvent.click(screen.getByRole("button", { name: "Done" }));
+  await waitFor(() => expect(handleUpdateStudent).toHaveBeenCalledWith("student-1", {
+    firstName: "Alex", lastName: "Silva", gender: "Non-binary", notes: "Keep this note",
+    isParticipatingWell: true, needsHelp: true, missingHomework: true,
+  }));
+  await waitFor(() => expect(screen.queryByLabelText("Gender")).toBeNull());
+});
+
 test("filters activity performance by the selected subject", async () => {
   const notesResult = orderedResult([]);
   const activityResult = orderedResult([

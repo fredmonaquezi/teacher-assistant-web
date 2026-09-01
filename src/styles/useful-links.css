@@ -1,0 +1,75 @@
+.notebook-content .polished-useful-links { container-type: inline-size; gap: 18px; min-width: 0; }
+.notebook-content .polished-useful-links .useful-links-header {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px;
+  padding: 20px; border: 1px solid var(--line-strong); border-radius: 18px;
+  background: linear-gradient(120deg, var(--surface), var(--surface-soft));
+}
+.polished-useful-links .useful-links-header-icon {
+  width: 52px; height: 52px; border: 0; border-radius: 14px; color: var(--brand); background: var(--ocean-mist);
+}
+.polished-useful-links .useful-links-copy h2 { font-size: clamp(1.5rem, 3cqi, 1.85rem); line-height: 1.15; }
+.polished-useful-links .useful-links-copy p { margin-top: 5px; font-size: .86rem; line-height: 1.45; }
+.notebook-content .polished-useful-links .useful-links-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; padding: 20px;
+  border-color: var(--line-strong); border-radius: 17px; box-shadow: none;
+  background: var(--surface);
+}
+.polished-useful-links .useful-links-form h3 { padding-bottom: 12px; margin: 0; border-bottom: 1px solid var(--line); font-size: 1.08rem; }
+.notebook-content .polished-useful-links .useful-links-form > .stack:nth-of-type(2) { grid-column: 2; }
+.notebook-content .polished-useful-links .useful-links-description-field { grid-column: 1; }
+.polished-useful-links .useful-links-form .stack { min-width: 0; gap: 8px; }
+.polished-useful-links .useful-links-form .stack > span { color: var(--ink-soft); font-size: .8rem; font-weight: 650; }
+.polished-useful-links .useful-links-form input { width: 100%; min-width: 0; min-height: 46px; border-radius: 10px; }
+.polished-useful-links .useful-links-form-actions { grid-column: 2; align-self: end; min-width: 0; }
+.notebook-content .polished-useful-links .useful-links-form-actions button { width: 100%; min-height: 46px; padding: 10px 16px; border-radius: 10px; }
+.polished-useful-links .useful-links-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+.notebook-content .polished-useful-links .useful-link-card {
+  min-height: 186px; padding: 18px; gap: 12px; border-color: var(--line); border-radius: 16px; box-shadow: none;
+}
+.notebook-content .polished-useful-links .useful-link-card.openable:hover { border-color: var(--brand); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.polished-useful-links .useful-link-card-head { display: block; }
+.polished-useful-links .useful-link-card-copy h3 { font-size: 1.08rem; line-height: 1.35; }
+.polished-useful-links .useful-link-domain { margin-top: 5px; color: var(--brand); font-size: .78rem; }
+.polished-useful-links .useful-link-description { flex: 1; margin-top: 2px; color: var(--ink-soft); font-size: .84rem; line-height: 1.5; }
+.polished-useful-links .useful-link-card-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line);
+}
+.polished-useful-links .useful-link-card-topbar { flex: 0 0 auto; gap: 8px; }
+.polished-useful-links .useful-link-open {
+  flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; border: 0;
+  justify-content: flex-start; gap: 7px; color: var(--brand); font-size: .78rem;
+}
+.notebook-content .polished-useful-links .useful-link-edit-btn.secondary,
+.notebook-content .polished-useful-links .useful-link-card .drag-handle,
+.notebook-content .polished-useful-links .useful-link-delete-btn.icon-button {
+  min-height: 38px; height: 38px; border-radius: 9px; box-shadow: none;
+}
+.notebook-content .polished-useful-links .useful-link-edit-btn.secondary { padding: 7px 11px; color: var(--ink); background: var(--surface-soft); }
+.notebook-content .polished-useful-links .useful-link-card .drag-handle { width: 38px; color: var(--ink-soft); background: var(--surface-soft); }
+.notebook-content .polished-useful-links .useful-link-delete-btn.icon-button { width: 38px; border-color: #e8bdc8; color: #983247; background: #fff0f3; }
+.notebook-content .polished-useful-links .useful-link-delete-btn.icon-button:hover { color: #802239; background: #fce1e8; }
+.polished-useful-links .useful-links-empty { border-radius: 16px; background: var(--surface); }
+.modal-card.useful-links-edit-modal { width: min(480px, calc(100vw - 32px)); padding: 24px; gap: 18px; border-radius: 20px; }
+.useful-links-edit-modal > h3 { text-align: center; font-size: 1.25rem; }
+.useful-links-edit-modal form > .stack { gap: 8px; }
+.useful-links-edit-modal input { min-height: 44px; border-radius: 10px; }
+.useful-links-edit-modal .modal-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.useful-links-edit-modal .modal-actions button { width: 100%; min-height: 44px; border-radius: 10px; }
+.useful-links-edit-modal .modal-actions .secondary { border-color: #e8bdc8; color: #983247; background: #fff0f3; }
+.polished-useful-links :is(button, input, .useful-link-card):focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+@container (max-width: 560px) {
+  .notebook-content .polished-useful-links .useful-links-header { grid-template-columns: auto minmax(0, 1fr); padding: 16px; }
+  .polished-useful-links .useful-links-header .reorder-mode-toggle { grid-column: 1 / -1; width: 100%; }
+  .notebook-content .polished-useful-links .useful-links-form { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .notebook-content .polished-useful-links .useful-links-form > .stack:nth-of-type(2),
+  .notebook-content .polished-useful-links .useful-links-description-field,
+  .polished-useful-links .useful-links-form-actions { grid-column: 1; }
+  .polished-useful-links .useful-links-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@container (max-width: 380px) {
+  .notebook-content .polished-useful-links .useful-link-card { padding: 15px; }
+  .polished-useful-links .useful-link-card-footer { align-items: stretch; flex-direction: column; }
+  .polished-useful-links .useful-link-card-topbar { width: 100%; justify-content: space-between; }
+  .polished-useful-links .useful-link-open { min-height: 32px; align-items: center; }
+}
