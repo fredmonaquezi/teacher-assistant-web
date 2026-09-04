@@ -88,6 +88,8 @@
       "kicker": "Teacher Codex",
       "title": "Central da Sala",
       "signedInAs": "Conectado como {{identity}}",
+      "workspaceHomeAria": "Início da Central da Sala",
+      "backToLanding": "Teacher Codex",
       "profile": "Perfil",
       "signOut": "Sair"
     },

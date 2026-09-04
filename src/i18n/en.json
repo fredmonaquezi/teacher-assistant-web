@@ -88,6 +88,8 @@
       "kicker": "Teacher Codex",
       "title": "Classroom Hub",
       "signedInAs": "Signed in as {{identity}}",
+      "workspaceHomeAria": "Classroom Hub home",
+      "backToLanding": "Teacher Codex",
       "profile": "Profile",
       "signOut": "Sign out"
     },

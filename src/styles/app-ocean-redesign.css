@@ -21,6 +21,8 @@ body{color:var(--ink)}
 :is(.nav-links a,.sidebar-account-link){min-height:44px;padding:10px 12px;border:1px solid transparent;border-radius:12px;color:#ffffffc7;background:transparent;font-weight:620}
 :is(.nav-links a.active,.sidebar-account-link.active){border-color:#90e0ef47;color:#fff;background:linear-gradient(135deg,#00b4d847,#0077b657);box-shadow:inset 3px 0 var(--ocean-frost)}
 .sidebar-nav-icon{color:var(--ocean-frost)}
+.sidebar-landing-link{border-color:#90e0ef24;background:#caf0f80b}
+.sidebar-landing-link:hover{border-color:#90e0ef47!important;color:#fff!important;background:#caf0f817!important}
 .language-toggle{padding:3px;border:1px solid #caf0f81f;border-radius:12px;background:#caf0f81a}
 .language-toggle button{color:#ffffffad;background:transparent;box-shadow:none}
 .language-toggle button.active{color:var(--ink);background:var(--ocean-mist);box-shadow:0 4px 12px #00000024}

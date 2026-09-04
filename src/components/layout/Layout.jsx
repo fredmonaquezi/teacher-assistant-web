@@ -5,6 +5,7 @@ import { ptBR } from "date-fns/locale/pt-BR";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router-dom";
 import "../../i18n";
+import { APP_PATHS } from "../../config/paths";
 import { formatDisplayName } from "../../utils/formatDisplayName";
 import ClassSwitcher from "./ClassSwitcher";
 import { getClassesNavigationPath } from "./layoutNavigation";
@@ -27,6 +28,9 @@ function NavIcon({ kind }) {
   }
   if (kind === "random") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="3" /><circle cx="9" cy="9" r="1" /><circle cx="15" cy="9" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="9" cy="15" r="1" /><circle cx="15" cy="15" r="1" /></svg>;
+  }
+  if (kind === "landing") {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H6.5A2.5 2.5 0 0 0 4 7.5v9A2.5 2.5 0 0 0 6.5 19H10M13 8l4 4-4 4M8 12h9" /></svg>;
   }
   return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3" /><path d="M5.5 19c.5-3.4 3-5 6.5-5s6 1.6 6.5 5" /></svg>;
 }
@@ -140,7 +144,13 @@ function Layout({
         onClick={closeMobileSidebar}
       />
       <aside id="app-sidebar" className="sidebar">
-        <a className="sidebar-brand" href="/" aria-label="Teacher Codex home">
+        <NavLink
+          className="sidebar-brand"
+          to="/"
+          end
+          aria-label={t("layout.sidebar.workspaceHomeAria")}
+          onClick={closeMobileSidebar}
+        >
           <span className="sidebar-app-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M5 5.5h10.5A3.5 3.5 0 0 1 19 9v9.5H8.5A3.5 3.5 0 0 1 5 15V5.5Z" /><path d="M9 9h6M9 12h4" /></svg>
           </span>
@@ -148,7 +158,7 @@ function Layout({
             <p className="sidebar-kicker">{appName}</p>
             <h1 className="sidebar-title">{t("layout.sidebar.title")}</h1>
           </div>
-        </a>
+        </NavLink>
         <p className="sidebar-email">{t("layout.sidebar.signedInAs", { identity: sidebarIdentity })}</p>
         <nav className="nav-links">
           {navLinks.map((link) => (
@@ -164,6 +174,14 @@ function Layout({
           ))}
         </nav>
         <div className="sidebar-account">
+          <a
+            href={APP_PATHS.home}
+            className="sidebar-account-link sidebar-landing-link"
+            onClick={closeMobileSidebar}
+          >
+            <span className="sidebar-nav-icon"><NavIcon kind="landing" /></span>
+            <span>{t("layout.sidebar.backToLanding")}</span>
+          </a>
           <div className="language-toggle" aria-label={t("common.language.label")}>
             <button
               type="button"
