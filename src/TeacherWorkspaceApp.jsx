@@ -184,6 +184,8 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
                 activeClassId={activeClassId}
                 students={students}
                 loading={loading}
+                preferences={profilePreferences}
+                onPreferencesChange={setProfilePreferences}
               />
             }
           />

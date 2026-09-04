@@ -174,6 +174,40 @@
       "selectTitle": "Selecione uma turma para começar",
       "selectDescription": "Escolha uma turma na barra superior ou abra o gerenciamento para criar a primeira."
     },
+    "englishMeter": {
+      "kicker": "Idioma em sala",
+      "title": "Medidor de Inglês",
+      "sliderLabel": "Uso de inglês da turma {{className}}",
+      "nativeLanguage": "Mais língua nativa",
+      "english": "Mais inglês",
+      "moreNative": "Um pouco menos de inglês",
+      "moreEnglish": "Um pouco mais de inglês",
+      "decreaseLabel": "Diminuir o uso de inglês em 5 por cento",
+      "increaseLabel": "Aumentar o uso de inglês em 5 por cento",
+      "hint": "Ajuste conforme o equilíbrio dos idiomas mudar na sala.",
+      "levels": {
+        "starting": {
+          "title": "Aquecendo",
+          "description": "O inglês está começando a entrar na conversa."
+        },
+        "building": {
+          "title": "Criando confiança",
+          "description": "A turma está encontrando mais momentos para usar o inglês."
+        },
+        "flowing": {
+          "title": "Entrando no ritmo",
+          "description": "O inglês está virando parte natural da sala."
+        },
+        "soaring": {
+          "title": "O inglês está voando!",
+          "description": "A turma está mantendo a maioria das conversas em inglês."
+        },
+        "immersed": {
+          "title": "Imersão total!",
+          "description": "O inglês tomou conta da sala—excelente trabalho em equipe!"
+        }
+      }
+    },
     "actions": {
       "title": "Ações rápidas",
       "subtitle": "Ferramentas para a turma ativa e links de ensino para o dia a dia.",
@@ -492,6 +526,12 @@
       "timeFormat24h": "24 horas",
       "defaultLandingPage": "Página inicial padrão",
       "preview": "Pré-visualização",
+      "englishMeter": {
+        "title": "Mostrar o Medidor de Inglês",
+        "description": "Adicione à tela Início um medidor divertido de uso do inglês para cada turma. Você ajusta o nível durante a aula.",
+        "on": "Ativado",
+        "off": "Desativado"
+      },
       "landing": {
         "dashboard": "Painel",
         "calendar": "Calendário",

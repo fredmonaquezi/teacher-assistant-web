@@ -215,6 +215,37 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
             <strong>{t("profile.preferences.preview")}</strong>
             <span>{datePreview} · {timePreview}</span>
           </div>
+          <div className="profile-preference-toggle profile-full">
+            <div className="profile-preference-toggle-copy">
+              <span className="profile-preference-icon" aria-hidden="true">Aa</span>
+              <div>
+                <strong>{t("profile.preferences.englishMeter.title")}</strong>
+                <p>{t("profile.preferences.englishMeter.description")}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="profile-switch"
+              role="switch"
+              aria-checked={Boolean(preferences?.englishMeterEnabled)}
+              aria-label={t("profile.preferences.englishMeter.title")}
+              onClick={() =>
+                onPreferencesChange((prev) => ({
+                  ...prev,
+                  englishMeterEnabled: !prev?.englishMeterEnabled,
+                }))
+              }
+            >
+              <span className="profile-switch-track" aria-hidden="true">
+                <span />
+              </span>
+              <span>
+                {preferences?.englishMeterEnabled
+                  ? t("profile.preferences.englishMeter.on")
+                  : t("profile.preferences.englishMeter.off")}
+              </span>
+            </button>
+          </div>
         </div>
       </section>
     </section>

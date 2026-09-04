@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, expect, test } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { afterEach, expect, test, vi } from "vitest";
 import TeacherHomePage from "./TeacherHomePage";
 
 const STUDENTS = [
@@ -48,4 +49,54 @@ test("guides the teacher and disables class tools when no class is active", () =
   expect(screen.getByRole("link", { name: /Useful Links/i }).getAttribute("href")).toBe(
     "/useful-links"
   );
+});
+
+test("shows and updates a meter value scoped to the active class when enabled", async () => {
+  const user = userEvent.setup();
+  const onPreferencesChange = vi.fn();
+
+  render(
+    <MemoryRouter>
+      <TeacherHomePage
+        activeClass={{ id: "class-1", name: "Class 4A", grade_level: "Grade 4" }}
+        activeClassId="class-1"
+        students={STUDENTS}
+        loading={false}
+        preferences={{
+          englishMeterEnabled: true,
+          englishMeterValues: { "class-1": 65, "class-2": 20 },
+        }}
+        onPreferencesChange={onPreferencesChange}
+      />
+    </MemoryRouter>
+  );
+
+  expect(screen.getByRole("heading", { name: "English Meter" })).toBeTruthy();
+  expect(screen.getByRole("slider", { name: "English use for Class 4A" }).value).toBe("65");
+
+  await user.click(screen.getByRole("button", { name: "Increase English use by 5 percent" }));
+
+  const preferenceUpdater = onPreferencesChange.mock.calls[0][0];
+  expect(
+    preferenceUpdater({
+      englishMeterEnabled: true,
+      englishMeterValues: { "class-1": 65, "class-2": 20 },
+    }).englishMeterValues
+  ).toEqual({ "class-1": 70, "class-2": 20 });
+});
+
+test("keeps the English Meter hidden when the preference is off", () => {
+  render(
+    <MemoryRouter>
+      <TeacherHomePage
+        activeClass={{ id: "class-1", name: "Class 4A" }}
+        activeClassId="class-1"
+        students={STUDENTS}
+        loading={false}
+        preferences={{ englishMeterEnabled: false }}
+      />
+    </MemoryRouter>
+  );
+
+  expect(screen.queryByRole("heading", { name: "English Meter" })).toBeNull();
 });

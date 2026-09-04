@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import TileIcon from "../components/navigation/TileIcon";
+import EnglishMeter, { DEFAULT_ENGLISH_METER_VALUE } from "../components/EnglishMeter";
 
 const HOME_ACTIONS = [
   { key: "students", icon: "classes", getPath: (classId) => `/classes/${classId}` },
@@ -11,11 +12,33 @@ const HOME_ACTIONS = [
   { key: "usefulLinks", icon: "links", getPath: () => "/useful-links", availableWithoutClass: true },
 ];
 
-function TeacherHomePage({ activeClass, activeClassId, students, loading }) {
+function TeacherHomePage({
+  activeClass,
+  activeClassId,
+  students,
+  loading,
+  preferences,
+  onPreferencesChange,
+}) {
   const { t } = useTranslation();
   const classStudents = activeClassId
     ? students.filter((student) => student.class_id === activeClassId)
     : [];
+  const englishMeterValues = preferences?.englishMeterValues;
+  const englishMeterValue =
+    englishMeterValues && typeof englishMeterValues === "object"
+      ? englishMeterValues[activeClassId] ?? DEFAULT_ENGLISH_METER_VALUE
+      : DEFAULT_ENGLISH_METER_VALUE;
+
+  const handleEnglishMeterChange = (nextValue) => {
+    onPreferencesChange?.((previousPreferences) => ({
+      ...previousPreferences,
+      englishMeterValues: {
+        ...(previousPreferences?.englishMeterValues || {}),
+        [activeClassId]: nextValue,
+      },
+    }));
+  };
 
   return (
     <section className="panel teacher-home-page">
@@ -63,6 +86,14 @@ function TeacherHomePage({ activeClass, activeClassId, students, loading }) {
           </>
         )}
       </section>
+
+      {preferences?.englishMeterEnabled && activeClass && (
+        <EnglishMeter
+          className={activeClass.name}
+          value={englishMeterValue}
+          onChange={handleEnglishMeterChange}
+        />
+      )}
 
       <section className="teacher-home-actions-section">
         <div className="teacher-home-section-heading">
