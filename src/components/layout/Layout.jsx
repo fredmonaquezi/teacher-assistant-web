@@ -123,20 +123,6 @@ function Layout({
     <div className={`app-shell${isMobileSidebarOpen ? " mobile-sidebar-open" : ""}`}>
       <button
         type="button"
-        className="mobile-nav-toggle"
-        aria-controls="app-sidebar"
-        aria-expanded={isMobileSidebarOpen}
-        aria-label={
-          isMobileSidebarOpen
-            ? t("layout.mobileNav.closeAria")
-            : t("layout.mobileNav.openAria")
-        }
-        onClick={() => setIsMobileSidebarOpen((open) => !open)}
-      >
-        <span aria-hidden="true">{isMobileSidebarOpen ? "×" : "☰"}</span>
-      </button>
-      <button
-        type="button"
         className="mobile-nav-backdrop"
         aria-label={t("layout.mobileNav.closeAria")}
         aria-hidden={!isMobileSidebarOpen}
@@ -144,21 +130,33 @@ function Layout({
         onClick={closeMobileSidebar}
       />
       <aside id="app-sidebar" className="sidebar">
-        <NavLink
-          className="sidebar-brand"
-          to="/"
-          end
-          aria-label={t("layout.sidebar.workspaceHomeAria")}
-          onClick={closeMobileSidebar}
-        >
-          <span className="sidebar-app-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M5 5.5h10.5A3.5 3.5 0 0 1 19 9v9.5H8.5A3.5 3.5 0 0 1 5 15V5.5Z" /><path d="M9 9h6M9 12h4" /></svg>
-          </span>
-          <div>
-            <p className="sidebar-kicker">{appName}</p>
-            <h1 className="sidebar-title">{t("layout.sidebar.title")}</h1>
-          </div>
-        </NavLink>
+        <div className="sidebar-brand-row">
+          <NavLink
+            className="sidebar-brand"
+            to="/"
+            end
+            aria-label={t("layout.sidebar.workspaceHomeAria")}
+            onClick={closeMobileSidebar}
+          >
+            <span className="sidebar-app-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 5.5h10.5A3.5 3.5 0 0 1 19 9v9.5H8.5A3.5 3.5 0 0 1 5 15V5.5Z" /><path d="M9 9h6M9 12h4" /></svg>
+            </span>
+            <div>
+              <p className="sidebar-kicker">{appName}</p>
+              <h1 className="sidebar-title">{t("layout.sidebar.title")}</h1>
+            </div>
+          </NavLink>
+          <button
+            type="button"
+            className="sidebar-mobile-close"
+            aria-label={t("layout.mobileNav.closeAria")}
+            onClick={closeMobileSidebar}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m7 7 10 10M17 7 7 17" />
+            </svg>
+          </button>
+        </div>
         <p className="sidebar-email">{t("layout.sidebar.signedInAs", { identity: sidebarIdentity })}</p>
         <nav className="nav-links">
           {navLinks.map((link) => (
@@ -208,6 +206,31 @@ function Layout({
         </div>
       </aside>
       <div className="workspace">
+        <header className="mobile-app-bar">
+          <button
+            type="button"
+            className="mobile-nav-toggle"
+            aria-controls="app-sidebar"
+            aria-expanded={isMobileSidebarOpen}
+            aria-label={t("layout.mobileNav.openAria")}
+            onClick={() => setIsMobileSidebarOpen(true)}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 7h14M5 12h14M5 17h14" />
+            </svg>
+          </button>
+          <NavLink
+            className="mobile-app-brand"
+            to="/"
+            end
+            aria-label={t("layout.sidebar.workspaceHomeAria")}
+          >
+            <span className="mobile-app-brand-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 5.5h10.5A3.5 3.5 0 0 1 19 9v9.5H8.5A3.5 3.5 0 0 1 5 15V5.5Z" /><path d="M9 9h6M9 12h4" /></svg>
+            </span>
+            <strong>{appName}</strong>
+          </NavLink>
+        </header>
         <header className="topbar">
           <div className="topbar-greeting">
             <p className="postit-kicker">{appName}</p>

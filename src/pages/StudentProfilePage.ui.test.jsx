@@ -66,6 +66,22 @@ test("filters activity performance by the selected subject", async () => {
         subject: "Mathematics",
         title: "Multiplication strategies",
         description: "Explained two multiplication strategies.",
+        activity_assessment_criteria: [
+          {
+            id: "criterion-1",
+            title: "Explains mathematical reasoning",
+            sort_order: 0,
+            activity_assessment_criterion_results: [
+              {
+                id: "result-1",
+                student_id: "student-1",
+                outcome: "exceeded",
+                notes: "Used two clear examples.",
+                observed_at: "2026-08-18T12:00:00Z",
+              },
+            ],
+          },
+        ],
       },
     },
     {
@@ -124,6 +140,8 @@ test("filters activity performance by the selected subject", async () => {
 
   expect(screen.getByText("Explained two multiplication strategies.")).toBeTruthy();
   expect(screen.getByText("Multiplication strategies")).toBeTruthy();
+  expect(screen.getByText("Explains mathematical reasoning")).toBeTruthy();
+  expect(screen.getByText("Used two clear examples.")).toBeTruthy();
   expect(screen.queryByText("Identified evidence in a short text.")).toBeNull();
   const summary = screen.getByLabelText("Activity performance summary");
   expect(within(summary).getAllByText("1", { selector: "strong" })).toHaveLength(2);

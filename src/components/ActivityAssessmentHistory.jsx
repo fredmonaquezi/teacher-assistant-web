@@ -15,7 +15,7 @@ function ActivityAssessmentHistory({ classId, studentCount, refreshKey = "" }) {
       setLoading(true);
       const { data, error: loadError } = await supabase
         .from("activity_assessments")
-        .select("id,activity_date,subject,title,description,created_at,activity_assessment_entries(id,student_id)")
+        .select("id,activity_date,subject,title,description,created_at,activity_assessment_entries(id,student_id),activity_assessment_criteria(id)")
         .eq("class_id", classId)
         .order("activity_date", { ascending: false })
         .order("created_at", { ascending: false });
@@ -55,6 +55,7 @@ function ActivityAssessmentHistory({ classId, studentCount, refreshKey = "" }) {
         <div className="class-activity-list">
           {activities.map((activity) => {
             const assessedCount = activity.activity_assessment_entries?.length || 0;
+            const criterionCount = activity.activity_assessment_criteria?.length || 0;
             const remainingCount = Math.max(studentCount - assessedCount, 0);
             return (
               <article className="class-activity-card" key={activity.id}>
@@ -66,6 +67,7 @@ function ActivityAssessmentHistory({ classId, studentCount, refreshKey = "" }) {
                   <h4 className="class-activity-title">{activity.title || activity.subject}</h4>
                   <p>{activity.description}</p>
                   <small>
+                    {criterionCount > 0 ? `${criterionCount} ${criterionCount === 1 ? "criterion" : "criteria"} · ` : ""}
                     {assessedCount} of {studentCount} assessed
                     {remainingCount > 0 ? ` · ${remainingCount} remaining` : " · Complete"}
                   </small>

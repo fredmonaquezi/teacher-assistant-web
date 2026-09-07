@@ -21,6 +21,19 @@ function activitySubjectKey(entry) {
   return `legacy:${(activity?.subject || "Activity").trim().toLocaleLowerCase()}`;
 }
 
+function criterionEvidenceForEntry(entry, studentId) {
+  const activity = activityDetailsForEntry(entry);
+  return [...(activity?.activity_assessment_criteria || [])]
+    .sort((first, second) => Number(first.sort_order || 0) - Number(second.sort_order || 0))
+    .map((criterion) => {
+      const result = (criterion.activity_assessment_criterion_results || []).find(
+        (item) => item.student_id === studentId
+      );
+      return result ? { ...result, criterionTitle: criterion.title } : null;
+    })
+    .filter(Boolean);
+}
+
 function StudentProfilePage({ students, classes, subjects = [], attendanceSessions, attendanceEntries, handleUpdateStudent }) {
   const { t } = useTranslation();
   const { studentId } = useParams();
@@ -71,7 +84,7 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
     setLoadingActivityAssessments(true);
     const { data, error } = await supabase
       .from("activity_assessment_entries")
-      .select("id,outcome,notes,created_at,activity_assessments!inner(id,activity_date,subject_id,subject,title,description)")
+      .select("id,outcome,notes,created_at,activity_assessments!inner(id,activity_date,subject_id,subject,title,description,activity_assessment_criteria(id,title,sort_order,activity_assessment_criterion_results(id,student_id,outcome,notes,observed_at)))")
       .eq("student_id", studentId)
       .order("created_at", { ascending: false });
     if (error) setActivityAssessmentError(error.message);
@@ -235,6 +248,7 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
               <div className="simple-timeline">
                 {visibleActivityAssessments.map((assessmentEntry) => {
                   const assessment = activityDetailsForEntry(assessmentEntry);
+                  const criterionEvidence = criterionEvidenceForEntry(assessmentEntry, studentId);
                   return (
                     <article key={assessmentEntry.id} className="simple-timeline-entry activity-profile-entry">
                       <div className="simple-entry-meta">
@@ -245,6 +259,22 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
                       <h4 className="activity-profile-title">{assessment?.title || assessment?.subject || "Activity"}</h4>
                       {assessment?.activity_date && <p className="activity-profile-date">Activity started {format(parseISO(assessment.activity_date), "d MMM yyyy")}</p>}
                       <p>{assessment?.description}</p>
+                      {criterionEvidence.length > 0 && (
+                        <div className="activity-profile-criteria">
+                          <strong className="activity-profile-criteria-title">Criteria evidence</strong>
+                          <div className="activity-profile-criteria-list">
+                            {criterionEvidence.map((evidence) => (
+                              <div className="activity-profile-criterion" key={evidence.id}>
+                                <span>{evidence.criterionTitle}</span>
+                                <span className={`activity-outcome ${evidence.outcome}`}>
+                                  {evidence.outcome.replaceAll("_", " ")}
+                                </span>
+                                {evidence.notes && <small>{evidence.notes}</small>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       {assessmentEntry.notes && <p className="activity-profile-observation"><strong>Observation:</strong> {assessmentEntry.notes}</p>}
                     </article>
                   );

@@ -89,6 +89,29 @@
 .student-profile-page .activity-profile-title { color: var(--ink); line-height: 1.35; }
 .student-profile-page :is(.activity-profile-subject, .activity-profile-date, .activity-profile-observation) { color: var(--ink-soft); }
 .student-profile-page .activity-profile-observation { border-color: var(--line); }
+.activity-profile-criteria {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+.activity-profile-criteria-title { color: var(--ink); font-size: .76rem; }
+.activity-profile-criteria-list { display: grid; gap: 6px; }
+.activity-profile-criterion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 9px;
+  border-radius: 9px;
+  background: var(--surface);
+}
+.activity-profile-criterion > span:first-child { color: var(--ink); font-size: .76rem; font-weight: 650; overflow-wrap: anywhere; }
+.activity-profile-criterion .activity-outcome { font-size: .64rem; }
+.activity-profile-criterion small { grid-column: 1 / -1; color: var(--ink-soft); font-size: .7rem; line-height: 1.4; }
 .student-profile-page .simple-timeline-entry p { margin-top: 6px; font-size: .88rem; line-height: 1.5; }
 .student-profile-page .simple-entry-form { padding: 0; border: 0; border-radius: 0; background: none; gap: 12px; }
 .student-profile-page .simple-entry-controls,
