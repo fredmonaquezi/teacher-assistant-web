@@ -246,17 +246,22 @@
 }
 .activity-assessment-page .activity-student-section { gap: 0; }
 .activity-assessment-page .activity-student-heading {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
   padding: 20px;
   gap: 20px;
   border: 1px solid var(--line);
   border-radius: 18px 18px 0 0;
-  background: var(--surface-soft);
+  background: linear-gradient(135deg, var(--surface-soft), rgba(144, 224, 239, .2));
 }
+.activity-student-heading > div:first-child { grid-column: 1 / span 2; min-width: 0; }
 .activity-student-heading h3 { color: var(--ink); font-size: 1.1rem; line-height: 1.3; }
 .activity-assessment-page .activity-student-heading > label {
   display: grid;
   gap: 7px;
-  min-width: 190px;
+  width: 100%;
+  min-width: 0;
   color: var(--ink-soft);
 }
 .activity-assessment-page .activity-student-list {
@@ -268,9 +273,11 @@
   background: var(--surface);
 }
 .activity-assessment-page .activity-student-card {
-  grid-template-columns: minmax(120px, .85fr) minmax(170px, 1fr) minmax(180px, 1.3fr);
-  gap: 16px;
-  padding: 16px 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 20px;
+  min-height: 94px;
+  padding: 18px 20px;
   border: 0;
   border-bottom: 1px solid var(--line);
   border-radius: 0;
@@ -278,9 +285,10 @@
   box-shadow: none;
 }
 .activity-assessment-page .activity-student-card:last-child { border-bottom: 0; }
-.activity-assessment-page .activity-student-card:focus-within { background: var(--surface-soft); }
+.activity-assessment-page .activity-student-card:hover { background: rgba(202, 240, 248, .12); }
+.activity-assessment-page .activity-student-card:focus-within { background: rgba(202, 240, 248, .28); }
 .activity-assessment-page .activity-student-card.assessed { background: #f1faf7; }
-.activity-student-identity { min-width: 0; }
+.activity-student-identity { min-width: 0; align-self: center; }
 .activity-student-identity > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 .activity-student-identity .simple-avatar { flex-shrink: 0; }
 .activity-assessment-page .activity-assessment-actions {
@@ -310,6 +318,8 @@
   .activity-criterion-student .activity-student-identity { grid-column: 1 / -1; }
   .activity-student-criterion-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .activity-student-criterion-copy { grid-column: 1 / -1; }
+  .activity-assessment-page .activity-student-heading { grid-template-columns: 1fr; align-items: stretch; }
+  .activity-student-heading > div:first-child { grid-column: auto; }
   .activity-assessment-page .activity-student-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .activity-student-identity { grid-column: 1 / -1; }
   .activity-assessment-page .activity-assessment-header { flex-direction: column; align-items: stretch; gap: 16px; }
