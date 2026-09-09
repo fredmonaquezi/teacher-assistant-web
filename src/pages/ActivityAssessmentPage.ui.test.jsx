@@ -149,6 +149,46 @@ test("allows an activity to be saved after assessing only participating students
   ], { onConflict: "activity_assessment_id,student_id" });
 });
 
+test("saves a 0-10 grade when numeric assessment mode is enabled", async () => {
+  const single = vi.fn().mockResolvedValue({ data: { id: "activity-1" }, error: null });
+  const insertActivity = vi.fn(() => ({ select: vi.fn(() => ({ single })) }));
+  const upsertEntries = vi.fn().mockResolvedValue({ error: null });
+
+  supabaseMock.from.mockImplementation((table) => {
+    if (table === "activity_assessments") return { insert: insertActivity };
+    if (table === "activity_assessment_entries") return { upsert: upsertEntries };
+    throw new Error(`Unexpected table: ${table}`);
+  });
+
+  render(
+    <MemoryRouter initialEntries={["/classes/class-1/assess-activity"]}>
+      <Routes>
+        <Route path="/classes/:classId/assess-activity" element={
+          <ActivityAssessmentPage
+            classes={[{ id: "class-1", name: "Year 3" }]}
+            subjects={[{ id: "subject-1", class_id: "class-1", name: "Maths", sort_order: 1 }]}
+            students={[{ id: "student-1", class_id: "class-1", first_name: "Ana", last_name: "Silva" }]}
+            preferences={{ activityAssessmentScale: "grade" }}
+          />
+        } />
+        <Route path="/classes/:classId" element={<p>Class page</p>} />
+      </Routes>
+    </MemoryRouter>
+  );
+
+  fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "subject-1" } });
+  fireEvent.change(screen.getByLabelText("Activity title"), { target: { value: "Number facts" } });
+  fireEvent.change(screen.getByLabelText("Brief activity description"), { target: { value: "Practised number facts." } });
+  fireEvent.change(screen.getByLabelText("Grade for Ana Silva"), { target: { value: "grade_8" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save activity" }));
+
+  await waitFor(() => expect(screen.getByText("Class page")).toBeTruthy());
+  expect(insertActivity).toHaveBeenCalledWith(expect.objectContaining({ assessment_scale: "grade" }));
+  expect(upsertEntries).toHaveBeenCalledWith([
+    { activity_assessment_id: "activity-1", student_id: "student-1", outcome: "grade_8", notes: null },
+  ], { onConflict: "activity_assessment_id,student_id" });
+});
+
 test("saves optional criteria, criterion evidence, and suggested overall outcomes", async () => {
   const activitySingle = vi.fn().mockResolvedValue({ data: { id: "activity-1" }, error: null });
   const insertActivity = vi.fn(() => ({ select: vi.fn(() => ({ single: activitySingle })) }));

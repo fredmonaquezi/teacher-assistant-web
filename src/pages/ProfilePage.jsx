@@ -217,6 +217,37 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
           </div>
           <div className="profile-preference-toggle profile-full">
             <div className="profile-preference-toggle-copy">
+              <span className="profile-preference-icon" aria-hidden="true">10</span>
+              <div>
+                <strong>{t("profile.preferences.assessmentScale.title")}</strong>
+                <p>{t("profile.preferences.assessmentScale.description")}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="profile-switch"
+              role="switch"
+              aria-checked={preferences?.activityAssessmentScale === "grade"}
+              aria-label={t("profile.preferences.assessmentScale.title")}
+              onClick={() =>
+                onPreferencesChange((prev) => ({
+                  ...prev,
+                  activityAssessmentScale: prev?.activityAssessmentScale === "grade" ? "outcome" : "grade",
+                }))
+              }
+            >
+              <span className="profile-switch-track" aria-hidden="true">
+                <span />
+              </span>
+              <span>
+                {preferences?.activityAssessmentScale === "grade"
+                  ? t("profile.preferences.assessmentScale.grade")
+                  : t("profile.preferences.assessmentScale.outcome")}
+              </span>
+            </button>
+          </div>
+          <div className="profile-preference-toggle profile-full">
+            <div className="profile-preference-toggle-copy">
               <span className="profile-preference-icon" aria-hidden="true">Aa</span>
               <div>
                 <strong>{t("profile.preferences.englishMeter.title")}</strong>

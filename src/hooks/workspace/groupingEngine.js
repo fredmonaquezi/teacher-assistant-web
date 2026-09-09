@@ -3,6 +3,7 @@ import {
   getAssessmentMaxScore,
   scoreToPercent,
 } from "../../utils/assessmentMetrics";
+import { activityAssessmentToPercent } from "../../utils/activityAssessmentScale";
 
 export function buildConstraintSet(studentList, groupConstraints) {
   const set = new Set();
@@ -53,13 +54,6 @@ function shuffleArray(input) {
 function normalizeGender(value) {
   return (value || "").trim().toLowerCase();
 }
-
-const ACTIVITY_OUTCOME_PERCENT = {
-  needs_support: 25,
-  working_towards: 50,
-  met: 75,
-  exceeded: 100,
-};
 
 export const ACADEMIC_PROFILE_KEYS = ["needs_support", "developing", "on_track", "extending"];
 
@@ -122,7 +116,7 @@ export function buildAbilityProfiles(
     addScoreSample(
       entry.student_id,
       activityAssessment.subject_id,
-      ACTIVITY_OUTCOME_PERCENT[entry.outcome]
+      activityAssessmentToPercent(entry.outcome)
     );
   });
 

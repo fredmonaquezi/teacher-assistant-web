@@ -195,6 +195,7 @@
 .activity-outcome.working_towards { color: #80531a; background: #f5e2bd; }
 .activity-outcome.met { color: #35613a; background: #dcebd8; }
 .activity-outcome.exceeded { color: #315f72; background: #d7e9ef; }
+.activity-outcome.grade { color: #315f72; background: #d7e9ef; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 720px) {
   .simple-page-header, .simple-class-header, .simple-profile-note { align-items: flex-start; flex-direction: column; }

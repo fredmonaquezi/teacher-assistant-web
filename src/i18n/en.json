@@ -525,6 +525,12 @@
       "timeFormat24h": "24-hour",
       "defaultLandingPage": "Default landing page",
       "preview": "Preview",
+      "assessmentScale": {
+        "title": "Use 0–10 grades for activity assessments",
+        "description": "Choose numeric grades instead of Needs support, Working towards, Met, and Exceeded. Existing assessments keep their original scale.",
+        "grade": "0–10 grades",
+        "outcome": "Learning outcomes"
+      },
       "englishMeter": {
         "title": "Show the English Meter",
         "description": "Add a playful, per-class English-use meter to Home. You control the level manually during class.",

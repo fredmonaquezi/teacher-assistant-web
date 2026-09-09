@@ -3,17 +3,13 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import ActivityCriteriaSection, { criterionKey } from "../components/activity-assessment/ActivityCriteriaSection";
+import {
+  ACTIVITY_ASSESSMENT_SCALES,
+  activityAssessmentOptions,
+} from "../utils/activityAssessmentScale";
 import "../styles/activity-assessment.css";
 
-const OUTCOME_OPTIONS = [
-  { value: "needs_support", label: "Needs support" },
-  { value: "working_towards", label: "Working towards" },
-  { value: "met", label: "Met" },
-  { value: "exceeded", label: "Exceeded" },
-];
-
 const OTHER_SUBJECT_VALUE = "__other__";
-const OUTCOME_RANK = ["needs_support", "working_towards", "met", "exceeded"];
 let newCriterionSequence = 0;
 
 function byName(first, second) {
@@ -41,7 +37,7 @@ function criterionResultKey(criterionId, studentId) {
   return `${criterionId}:${studentId}`;
 }
 
-function ActivityAssessmentPage({ classes, students, subjects = [] }) {
+function ActivityAssessmentPage({ classes, students, subjects = [], preferences }) {
   const { classId, activityAssessmentId } = useParams();
   const navigate = useNavigate();
   const isExistingActivity = Boolean(activityAssessmentId);
@@ -77,6 +73,20 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
   const [loadingActivity, setLoadingActivity] = useState(isExistingActivity);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [assessmentScale, setAssessmentScale] = useState(
+    preferences?.activityAssessmentScale === ACTIVITY_ASSESSMENT_SCALES.GRADE
+      ? ACTIVITY_ASSESSMENT_SCALES.GRADE
+      : ACTIVITY_ASSESSMENT_SCALES.OUTCOME
+  );
+  const assessmentOptions = useMemo(
+    () => activityAssessmentOptions(assessmentScale),
+    [assessmentScale]
+  );
+  const assessmentValues = useMemo(
+    () => assessmentOptions.map((option) => option.value),
+    [assessmentOptions]
+  );
+  const resultLabel = assessmentScale === ACTIVITY_ASSESSMENT_SCALES.GRADE ? "Grade" : "Outcome";
 
   const suggestedOutcomeForStudent = (studentId) => {
     const outcomes = criteria
@@ -84,10 +94,10 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
       .filter(Boolean);
     if (outcomes.length === 0) return "";
     const averageRank = outcomes.reduce(
-      (total, outcome) => total + OUTCOME_RANK.indexOf(outcome),
+      (total, outcome) => total + assessmentValues.indexOf(outcome),
       0
     ) / outcomes.length;
-    return OUTCOME_RANK[Math.round(averageRank)] || "";
+    return assessmentValues[Math.round(averageRank)] || "";
   };
 
   const effectiveOutcomeForStudent = (studentId) =>
@@ -113,7 +123,7 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
       ] = await Promise.all([
         supabase
           .from("activity_assessments")
-          .select("id,class_id,activity_date,subject_id,subject,title,description")
+          .select("id,class_id,activity_date,subject_id,subject,title,description,assessment_scale")
           .eq("id", activityAssessmentId)
           .eq("class_id", classId)
           .single(),
@@ -149,6 +159,11 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
         title: activityRow.title || activityRow.subject,
         description: activityRow.description,
       });
+      setAssessmentScale(
+        activityRow.assessment_scale === ACTIVITY_ASSESSMENT_SCALES.GRADE
+          ? ACTIVITY_ASSESSMENT_SCALES.GRADE
+          : ACTIVITY_ASSESSMENT_SCALES.OUTCOME
+      );
       setStudentResults(
         Object.fromEntries(
           (entryRows || []).map((entry) => [
@@ -306,6 +321,7 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
       subject: selectedSubject?.name || activity.customSubject.trim(),
       title: activity.title.trim(),
       description: activity.description.trim(),
+      assessment_scale: assessmentScale,
     };
     const activityMutation = isExistingActivity
       ? supabase
@@ -559,7 +575,8 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
           criteria={criteria}
           students={classStudents}
           results={criterionResults}
-          outcomeOptions={OUTCOME_OPTIONS}
+          outcomeOptions={assessmentOptions}
+          resultLabel={resultLabel}
           assessmentMode={assessmentMode}
           activeCriterionKey={activeCriterionKey}
           onAssessmentModeChange={setAssessmentMode}
@@ -580,8 +597,8 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
           <section className="activity-student-section">
             <div className="activity-student-heading">
               <div>
-                <p className="simple-kicker">{criteria.length > 0 ? "Overall summary" : "Individual outcomes"}</p>
-                <h3>{criteria.length > 0 ? "Confirm overall outcomes" : "Assess participating students"}</h3>
+                <p className="simple-kicker">{criteria.length > 0 ? "Overall summary" : `Individual ${resultLabel.toLowerCase()}s`}</p>
+                <h3>{criteria.length > 0 ? `Confirm overall ${resultLabel.toLowerCase()}s` : "Assess participating students"}</h3>
                 {criteria.length > 0 && (
                   <p className="activity-overall-hint">
                     Suggestions use the completed criteria. Keep them or choose a different professional judgment.
@@ -589,16 +606,16 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
                 )}
               </div>
               <label>
-                <span>Set all to</span>
+                <span>Set all {resultLabel.toLowerCase()}s to</span>
                 <select
-                  aria-label="Set outcome for all students"
+                  aria-label={`Set ${resultLabel.toLowerCase()} for all students`}
                   defaultValue=""
                   onChange={(event) => {
                     if (event.target.value) setOutcomeForAll(event.target.value);
                   }}
                 >
-                  <option value="" disabled>Choose outcome</option>
-                  {OUTCOME_OPTIONS.map((option) => (
+                  <option value="" disabled>Choose {resultLabel.toLowerCase()}</option>
+                  {assessmentOptions.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
@@ -629,22 +646,22 @@ function ActivityAssessmentPage({ classes, students, subjects = [] }) {
                     </div>
                     <label className="stack">
                       <span>
-                        Outcome
+                        {resultLabel}
                         {suggestedOutcome && (
                           <small className="activity-suggested-outcome">
-                            Suggested: {OUTCOME_OPTIONS.find((option) => option.value === suggestedOutcome)?.label}
+                            Suggested: {assessmentOptions.find((option) => option.value === suggestedOutcome)?.label}
                           </small>
                         )}
                       </span>
                       <select
-                        aria-label={`Outcome for ${student.first_name} ${student.last_name}`}
+                        aria-label={`${resultLabel} for ${student.first_name} ${student.last_name}`}
                         value={displayedOutcome}
                         onChange={(event) =>
                           updateStudentResult(student.id, "outcome", event.target.value)
                         }
                       >
                         <option value="" disabled={Boolean(result.assessedAt) || Boolean(suggestedOutcome)}>Not assessed yet</option>
-                        {OUTCOME_OPTIONS.map((option) => (
+                        {assessmentOptions.map((option) => (
                           <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                       </select>

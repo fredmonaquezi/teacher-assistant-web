@@ -526,6 +526,12 @@
       "timeFormat24h": "24 horas",
       "defaultLandingPage": "Página inicial padrão",
       "preview": "Pré-visualização",
+      "assessmentScale": {
+        "title": "Usar notas de 0 a 10 nas avaliações de atividades",
+        "description": "Use notas numéricas em vez de Precisa de apoio, Em desenvolvimento, Atingiu e Superou. As avaliações existentes mantêm a escala original.",
+        "grade": "Notas de 0 a 10",
+        "outcome": "Níveis de aprendizagem"
+      },
       "englishMeter": {
         "title": "Mostrar o Medidor de Inglês",
         "description": "Adicione à tela Início um medidor divertido de uso do inglês para cada turma. Você ajusta o nível durante a aula.",

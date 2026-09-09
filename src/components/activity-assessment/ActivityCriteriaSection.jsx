@@ -13,16 +13,16 @@ function StudentIdentity({ student }) {
   );
 }
 
-function ResultFields({ criterion, student, result, outcomeOptions, onResultChange }) {
+function ResultFields({ criterion, student, result, outcomeOptions, resultLabel, onResultChange }) {
   const key = criterionKey(criterion);
   const fullName = `${student.first_name} ${student.last_name}`;
 
   return (
     <>
       <label className="stack">
-        <span>Outcome</span>
+        <span>{resultLabel}</span>
         <select
-          aria-label={`${criterion.title || "Criterion"} outcome for ${fullName}`}
+          aria-label={`${criterion.title || "Criterion"} ${resultLabel.toLowerCase()} for ${fullName}`}
           value={result?.outcome || ""}
           onChange={(event) => onResultChange(key, student.id, "outcome", event.target.value)}
         >
@@ -50,6 +50,7 @@ function ActivityCriteriaSection({
   students,
   results,
   outcomeOptions,
+  resultLabel = "Outcome",
   assessmentMode,
   activeCriterionKey,
   onAssessmentModeChange,
@@ -205,13 +206,13 @@ function ActivityCriteriaSection({
                   {activeCriterion.description && <p>{activeCriterion.description}</p>}
                 </div>
                 <label>
-                  <span>Set all to</span>
+                  <span>Set all {resultLabel.toLowerCase()}s to</span>
                   <select
-                    aria-label={`Set ${activeCriterion.title || "criterion"} outcome for all students`}
+                    aria-label={`Set ${activeCriterion.title || "criterion"} ${resultLabel.toLowerCase()} for all students`}
                     defaultValue=""
                     onChange={(event) => setCriterionForAll(activeCriterion, event.target.value)}
                   >
-                    <option value="" disabled>Choose outcome</option>
+                    <option value="" disabled>Choose {resultLabel.toLowerCase()}</option>
                     {outcomeOptions.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
@@ -229,6 +230,7 @@ function ActivityCriteriaSection({
                         student={student}
                         result={result}
                         outcomeOptions={outcomeOptions}
+                        resultLabel={resultLabel}
                         onResultChange={onResultChange}
                       />
                     </article>
@@ -255,6 +257,7 @@ function ActivityCriteriaSection({
                           student={student}
                           result={getResult(criterion, student.id)}
                           outcomeOptions={outcomeOptions}
+                          resultLabel={resultLabel}
                           onResultChange={onResultChange}
                         />
                       </div>

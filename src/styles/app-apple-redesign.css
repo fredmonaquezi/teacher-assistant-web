@@ -238,6 +238,7 @@ input:disabled { color: var(--ink-soft); background: #f2f2f4; }
 .activity-outcome.working_towards { color: #8a5700; background: #fff5d9; }
 .activity-outcome.met { color: #176b2d; background: #edf8ef; }
 .activity-outcome.exceeded { color: #075cae; background: var(--brand-soft); }
+.activity-outcome.grade { color: #075cae; background: var(--brand-soft); font-variant-numeric: tabular-nums; }
 
 /* Existing feature pages */
 .classes-header-copy h2, .attendance-page-title h2 { color: var(--ink); font-family: inherit; letter-spacing: -.035em; }

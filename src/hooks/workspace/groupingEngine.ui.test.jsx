@@ -147,6 +147,23 @@ describe("buildAbilityProfiles activity assessments", () => {
     });
   });
 
+  test("converts 0-10 activity grades to percentages", () => {
+    const profiles = buildAbilityProfiles(
+      "class-1",
+      [{ id: "student-1" }],
+      [],
+      [],
+      [{ id: "activity-1", class_id: "class-1" }],
+      [{ activity_assessment_id: "activity-1", student_id: "student-1", outcome: "grade_8" }]
+    );
+
+    expect(profiles.get("student-1")).toMatchObject({
+      averagePercent: 80,
+      band: "on_track",
+      source: "assessment",
+    });
+  });
+
   test("averages within each subject before combining subjects", () => {
     const profiles = buildAbilityProfiles(
       "class-1",

@@ -4,6 +4,11 @@ import { NavLink, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../supabaseClient";
 import { summarizeAttendanceEntries } from "../utils/attendanceMetrics";
+import {
+  activityAssessmentMeetsExpectations,
+  formatActivityAssessment,
+  isActivityGrade,
+} from "../utils/activityAssessmentScale";
 import EditStudentModal from "../components/student-detail/EditStudentModal";
 import "../styles/student-profile.css";
 
@@ -126,10 +131,11 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
   );
   const activityPerformance = useMemo(() => {
     const meetingExpectations = visibleActivityAssessments.filter(
-      (assessmentEntry) => assessmentEntry.outcome === "met" || assessmentEntry.outcome === "exceeded"
+      (assessmentEntry) => activityAssessmentMeetsExpectations(assessmentEntry.outcome)
     ).length;
     return {
       meetingExpectations,
+      usesNumericGrades: visibleActivityAssessments.some((assessmentEntry) => isActivityGrade(assessmentEntry.outcome)),
       percentage: visibleActivityAssessments.length
         ? Math.round((meetingExpectations / visibleActivityAssessments.length) * 100)
         : 0,
@@ -242,8 +248,14 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
             <>
               <div className="activity-performance-summary" aria-label="Activity performance summary">
                 <article><strong>{visibleActivityAssessments.length}</strong><span>assessed activities</span></article>
-                <article><strong>{activityPerformance.meetingExpectations}</strong><span>met or exceeded</span></article>
-                <article><strong>{activityPerformance.percentage}%</strong><span>meeting expectations</span></article>
+                <article>
+                  <strong>{activityPerformance.meetingExpectations}</strong>
+                  <span>{activityPerformance.usesNumericGrades ? "at or above expectations" : "met or exceeded"}</span>
+                </article>
+                <article>
+                  <strong>{activityPerformance.percentage}%</strong>
+                  <span>{activityPerformance.usesNumericGrades ? "at or above expectations" : "meeting expectations"}</span>
+                </article>
               </div>
               <div className="simple-timeline">
                 {visibleActivityAssessments.map((assessmentEntry) => {
@@ -253,7 +265,9 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
                     <article key={assessmentEntry.id} className="simple-timeline-entry activity-profile-entry">
                       <div className="simple-entry-meta">
                         <strong>{assessmentEntry.created_at ? `Assessed ${format(parseISO(assessmentEntry.created_at), "d MMM yyyy")}` : "Assessment date not set"}</strong>
-                        <span className={`activity-outcome ${assessmentEntry.outcome}`}>{assessmentEntry.outcome.replaceAll("_", " ")}</span>
+                        <span className={`activity-outcome ${isActivityGrade(assessmentEntry.outcome) ? "grade" : assessmentEntry.outcome}`}>
+                          {formatActivityAssessment(assessmentEntry.outcome)}
+                        </span>
                       </div>
                       <p className="activity-profile-subject">{subjectNameById.get(assessment?.subject_id) || assessment?.subject || "Activity"}</p>
                       <h4 className="activity-profile-title">{assessment?.title || assessment?.subject || "Activity"}</h4>
@@ -266,8 +280,8 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
                             {criterionEvidence.map((evidence) => (
                               <div className="activity-profile-criterion" key={evidence.id}>
                                 <span>{evidence.criterionTitle}</span>
-                                <span className={`activity-outcome ${evidence.outcome}`}>
-                                  {evidence.outcome.replaceAll("_", " ")}
+                                <span className={`activity-outcome ${isActivityGrade(evidence.outcome) ? "grade" : evidence.outcome}`}>
+                                  {formatActivityAssessment(evidence.outcome)}
                                 </span>
                                 {evidence.notes && <small>{evidence.notes}</small>}
                               </div>

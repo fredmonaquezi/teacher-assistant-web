@@ -229,11 +229,11 @@ function TeacherWorkspaceApp({ user, onSignOut }) {
           />
           <Route
             path="/classes/:classId/assess-activity"
-            element={<ActivityAssessmentPage classes={classes} students={students} subjects={subjects} />}
+            element={<ActivityAssessmentPage classes={classes} students={students} subjects={subjects} preferences={profilePreferences} />}
           />
           <Route
             path="/classes/:classId/assess-activity/:activityAssessmentId"
-            element={<ActivityAssessmentPage classes={classes} students={students} subjects={subjects} />}
+            element={<ActivityAssessmentPage classes={classes} students={students} subjects={subjects} preferences={profilePreferences} />}
           />
           <Route
             path="/attendance"
