@@ -403,7 +403,7 @@
   right: 10px;
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .calendar-mode,
   .calendar-day-list .entry,
   .calendar-day-list .event
@@ -418,18 +418,6 @@
 .card.auth-card {
   width: min(430px, 100%); padding: 30px; gap: 18px; border: 1px solid var(--line);
   border-radius: 20px; background: rgba(255,255,255,.94); box-shadow: 0 24px 80px rgba(0,0,0,.1);
-}
-
-@media (max-width: 900px) {
-  .content.notebook-board { width: min(100% - 40px, 1180px); }
-}
-
-@media (max-width: 720px) {
-  .content.notebook-board { width: calc(100% - 28px); }
-}
-
-@media (max-width: 1040px) {
-  .content.notebook-board{width:min(100% - 40px,1180px)}
 }
 
 .notebook-content .polished-useful-links { container-type: inline-size; gap: 18px; min-width: 0; }

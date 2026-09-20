@@ -671,7 +671,7 @@
   opacity: 0.95;
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .profile-page,
   .attendance-page,
   .groups-page,
@@ -681,7 +681,7 @@
   gap: 12px;
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .profile-hero,
   .profile-section,
   .profile-preview,
@@ -731,7 +731,7 @@
   box-shadow: 0 8px 14px rgba(86, 63, 35, 0.1);
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .attendance-page-title h2,
   .running-records-title h2,
   .calendar-header h2,
@@ -743,7 +743,7 @@
   color: #31261c;
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .attendance-card-date,
   .subject-card-name,
   .student-card-content strong,
@@ -754,7 +754,7 @@
   color: #3b2d1f;
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .attendance-date-chip,
   .calendar-entry-date-chip,
   .reminder-date,
@@ -765,7 +765,7 @@
   color: #664624;
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .calendar-mode,
   .calendar-day-list .entry,
   .calendar-day-list .event

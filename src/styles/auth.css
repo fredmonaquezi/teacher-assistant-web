@@ -455,7 +455,7 @@
 
 .simple-avatar.large { width: 64px; height: 64px; font-size: 1.2rem; }
 
-.notebook-content :is(
+.notebook-content :where(
   .calendar-mode,
   .calendar-day-list .entry,
   .calendar-day-list .event

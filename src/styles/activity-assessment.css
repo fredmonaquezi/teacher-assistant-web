@@ -241,7 +241,7 @@
   .activity-student-note { grid-column: auto; }
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .calendar-mode,
   .calendar-day-list .entry,
   .calendar-day-list .event

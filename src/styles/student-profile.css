@@ -397,7 +397,7 @@
   .class-activity-card { align-items: flex-start; flex-direction: column; }
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .profile-page,
   .attendance-page,
   .groups-page,
@@ -407,7 +407,7 @@
   gap: 12px;
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .profile-hero,
   .profile-section,
   .profile-preview,
@@ -457,7 +457,7 @@
   box-shadow: 0 8px 14px rgba(86, 63, 35, 0.1);
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .calendar-mode,
   .calendar-day-list .entry,
   .calendar-day-list .event

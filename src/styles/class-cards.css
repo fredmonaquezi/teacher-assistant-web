@@ -523,7 +523,7 @@
   .class-activity-card { align-items: flex-start; flex-direction: column; }
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .calendar-mode,
   .calendar-day-list .entry,
   .calendar-day-list .event

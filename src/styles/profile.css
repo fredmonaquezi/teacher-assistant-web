@@ -297,7 +297,7 @@
 
 .activity-outcome.grade { color: #315f72; background: #d7e9ef; font-variant-numeric: tabular-nums; }
 
-.notebook-content :is(
+.notebook-content :where(
   .profile-page,
   .attendance-page,
   .groups-page,
@@ -307,7 +307,7 @@
   gap: 12px;
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .profile-hero,
   .profile-section,
   .profile-preview,
@@ -357,7 +357,7 @@
   box-shadow: 0 8px 14px rgba(86, 63, 35, 0.1);
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .attendance-page-title h2,
   .running-records-title h2,
   .calendar-header h2,
@@ -369,7 +369,7 @@
   color: #31261c;
 }
 
-.notebook-content :is(
+.notebook-content :where(
   .calendar-mode,
   .calendar-day-list .entry,
   .calendar-day-list .event
@@ -402,11 +402,15 @@
 
 .notebook-content .profile-hero { padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow-sm); }
 
+.profile-hero h2, .profile-section h3 { color: var(--ink); }
+
 .profile-hero-badge { color: var(--brand); background: var(--brand-soft); border: 0; }
 
 .notebook-content .profile-section { padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow-sm); }
 
 .notebook-content .profile-preview { border: 0; border-radius: 12px; color: var(--ink-soft); background: #f2f2f4; box-shadow: none; }
+
+.profile-preview strong, .profile-preview span { color: var(--ink); }
 
 .notebook-content .status-btn {
   min-height: 36px; padding: 0 10px; border-radius: 9px; box-shadow: none;
