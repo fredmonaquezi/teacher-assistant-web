@@ -1,41 +1,12 @@
-import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import ReorderModeToggle from "../components/common/ReorderModeToggle";
 import TileIcon from "../components/navigation/TileIcon";
-import { useHandleDrag } from "../hooks/useHandleDrag";
-import { useReorderMode } from "../hooks/useReorderMode";
+import useUsefulLinksPageController, {
+  getLinkDomain,
+  isInteractiveTarget,
+} from "../features/useful-links/useUsefulLinksPageController";
 import "../styles/useful-links.css";
-
-const EMPTY_FORM = {
-  title: "",
-  url: "",
-  description: "",
-};
-
-function normalizeLinks(links) {
-  return [...links].sort((first, second) => {
-    const firstSort = Number(first.sort_order ?? 0);
-    const secondSort = Number(second.sort_order ?? 0);
-    if (firstSort !== secondSort) return firstSort - secondSort;
-    return String(first.created_at || "").localeCompare(String(second.created_at || ""));
-  });
-}
-
-function getLinkDomain(url) {
-  if (!url) return "";
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname.replace(/^www\./i, "");
-  } catch {
-    return url;
-  }
-}
-
-function isInteractiveTarget(target) {
-  if (!(target instanceof Element)) return false;
-  return !!target.closest("button,input,textarea,select,a,label");
-}
 
 function UsefulLinksPage({
   formError,
@@ -46,81 +17,29 @@ function UsefulLinksPage({
   handleSwapUsefulLinkSortOrder,
 }) {
   const { t } = useTranslation();
-  const [createForm, setCreateForm] = useState(EMPTY_FORM);
-  const [editingLinkId, setEditingLinkId] = useState("");
-  const [editForm, setEditForm] = useState(EMPTY_FORM);
-  const [linkToDelete, setLinkToDelete] = useState(null);
-  const [dragLinkId, setDragLinkId] = useState(null);
-  const { isMobileLayout, isReorderMode, setIsReorderMode, isReorderEnabled } = useReorderMode();
-  const isMobileReorderActive = isMobileLayout && isReorderMode;
-
   const {
+    createForm, setCreateForm, editForm, setEditForm, editingLink,
+    linkToDelete, setLinkToDelete, dragLinkId, setDragLinkId,
+    sortedLinks, isMobileLayout, isReorderMode, setIsReorderMode,
+    isReorderEnabled, isMobileReorderActive, closeEditModal,
+    onSubmitCreate, onSubmitEdit, openEditModal, confirmDeleteLink,
+    handleMobileMove,
     onHandlePointerDown: onLinkHandlePointerDown,
     onHandlePointerMove: onLinkHandlePointerMove,
     onHandlePointerUp: onLinkHandlePointerUp,
     isDragAllowed: isLinkDragAllowed,
     resetHandleDrag: resetLinkHandleDrag,
-  } = useHandleDrag(isReorderEnabled && !isMobileLayout);
-
-  const sortedLinks = useMemo(() => normalizeLinks(usefulLinks), [usefulLinks]);
-  const editingLink = useMemo(
-    () => sortedLinks.find((item) => item.id === editingLinkId) || null,
-    [editingLinkId, sortedLinks]
-  );
-
-  const resetCreateForm = () => setCreateForm(EMPTY_FORM);
-  const closeEditModal = () => {
-    setEditingLinkId("");
-    setEditForm(EMPTY_FORM);
-  };
+  } = useUsefulLinksPageController({
+    usefulLinks,
+    handleCreateUsefulLink,
+    handleUpdateUsefulLink,
+    handleDeleteUsefulLink,
+    handleSwapUsefulLinkSortOrder,
+  });
 
   const openExternalLink = (url) => {
     if (!url) return;
     window.open(url, "_blank", "noopener,noreferrer");
-  };
-
-  const onSubmitCreate = async (event) => {
-    event.preventDefault();
-    const didCreate = await handleCreateUsefulLink(createForm);
-    if (!didCreate) return;
-    resetCreateForm();
-  };
-
-  const onSubmitEdit = async (event) => {
-    event.preventDefault();
-    if (!editingLinkId) return;
-    const didUpdate = await handleUpdateUsefulLink(editingLinkId, editForm);
-    if (!didUpdate) return;
-    closeEditModal();
-  };
-
-  const openEditModal = (link) => {
-    setEditingLinkId(link.id);
-    setEditForm({
-      title: link.title || "",
-      url: link.url || "",
-      description: link.description || "",
-    });
-  };
-
-  const onDeleteLink = async (link) => {
-    if (!link?.id) return;
-    setLinkToDelete(link);
-  };
-
-  const confirmDeleteLink = async () => {
-    if (!linkToDelete?.id) return;
-    await handleDeleteUsefulLink(linkToDelete.id);
-    setLinkToDelete(null);
-  };
-
-  const handleMobileMove = async (linkId, direction) => {
-    const currentIndex = sortedLinks.findIndex((item) => item.id === linkId);
-    if (currentIndex < 0) return;
-    const targetIndex = currentIndex + direction;
-    const target = sortedLinks[targetIndex];
-    if (!target) return;
-    await handleSwapUsefulLinkSortOrder(sortedLinks, linkId, target.id);
   };
 
   return (
@@ -301,7 +220,7 @@ function UsefulLinksPage({
                           aria-label={t("usefulLinks.aria.delete", { title: link.title })}
                           onClick={(event) => {
                             event.stopPropagation();
-                            onDeleteLink(link);
+                            setLinkToDelete(link);
                           }}
                         >
                           ✕

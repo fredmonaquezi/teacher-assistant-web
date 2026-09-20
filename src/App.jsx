@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState } from "react";
 import { queryClient } from "./lib/queryClient";
 import { supabase } from "./supabaseClient";
 import { APP_PATHS, isTeacherAssistantPath } from "./config/paths";
+import { getCurrentUser, signOut, subscribeToAuthChanges } from "./features/auth/authRepository";
 import LandingPage from "./pages/LandingPage";
 import LoadingState from "./components/common/LoadingState";
 
@@ -33,15 +34,13 @@ function App() {
     let isMounted = true;
 
     const getSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (isMounted) setUser(data.session?.user ?? null);
+      const currentUser = await getCurrentUser(supabase);
+      if (isMounted) setUser(currentUser);
     };
 
     getSession();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    const unsubscribe = subscribeToAuthChanges(supabase, (event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         setAuthMode("reset");
         setStatusMessage("");
@@ -60,17 +59,17 @@ function App() {
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
+      unsubscribe();
     };
   }, []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut(supabase);
     queryClient.clear();
   };
 
   const handlePasswordResetComplete = async () => {
-    await supabase.auth.signOut();
+    await signOut(supabase);
     queryClient.clear();
     setAuthMode("signin");
     if (typeof window !== "undefined") {

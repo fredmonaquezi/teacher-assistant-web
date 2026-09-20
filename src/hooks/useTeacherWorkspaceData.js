@@ -1,478 +1,187 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import useWorkspaceActions from "./workspace/useWorkspaceActions";
-import useWorkspaceReads from "./workspace/useWorkspaceReads";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import useActiveClassSelection from "./useActiveClassSelection";
+import useAttendanceFeature from "../features/attendance/useAttendanceFeature";
+import useClassroomFeature from "../features/classroom/useClassroomFeature";
+import useGroupsFeature from "../features/groups/useGroupsFeature";
+import useProfilePreferences from "../features/profile/useProfilePreferences";
+import { getFeatureDomainsForPath } from "../features/queryKeys";
+import useRandomPickerFeature from "../features/random-picker/useRandomPickerFeature";
+import useSubjectsFeature from "../features/subjects/useSubjectsFeature";
+import useUsefulLinksFeature from "../features/useful-links/useUsefulLinksFeature";
 
-function useTeacherWorkspaceData(userId) {
-  const {
-    profilePreferences,
-    setProfilePreferences,
-    classes,
-    students,
-    calendarDiaryEntries,
-    setCalendarDiaryEntries,
-    calendarEvents,
-    setCalendarEvents,
-    calendarTablesReady,
-    usefulLinks,
-    setUsefulLinks,
-    randomPickerCustomCategories,
-    setRandomPickerCustomCategories,
-    randomPickerRotationRows,
-    setRandomPickerRotationRows,
-    attendanceSessions,
-    attendanceEntries,
-    setAttendanceEntries,
-    assessments,
-    setAssessments,
-    assessmentEntries,
-    setAssessmentEntries,
-    runningRecords,
-    subjects,
-    units,
-    rubrics,
-    rubricCategories,
-    rubricCriteria,
-    developmentScores,
-    groups,
-    groupMembers,
-    groupConstraints,
-    activityAssessmentsForGrouping,
-    activityAssessmentEntriesForGrouping,
-    loading,
-    formError,
-    setFormError,
-    classOptions,
-    loadData,
-    ensureDataForPath,
-    invalidateWorkspaceDomains,
-    removeClassScopedWorkspaceData,
-    refreshCoreData,
-    refreshAttendanceData,
-    refreshAssessmentData,
-    refreshRubricData,
-    refreshGroupData,
-    refreshCalendarData,
-    refreshUsefulLinksData,
-    refreshRandomPickerData,
-  } = useWorkspaceReads(userId);
+function useTeacherWorkspaceData(userId, pathname = "/") {
+  const domains = getFeatureDomainsForPath(pathname);
+  const [profilePreferences, setProfilePreferences] = useProfilePreferences();
+  const orphanedStudentCleanupKeyRef = useRef("");
+
+  const classroom = useClassroomFeature({ userId });
+  const subjectsFeature = useSubjectsFeature({ userId, enabled: domains.subjects });
+  const attendance = useAttendanceFeature({
+    userId,
+    enabled: domains.attendance,
+    students: classroom.students,
+  });
+  const groupsFeature = useGroupsFeature({
+    userId,
+    enabled: domains.groups,
+    students: classroom.students,
+  });
+  const usefulLinksFeature = useUsefulLinksFeature({ userId, enabled: domains.usefulLinks });
+  const randomPickerFeature = useRandomPickerFeature({ userId, enabled: domains.randomPicker });
+  const setClassroomError = classroom.setError;
+  const setSubjectsError = subjectsFeature.setError;
+  const setAttendanceError = attendance.setError;
+  const setGroupsError = groupsFeature.setError;
+  const setUsefulLinksError = usefulLinksFeature.setError;
+  const setRandomPickerError = randomPickerFeature.setError;
+  const cleanupOrphanedStudents = classroom.handleCleanupOrphanedStudents;
+  const classroomLoading = classroom.loading;
 
   const { activeClass, activeClassId, setActiveClassId } = useActiveClassSelection(
     userId,
-    classes
+    classroom.classes
   );
 
-  const [seedingRubrics, setSeedingRubrics] = useState(false);
-  const [classForm, setClassForm] = useState({
-    name: "",
-    gradeLevel: "",
-    schoolYear: "",
-    sortOrder: "",
-  });
-  const [studentForm, setStudentForm] = useState({
-    firstName: "",
-    lastName: "",
-    gender: "Prefer not to say",
-    classId: "",
-    notes: "",
-    isParticipatingWell: false,
-    needsHelp: false,
-    missingHomework: false,
-    separationList: "",
-    sortOrder: "",
-  });
-  const [runningRecordForm, setRunningRecordForm] = useState({
-    studentId: "",
-    recordDate: "",
-    textTitle: "",
-    bookLevel: "",
-    totalWords: "",
-    errors: "",
-    selfCorrections: "",
-    notes: "",
-  });
-  const [subjectForm, setSubjectForm] = useState({
-    classId: "",
-    name: "",
-    description: "",
-    sortOrder: "",
-  });
-  const [unitForm, setUnitForm] = useState({
-    subjectId: "",
-    name: "",
-    description: "",
-    sortOrder: "",
-  });
-  const [developmentScoreForm, setDevelopmentScoreForm] = useState({
-    studentId: "",
-    criterionId: "",
-    rating: "3",
-    date: "",
-    notes: "",
-  });
-  const [groupGenForm, setGroupGenForm] = useState({
-    classId: "",
-    size: "3",
-    prefix: "Group",
-    clearExisting: true,
-    balanceGender: false,
-    separateGender: false,
-    balanceAbility: false,
-    pairSupportPartners: false,
-    respectSeparations: true,
-  });
-  const [constraintForm, setConstraintForm] = useState({
-    studentA: "",
-    studentB: "",
-  });
-  const [groupsShowAdvanced, setGroupsShowAdvanced] = useState(false);
-  const [groupsShowSeparations, setGroupsShowSeparations] = useState(false);
-  const [isGeneratingGroups, setIsGeneratingGroups] = useState(false);
-  const groupsScrollTopRef = useRef(0);
-  const orphanedStudentCleanupKeyRef = useRef("");
-
-  const {
-    handleCreateClass,
-    handleAddClassSubjects,
-    handleRenameClassSubject,
-    handleUpdateClass,
-    handleCreateStudent,
-    handleUpdateStudent,
-    handleUpdateStudentAcademicLevel,
-    handleDeleteClass,
-    handleCleanupOrphanedStudents,
-    handleUpdateSortOrder,
-    handleSwapSortOrder,
-    handleUpdateAttendanceEntry,
-    handleCreateAttendanceSessionForDate,
-    handleDeleteAttendanceSession,
-    handleUpdateAssessmentEntry,
-    handleSetAssessmentEntryScore,
-    handleEnsureAssessmentEntries,
-    handleUpdateAssessmentNotes,
-    handleCreateRunningRecord,
-    handleUpdateRunningRecord,
-    handleDeleteRunningRecord,
-    handleCreateSubject,
-    handleCreateUnit,
-    handleDeleteUnit,
-    handleCreateAssessmentForUnit,
-    handleDeleteAssessment,
-    handleCopyAssessmentsFromUnit,
-    handleCreateDevelopmentScore,
-    handleCreateDevelopmentScoreEntry,
-    handleUpdateDevelopmentScore,
-    handleSeedDefaultRubrics,
-    handleCreateRubricTemplate,
-    handleUpdateRubricTemplate,
-    handleDeleteRubricTemplate,
-    handleDeleteAllRubrics,
-    handleCreateRubricCategory,
-    handleDeleteRubricCategory,
-    handleCreateRubricCriterion,
-    handleDeleteRubricCriterion,
-    handleUpdateRubricCriterion,
-    handleCreateCalendarDiaryEntry,
-    handleUpdateCalendarDiaryEntry,
-    handleDeleteCalendarDiaryEntry,
-    handleCreateCalendarEvent,
-    handleDeleteCalendarEvent,
-    handleCreateUsefulLink,
-    handleUpdateUsefulLink,
-    handleDeleteUsefulLink,
-    handleSwapUsefulLinkSortOrder,
-    handleCreateRandomPickerCustomCategory,
-    handleDeleteRandomPickerCustomCategory,
-    handleSetRandomPickerRotationUsedStudents,
-    handleImportLegacyRandomPickerState,
-    handleAddConstraint,
-    handleDeleteConstraint,
-    handleGenerateGroups,
-  } = useWorkspaceActions({
-    classes,
-    students,
-    attendanceSessions,
-    setAttendanceEntries,
-    setCalendarDiaryEntries,
-    setCalendarEvents,
-    usefulLinks,
-    setUsefulLinks,
-    randomPickerCustomCategories,
-    setRandomPickerCustomCategories,
-    randomPickerRotationRows,
-    setRandomPickerRotationRows,
-    assessmentEntries,
-    setAssessmentEntries,
-    assessments,
-    subjects,
-    units,
-    rubrics,
-    rubricCategories,
-    rubricCriteria,
-    groupConstraints,
-    activityAssessmentsForGrouping,
-    activityAssessmentEntriesForGrouping,
-    classForm,
-    setClassForm,
-    studentForm,
-    setStudentForm,
-    runningRecordForm,
-    setRunningRecordForm,
-    subjectForm,
-    setSubjectForm,
-    unitForm,
-    setUnitForm,
-    developmentScoreForm,
-    setDevelopmentScoreForm,
-    groupGenForm,
-    constraintForm,
-    setConstraintForm,
-    isGeneratingGroups,
-    setIsGeneratingGroups,
-    setSeedingRubrics,
-    setFormError,
-    loadData,
-    refreshCoreData,
-    refreshAttendanceData,
-    refreshAssessmentData,
-    refreshRubricData,
-    refreshGroupData,
-    refreshCalendarData,
-    refreshUsefulLinksData,
-    refreshRandomPickerData,
-    invalidateWorkspaceDomains,
-    removeClassScopedWorkspaceData,
-  });
-
-  const orphanedStudentIds = useMemo(() => {
-    const validClassIdSet = new Set(classes.map((classItem) => classItem.id).filter(Boolean));
-    return students
-      .filter((student) => student.class_id && !validClassIdSet.has(student.class_id))
-      .map((student) => student.id)
-      .filter(Boolean)
-      .sort();
-  }, [classes, students]);
-
-  const visibleStudents = useMemo(() => {
-    const validClassIdSet = new Set(classes.map((classItem) => classItem.id).filter(Boolean));
-    return students.filter((student) => !student.class_id || validClassIdSet.has(student.class_id));
-  }, [classes, students]);
-
-  const visibleStudentIdSet = useMemo(
+  const validClassIds = useMemo(
+    () => new Set(classroom.classes.map((classItem) => classItem.id).filter(Boolean)),
+    [classroom.classes]
+  );
+  const orphanedStudentIds = useMemo(
+    () =>
+      classroom.students
+        .filter((student) => student.class_id && !validClassIds.has(student.class_id))
+        .map((student) => student.id)
+        .filter(Boolean)
+        .sort(),
+    [classroom.students, validClassIds]
+  );
+  const visibleStudents = useMemo(
+    () =>
+      classroom.students.filter(
+        (student) => !student.class_id || validClassIds.has(student.class_id)
+      ),
+    [classroom.students, validClassIds]
+  );
+  const visibleStudentIds = useMemo(
     () => new Set(visibleStudents.map((student) => student.id).filter(Boolean)),
     [visibleStudents]
   );
-
-  const visibleAttendanceEntries = useMemo(
+  const attendanceEntries = useMemo(
     () =>
-      attendanceEntries.filter(
-        (entry) => !entry.student_id || visibleStudentIdSet.has(entry.student_id)
+      attendance.attendanceEntries.filter(
+        (entry) => !entry.student_id || visibleStudentIds.has(entry.student_id)
       ),
-    [attendanceEntries, visibleStudentIdSet]
+    [attendance.attendanceEntries, visibleStudentIds]
   );
-
-  const visibleAssessmentEntries = useMemo(
+  const groupMembers = useMemo(
     () =>
-      assessmentEntries.filter(
-        (entry) => !entry.student_id || visibleStudentIdSet.has(entry.student_id)
+      groupsFeature.groupMembers.filter(
+        (member) => !member.student_id || visibleStudentIds.has(member.student_id)
       ),
-    [assessmentEntries, visibleStudentIdSet]
+    [groupsFeature.groupMembers, visibleStudentIds]
   );
-
-  const visibleRunningRecords = useMemo(
+  const groupConstraints = useMemo(
     () =>
-      runningRecords.filter(
-        (record) => !record.student_id || visibleStudentIdSet.has(record.student_id)
-      ),
-    [runningRecords, visibleStudentIdSet]
-  );
-
-  const visibleDevelopmentScores = useMemo(
-    () =>
-      developmentScores.filter(
-        (score) => !score.student_id || visibleStudentIdSet.has(score.student_id)
-      ),
-    [developmentScores, visibleStudentIdSet]
-  );
-
-  const visibleGroupMembers = useMemo(
-    () =>
-      groupMembers.filter(
-        (member) => !member.student_id || visibleStudentIdSet.has(member.student_id)
-      ),
-    [groupMembers, visibleStudentIdSet]
-  );
-
-  const visibleGroupConstraints = useMemo(
-    () =>
-      groupConstraints.filter(
+      groupsFeature.groupConstraints.filter(
         (constraint) =>
-          (!constraint.student_a || visibleStudentIdSet.has(constraint.student_a)) &&
-          (!constraint.student_b || visibleStudentIdSet.has(constraint.student_b))
+          (!constraint.student_a || visibleStudentIds.has(constraint.student_a)) &&
+          (!constraint.student_b || visibleStudentIds.has(constraint.student_b))
       ),
-    [groupConstraints, visibleStudentIdSet]
+    [groupsFeature.groupConstraints, visibleStudentIds]
   );
-
-  const visibleRandomPickerRotationRows = useMemo(
+  const randomPickerRotationRows = useMemo(
     () =>
-      randomPickerRotationRows.map((row) => ({
+      randomPickerFeature.rotationRows.map((row) => ({
         ...row,
         used_student_ids: (row.used_student_ids || []).filter((studentId) =>
-          visibleStudentIdSet.has(studentId)
+          visibleStudentIds.has(studentId)
         ),
       })),
-    [randomPickerRotationRows, visibleStudentIdSet]
+    [randomPickerFeature.rotationRows, visibleStudentIds]
   );
 
-  useEffect(() => {
-    if (loading) return;
-    if (typeof handleCleanupOrphanedStudents !== "function") return;
+  const clearCurrentError = useCallback(
+    (message = "") => {
+      setClassroomError(message);
+      setSubjectsError(message);
+      setAttendanceError(message);
+      setGroupsError(message);
+      setUsefulLinksError(message);
+      setRandomPickerError(message);
+    },
+    [setAttendanceError, setClassroomError, setGroupsError, setRandomPickerError, setSubjectsError, setUsefulLinksError]
+  );
+  const formError = useMemo(() => {
+    if (pathname.startsWith("/attendance")) return attendance.error;
+    if (pathname.startsWith("/groups")) return groupsFeature.error || subjectsFeature.error;
+    if (pathname.startsWith("/random")) return randomPickerFeature.error;
+    if (pathname.startsWith("/useful-links")) return usefulLinksFeature.error;
+    if (pathname.startsWith("/classes")) return classroom.error || subjectsFeature.error;
+    return classroom.error;
+  }, [attendance.error, classroom.error, groupsFeature.error, pathname, randomPickerFeature.error, subjectsFeature.error, usefulLinksFeature.error]);
 
-    if (!orphanedStudentIds.length) {
-      orphanedStudentCleanupKeyRef.current = "";
+  useEffect(() => {
+    if (classroomLoading || !orphanedStudentIds.length) {
+      if (!orphanedStudentIds.length) orphanedStudentCleanupKeyRef.current = "";
       return;
     }
-
-    const nextCleanupKey = orphanedStudentIds.join(",");
-    if (orphanedStudentCleanupKeyRef.current === nextCleanupKey) return;
-
-    orphanedStudentCleanupKeyRef.current = nextCleanupKey;
+    const cleanupKey = orphanedStudentIds.join(",");
+    if (orphanedStudentCleanupKeyRef.current === cleanupKey) return;
+    orphanedStudentCleanupKeyRef.current = cleanupKey;
     let isCurrent = true;
-
-    void handleCleanupOrphanedStudents().then((didCleanup) => {
-      if (isCurrent && !didCleanup) {
-        orphanedStudentCleanupKeyRef.current = "";
-      }
+    void cleanupOrphanedStudents().then((didCleanup) => {
+      if (isCurrent && !didCleanup) orphanedStudentCleanupKeyRef.current = "";
     });
-
     return () => {
       isCurrent = false;
     };
-  }, [handleCleanupOrphanedStudents, loading, orphanedStudentIds]);
+  }, [classroomLoading, cleanupOrphanedStudents, orphanedStudentIds]);
+
+  const classOptions = useMemo(
+    () =>
+      classroom.classes.map((item) => ({
+        id: item.id,
+        label: `${item.name}${item.grade_level ? ` (${item.grade_level})` : ""}`,
+      })),
+    [classroom.classes]
+  );
 
   return {
+    ...classroom,
+    ...subjectsFeature,
+    ...attendance,
+    ...groupsFeature,
+    ...usefulLinksFeature,
+    ...randomPickerFeature,
     activeClass,
     activeClassId,
     setActiveClassId,
     profilePreferences,
     setProfilePreferences,
-    classes,
+    classes: classroom.classes,
     students: visibleStudents,
-    calendarDiaryEntries,
-    calendarEvents,
-    calendarTablesReady,
-    usefulLinks,
-    randomPickerCustomCategories,
-    randomPickerRotationRows: visibleRandomPickerRotationRows,
-    attendanceSessions,
-    attendanceEntries: visibleAttendanceEntries,
-    assessments,
-    setAssessments,
-    assessmentEntries: visibleAssessmentEntries,
-    runningRecords: visibleRunningRecords,
-    subjects,
-    units,
-    rubrics,
-    rubricCategories,
-    rubricCriteria,
-    developmentScores: visibleDevelopmentScores,
-    seedingRubrics,
-    groups,
-    groupMembers: visibleGroupMembers,
-    groupConstraints: visibleGroupConstraints,
-    activityAssessmentsForGrouping,
-    activityAssessmentEntriesForGrouping,
-    loading,
+    usefulLinks: usefulLinksFeature.usefulLinks,
+    randomPickerCustomCategories: randomPickerFeature.customCategories,
+    randomPickerRotationRows,
+    classroomLoading,
+    attendanceSessions: attendance.attendanceSessions,
+    attendanceEntries,
+    subjects: subjectsFeature.subjects,
+    groups: groupsFeature.groups,
+    groupMembers,
+    groupConstraints,
+    activityAssessmentsForGrouping: groupsFeature.activityAssessments,
+    activityAssessmentEntriesForGrouping: groupsFeature.activityAssessmentEntries,
+    loading:
+      classroom.loading ||
+      subjectsFeature.loading ||
+      attendance.loading ||
+      groupsFeature.loading ||
+      usefulLinksFeature.loading ||
+      randomPickerFeature.loading,
     formError,
-    setFormError,
-    classForm,
-    setClassForm,
-    studentForm,
-    setStudentForm,
-    runningRecordForm,
-    setRunningRecordForm,
-    subjectForm,
-    setSubjectForm,
-    unitForm,
-    setUnitForm,
-    developmentScoreForm,
-    setDevelopmentScoreForm,
-    groupGenForm,
-    setGroupGenForm,
-    constraintForm,
-    setConstraintForm,
-    groupsShowAdvanced,
-    setGroupsShowAdvanced,
-    groupsShowSeparations,
-    setGroupsShowSeparations,
-    isGeneratingGroups,
-    groupsScrollTopRef,
+    setFormError: clearCurrentError,
     classOptions,
-    loadData,
-    ensureDataForPath,
-    invalidateWorkspaceDomains,
-    refreshCoreData,
-    refreshAttendanceData,
-    refreshAssessmentData,
-    refreshRubricData,
-    refreshGroupData,
-    refreshCalendarData,
-    refreshUsefulLinksData,
-    handleCreateClass,
-    handleAddClassSubjects,
-    handleRenameClassSubject,
-    handleUpdateClass,
-    handleCreateStudent,
-    handleUpdateStudent,
-    handleUpdateStudentAcademicLevel,
-    handleDeleteClass,
-    handleUpdateSortOrder,
-    handleSwapSortOrder,
-    handleUpdateAttendanceEntry,
-    handleCreateAttendanceSessionForDate,
-    handleDeleteAttendanceSession,
-    handleUpdateAssessmentEntry,
-    handleSetAssessmentEntryScore,
-    handleEnsureAssessmentEntries,
-    handleUpdateAssessmentNotes,
-    handleCreateRunningRecord,
-    handleUpdateRunningRecord,
-    handleDeleteRunningRecord,
-    handleCreateSubject,
-    handleCreateUnit,
-    handleDeleteUnit,
-    handleCreateAssessmentForUnit,
-    handleDeleteAssessment,
-    handleCopyAssessmentsFromUnit,
-    handleCreateDevelopmentScore,
-    handleCreateDevelopmentScoreEntry,
-    handleUpdateDevelopmentScore,
-    handleSeedDefaultRubrics,
-    handleCreateRubricTemplate,
-    handleUpdateRubricTemplate,
-    handleDeleteRubricTemplate,
-    handleDeleteAllRubrics,
-    handleCreateRubricCategory,
-    handleDeleteRubricCategory,
-    handleCreateRubricCriterion,
-    handleDeleteRubricCriterion,
-    handleUpdateRubricCriterion,
-    handleCreateCalendarDiaryEntry,
-    handleUpdateCalendarDiaryEntry,
-    handleDeleteCalendarDiaryEntry,
-    handleCreateCalendarEvent,
-    handleDeleteCalendarEvent,
-    handleCreateUsefulLink,
-    handleUpdateUsefulLink,
-    handleDeleteUsefulLink,
-    handleSwapUsefulLinkSortOrder,
-    handleCreateRandomPickerCustomCategory,
-    handleDeleteRandomPickerCustomCategory,
-    handleSetRandomPickerRotationUsedStudents,
-    handleImportLegacyRandomPickerState,
-    handleAddConstraint,
-    handleDeleteConstraint,
-    handleGenerateGroups,
   };
 }
 

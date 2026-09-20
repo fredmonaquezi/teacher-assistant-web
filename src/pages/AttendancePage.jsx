@@ -17,6 +17,7 @@ import {
   getAttendanceRateColor,
   summarizeAttendanceEntries,
 } from "../utils/attendanceMetrics";
+import "../styles/attendance.css";
 
 function CalendarIcon() {
   return (

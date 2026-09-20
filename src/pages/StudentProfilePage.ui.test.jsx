@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import StudentProfilePage from "./StudentProfilePage";
 
@@ -21,12 +22,17 @@ function orderedResult(data) {
   return result;
 }
 
+function withQueryClient(children) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+}
+
 test("edits gender without clearing existing notes or status flags", async () => {
   supabaseMock.from.mockImplementation(() => ({
     select: vi.fn(() => ({ eq: vi.fn(() => orderedResult([])) })),
   }));
   const handleUpdateStudent = vi.fn().mockResolvedValue(true);
-  render(
+  render(withQueryClient(
     <MemoryRouter initialEntries={["/students/student-1"]}>
       <Routes>
         <Route path="/students/:studentId" element={
@@ -39,7 +45,7 @@ test("edits gender without clearing existing notes or status flags", async () =>
         } />
       </Routes>
     </MemoryRouter>
-  );
+  ));
   fireEvent.click(screen.getByRole("button", { name: "Edit student" }));
   expect(screen.getByLabelText("Gender").value).toBe("Male");
   fireEvent.change(screen.getByLabelText("Gender"), { target: { value: "Non-binary" } });
@@ -110,7 +116,7 @@ test("filters activity performance by the selected subject", async () => {
     throw new Error(`Unexpected table: ${table}`);
   });
 
-  render(
+  render(withQueryClient(
     <MemoryRouter initialEntries={["/students/student-1"]}>
       <Routes>
         <Route
@@ -131,7 +137,7 @@ test("filters activity performance by the selected subject", async () => {
         />
       </Routes>
     </MemoryRouter>
-  );
+  ));
 
   await screen.findByText("Explained two multiplication strategies.");
   fireEvent.change(screen.getByLabelText("Filter activity assessments by subject"), {

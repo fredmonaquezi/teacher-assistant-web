@@ -1,37 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import TileIcon from "../components/navigation/TileIcon";
+import { getCategoryColor, getCategoryIcon } from "../features/random-picker/randomPickerPageModel";
+import useRandomPickerPageController from "../features/random-picker/useRandomPickerPageController";
 import "../styles/random-picker.css";
-
-const DEFAULT_CATEGORIES = ["Helper", "Guardian", "Line Leader", "Messenger"];
-const CATEGORY_ICONS = {
-  Helper: "⭐",
-  Guardian: "🛡️",
-  "Line Leader": "🚶",
-  Messenger: "✉️",
-};
-const CATEGORY_COLORS = {
-  Helper: "#0077b6",
-  Guardian: "#03045e",
-  "Line Leader": "#00b4d8",
-  Messenger: "#168aad",
-  Custom: "#0096c7",
-};
-
-function sameScope(firstClassId, secondClassId) {
-  return (firstClassId || null) === (secondClassId || null);
-}
-
-function normalizeUsedStudentIds(usedStudentIds) {
-  if (!Array.isArray(usedStudentIds)) return [];
-  return Array.from(
-    new Set(
-      usedStudentIds
-        .map((item) => String(item || "").trim())
-        .filter(Boolean)
-    )
-  );
-}
 
 function RandomPickerPage({
   formError,
@@ -47,202 +18,20 @@ function RandomPickerPage({
   handleImportLegacyRandomPickerState = async () => true,
 }) {
   const { t, i18n } = useTranslation();
-  const classId = activeClassId;
-  const classLabel = classOptions.find((option) => option.id === classId)?.label;
-  const validClassIds = useMemo(
-    () => new Set(classOptions.map((option) => option.id).filter(Boolean)),
-    [classOptions]
-  );
-  const filteredStudents = useMemo(
-    () =>
-      students.filter((student) => {
-        if (!classId) return false;
-        if (!validClassIds.has(student.class_id)) return false;
-        return student.class_id === classId;
-      }),
-    [classId, students, validClassIds]
-  );
-
-  const [selectedCategory, setSelectedCategory] = useState("Helper");
-  const [showAddCategory, setShowAddCategory] = useState(false);
-  const [showDeleteCategory, setShowDeleteCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [pickedStudent, setPickedStudent] = useState(null);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [isRotationMode, setIsRotationMode] = useState(false);
-  const [rotationFeedback, setRotationFeedback] = useState("");
-
-  const didImportLegacyRef = useRef(false);
-
-  const categoryDisplayLabel = (category) => {
-    if (category === "Helper") return t("random.categories.helper");
-    if (category === "Guardian") return t("random.categories.guardian");
-    if (category === "Line Leader") return t("random.categories.lineLeader");
-    if (category === "Messenger") return t("random.categories.messenger");
-    return category;
-  };
-
-  const categoryRotationLabel = (category) => {
-    if (i18n.language === "pt-BR" && category === "Helper") {
-      return t("random.categories.helperRotation");
-    }
-    return categoryDisplayLabel(category);
-  };
-
-  const customCategories = useMemo(() => {
-    if (!classId) return [];
-    return randomPickerCustomCategories
-      .filter((item) => sameScope(item.class_id, classId))
-      .sort((first, second) => {
-        const firstSort = Number(first.sort_order ?? 0);
-        const secondSort = Number(second.sort_order ?? 0);
-        if (firstSort !== secondSort) return firstSort - secondSort;
-        return String(first.created_at || "").localeCompare(String(second.created_at || ""));
-      })
-      .map((item) => item.name)
-      .filter(Boolean);
-  }, [classId, randomPickerCustomCategories]);
-
-  const categories = useMemo(
-    () => [...DEFAULT_CATEGORIES, ...customCategories],
-    [customCategories]
-  );
-
-  const activeCategory = categories.includes(selectedCategory) ? selectedCategory : "Helper";
-
-  const selectedRotationRow = useMemo(
-    () => {
-      if (!classId) return null;
-      return randomPickerRotationRows.find(
-        (item) =>
-          sameScope(item.class_id, classId) &&
-          String(item.category || "") === activeCategory
-      ) || null;
-    },
-    [activeCategory, classId, randomPickerRotationRows]
-  );
-
-  const usedStudentIds = useMemo(
-    () => new Set(normalizeUsedStudentIds(selectedRotationRow?.used_student_ids || [])),
-    [selectedRotationRow]
-  );
-
-  const availableStudents = filteredStudents.filter((student) => !usedStudentIds.has(student.id));
-  const usedStudents = filteredStudents.filter((student) => usedStudentIds.has(student.id));
-
-  const isSelectedCategoryCustom = customCategories.includes(activeCategory);
-  const categoryColor = CATEGORY_COLORS[activeCategory] || CATEGORY_COLORS.Custom;
-  const categoryIcon = CATEGORY_ICONS[activeCategory] || "🏳️";
-
-  useEffect(() => {
-    if (didImportLegacyRef.current) return;
-    if (loading) return;
-    if (typeof handleImportLegacyRandomPickerState !== "function") return;
-
-    didImportLegacyRef.current = true;
-    void handleImportLegacyRandomPickerState();
-  }, [handleImportLegacyRandomPickerState, loading]);
-
-  const pickRandom = (list) => {
-    if (!list.length) return;
-    setIsSpinning(true);
-    setTimeout(() => {
-      setIsSpinning(false);
-      setPickedStudent(list[Math.floor(Math.random() * list.length)]);
-    }, 1000);
-  };
-
-  const handleQuickPick = () => {
-    setIsRotationMode(false);
-    pickRandom(filteredStudents);
-  };
-
-  const handleRotationPick = () => {
-    setIsRotationMode(true);
-    pickRandom(availableStudents);
-  };
-
-  const markUsed = async () => {
-    if (!classId || !pickedStudent) return;
-
-    const nextUsedStudentIds = Array.from(
-      new Set([...normalizeUsedStudentIds(selectedRotationRow?.used_student_ids || []), pickedStudent.id])
-    );
-
-    const didSave = await handleSetRandomPickerRotationUsedStudents({
-      classId,
-      category: activeCategory,
-      usedStudentIds: nextUsedStudentIds,
-    });
-
-    if (!didSave) return;
-    setPickedStudent(null);
-  };
-
-  const clearUsed = async () => {
-    if (!classId) return;
-    const didClear = await handleSetRandomPickerRotationUsedStudents({
-      classId,
-      category: activeCategory,
-      usedStudentIds: [],
-    });
-
-    if (!didClear) return;
-
-    const clearedCount = usedStudentIds.size;
-    setRotationFeedback(
-      clearedCount > 0
-        ? t("random.feedback.resetCount", {
-            count: clearedCount,
-            role: categoryDisplayLabel(activeCategory),
-          })
-        : t("random.feedback.alreadyClear", { role: categoryDisplayLabel(activeCategory) })
-    );
-  };
-
-  useEffect(() => {
-    if (!rotationFeedback) return undefined;
-    const timer = window.setTimeout(() => setRotationFeedback(""), 2200);
-    return () => window.clearTimeout(timer);
-  }, [rotationFeedback]);
-
-  const addCustomCategory = async () => {
-    if (!classId) return;
-    const cleaned = newCategoryName.trim();
-    if (!cleaned) return;
-    if (categories.includes(cleaned)) return;
-
-    const didCreate = await handleCreateRandomPickerCustomCategory({
-      classId,
-      name: cleaned,
-    });
-
-    if (!didCreate) return;
-
-    setSelectedCategory(cleaned);
-    setNewCategoryName("");
-    setShowAddCategory(false);
-  };
-
-  const requestDeleteCategory = (category) => {
-    setSelectedCategory(category);
-    setShowDeleteCategory(true);
-  };
-
-  const deleteCustomCategory = async () => {
-    if (!classId || !isSelectedCategoryCustom) return;
-
-    const categoryToDelete = activeCategory;
-    const didDelete = await handleDeleteRandomPickerCustomCategory({
-      classId,
-      name: categoryToDelete,
-    });
-
-    if (!didDelete) return;
-
-    setSelectedCategory("Helper");
-    setShowDeleteCategory(false);
-  };
+  const {
+    classId, classLabel, filteredStudents, categories, customCategories, activeCategory,
+    availableStudents, usedStudents, isSelectedCategoryCustom, categoryColor, categoryIcon,
+    selectedCategory, setSelectedCategory, showAddCategory, setShowAddCategory,
+    showDeleteCategory, setShowDeleteCategory, newCategoryName, setNewCategoryName,
+    pickedStudent, setPickedStudent, isSpinning, isRotationMode, rotationFeedback,
+    categoryDisplayLabel, categoryRotationLabel, handleQuickPick, handleRotationPick,
+    markUsed, clearUsed, addCustomCategory, requestDeleteCategory, deleteCustomCategory,
+  } = useRandomPickerPageController({
+    t, language: i18n.language, loading, classOptions, activeClassId, students,
+    randomPickerCustomCategories, randomPickerRotationRows,
+    handleCreateRandomPickerCustomCategory, handleDeleteRandomPickerCustomCategory,
+    handleSetRandomPickerRotationUsedStudents, handleImportLegacyRandomPickerState,
+  });
 
   return (
     <>
@@ -302,8 +91,8 @@ function RandomPickerPage({
           <div className="random-category-row">
             {categories.map((category) => {
               const isSelected = activeCategory === category;
-              const color = CATEGORY_COLORS[category] || CATEGORY_COLORS.Custom;
-              const icon = CATEGORY_ICONS[category] || "🏳️";
+              const color = getCategoryColor(category);
+              const icon = getCategoryIcon(category);
               const isCustom = customCategories.includes(category);
               return (
                 <div key={category} className="random-category-chip-wrap">

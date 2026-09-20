@@ -4,6 +4,8 @@ import { enUS } from "date-fns/locale/en-US";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../supabaseClient";
+import { updatePassword, updateProfile } from "../features/profile/profileRepository";
+import "../styles/profile.css";
 
 function ProfilePage({ user, preferences, onPreferencesChange }) {
   const { t, i18n } = useTranslation();
@@ -42,24 +44,22 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
     setStatus("");
     setSavingProfile(true);
 
-    const payload = {
-      data: {
-        ...metadata,
-        full_name: profileForm.fullName.trim() || null,
-        display_name: profileForm.displayName.trim() || null,
-        school_name: profileForm.schoolName.trim() || null,
-        grade_levels: profileForm.gradeLevels.trim() || null,
-      },
+    const profileData = {
+      ...metadata,
+      full_name: profileForm.fullName.trim() || null,
+      display_name: profileForm.displayName.trim() || null,
+      school_name: profileForm.schoolName.trim() || null,
+      grade_levels: profileForm.gradeLevels.trim() || null,
     };
 
-    const { error: updateError } = await supabase.auth.updateUser(payload);
-    setSavingProfile(false);
-    if (updateError) {
+    try {
+      await updateProfile(supabase, profileData);
+      setStatus(t("profile.messages.profileUpdated"));
+    } catch (updateError) {
       setError(updateError.message || t("profile.messages.couldNotSaveProfile"));
-      return;
+    } finally {
+      setSavingProfile(false);
     }
-
-    setStatus(t("profile.messages.profileUpdated"));
   };
 
   const savePassword = async (event) => {
@@ -77,17 +77,15 @@ function ProfilePage({ user, preferences, onPreferencesChange }) {
     }
 
     setSavingPassword(true);
-    const { error: passwordError } = await supabase.auth.updateUser({
-      password: passwordForm.password,
-    });
-    setSavingPassword(false);
-    if (passwordError) {
+    try {
+      await updatePassword(supabase, passwordForm.password);
+      setPasswordForm({ password: "", confirmPassword: "" });
+      setStatus(t("profile.messages.passwordUpdated"));
+    } catch (passwordError) {
       setError(passwordError.message || t("profile.messages.couldNotUpdatePassword"));
-      return;
+    } finally {
+      setSavingPassword(false);
     }
-
-    setPasswordForm({ password: "", confirmPassword: "" });
-    setStatus(t("profile.messages.passwordUpdated"));
   };
 
   return (

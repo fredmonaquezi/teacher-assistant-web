@@ -3,8 +3,16 @@ import { useTranslation } from "react-i18next";
 import { loadAuthEnv } from "../../config/env";
 import "../../i18n";
 import { APP_PATHS } from "../../config/paths";
+import {
+  sendPasswordReset,
+  setPassword as setAuthPassword,
+  signInWithGoogleToken,
+  signInWithPassword,
+  signUp,
+} from "../../features/auth/authRepository";
 import { supabase } from "../../supabaseClient";
 import "../../App.css";
+import "../../styles/auth.css";
 
 const { enableGoogleAuth, googleClientId, publicAppUrl } = loadAuthEnv();
 const GOOGLE_IDENTITY_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
@@ -69,25 +77,17 @@ function AuthForm({ onSuccess, forcedMode, onPasswordResetComplete }) {
     try {
       if (isSignUp) {
         const emailRedirectTo = getSignUpEmailRedirect();
-        const { error: signUpError } = await supabase.auth.signUp({
+        await signUp(supabase, {
           email,
           password,
-          ...(emailRedirectTo ? { options: { emailRedirectTo } } : {}),
+          emailRedirectTo,
         });
-        if (signUpError) throw signUpError;
         onSuccess(t("auth.success.checkEmail"));
       } else if (isSignIn) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (signInError) throw signInError;
+        await signInWithPassword(supabase, { email, password });
       } else if (isForgotPassword) {
         const redirectTo = getPasswordResetRedirect();
-        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-          ...(redirectTo ? { redirectTo } : {}),
-        });
-        if (resetError) throw resetError;
+        await sendPasswordReset(supabase, { email, redirectTo });
         onSuccess(t("auth.success.resetEmailSent"));
         setMode(AUTH_MODES.SIGN_IN);
       } else if (isResetPassword) {
@@ -97,10 +97,7 @@ function AuthForm({ onSuccess, forcedMode, onPasswordResetComplete }) {
         if (newPassword !== confirmPassword) {
           throw new Error(t("auth.errors.passwordMismatch"));
         }
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: newPassword,
-        });
-        if (updateError) throw updateError;
+        await setAuthPassword(supabase, newPassword);
         setNewPassword("");
         setConfirmPassword("");
         onSuccess(t("auth.success.passwordUpdated"));
@@ -180,11 +177,7 @@ function AuthForm({ onSuccess, forcedMode, onPasswordResetComplete }) {
       try {
         const token = response?.credential;
         if (!token) throw new Error(t("auth.errors.googleMissingCredential"));
-        const { error: signInError } = await supabase.auth.signInWithIdToken({
-          provider: "google",
-          token,
-        });
-        if (signInError) throw signInError;
+        await signInWithGoogleToken(supabase, token);
       } catch (err) {
         setError(err.message || t("auth.errors.googleSignInFailed"));
       } finally {

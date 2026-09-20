@@ -1,6 +1,4 @@
-function criterionKey(criterion) {
-  return criterion.id || criterion.clientId;
-}
+import { criterionKey } from "../../utils/activityAssessmentCriteria";
 
 function StudentIdentity({ student }) {
   return (
@@ -273,5 +271,4 @@ function ActivityCriteriaSection({
   );
 }
 
-export { criterionKey };
 export default ActivityCriteriaSection;

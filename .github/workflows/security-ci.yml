@@ -29,6 +29,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Browser smoke tests
+        run: npm run test:smoke
+
       - name: Build
         run: npm run build
 
@@ -39,4 +42,4 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
       - name: Verify migration policy
-        run: bash scripts/verify-migrations.sh
+        run: npm run check:migrations

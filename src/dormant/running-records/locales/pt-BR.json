@@ -1,0 +1,100 @@
+{
+  "detail": {
+    "title": "Detalhe"
+  },
+  "empty": {
+    "createFirst": "Criar primeiro registro",
+    "description": "Crie seu primeiro registro para acompanhar progresso.",
+    "title": "Nenhum registro de leitura ainda"
+  },
+  "export": {
+    "accuracy": "Accuracy",
+    "class": "Turma",
+    "date": "Data",
+    "errors": "Erros",
+    "level": "Nível",
+    "notes": "Observações",
+    "scRatio": "SC relação",
+    "selfCorrections": "Auto correções",
+    "student": "Aluno",
+    "textTitle": "Texto título",
+    "totalWords": "Total palavras"
+  },
+  "exportCsv": "Exportar csv",
+  "exportJson": "Exportar json",
+  "filters": {
+    "allClasses": "Todas as turmas",
+    "allStudents": "Todos os alunos",
+    "allTime": "Todos os tempos",
+    "class": "Turma",
+    "clear": "Limpar",
+    "last30Days": "Últimos 30 dias",
+    "last7Days": "Últimos 7 dias",
+    "search": "Buscar",
+    "searchPlaceholder": "Buscar",
+    "sort": "Ordenar",
+    "sortAccuracyHighLow": "Acertos: maior para menor",
+    "sortAccuracyLowHigh": "Acertos: menor para maior",
+    "sortNewest": "Ordenar mais recente",
+    "sortOldest": "Ordenar mais antigo",
+    "student": "Aluno",
+    "thisTerm": "Este período"
+  },
+  "levels": {
+    "frustration": {
+      "short": "Frustração"
+    },
+    "independent": {
+      "short": "Independente"
+    },
+    "instructional": {
+      "short": "Instrucional"
+    }
+  },
+  "loading": "Carregando",
+  "metrics": {
+    "accuracy": "Acertos",
+    "errors": "Erros",
+    "sc": "Autocorreções",
+    "scRatio": "Relação AC",
+    "words": "Palavras"
+  },
+  "modal": {
+    "bookLevel": "Nível do livro",
+    "bookLevelPlaceholder": "Selecione A-Z",
+    "clickToChoose": "Clique para escolher",
+    "date": "Data",
+    "editDescription": "Atualize as informações de leitura",
+    "editTitle": "Editar Registro",
+    "errors": "Erros",
+    "newDescription": "Registre as informações de leitura",
+    "newTitle": "Novo Registro",
+    "notesOptional": "Observações opcional",
+    "notesPlaceholder": "Notas",
+    "readingLevel": "Reading nível",
+    "results": "Resultados",
+    "selectStudent": "Selecionar aluno",
+    "selfCorrectionRatio": "Relação de autocorreção",
+    "selfCorrections": "Auto correções",
+    "student": "Aluno",
+    "textTitle": "Texto título",
+    "textTitlePlaceholder": "ex: Sítio do Pica Pau Amarelo",
+    "totalWords": "Total palavras"
+  },
+  "na": "N/A",
+  "newRecord": "Novo Registro",
+  "noClass": "sem turma",
+  "noDate": "sem data",
+  "resultsSummary": "Mostrando {{shown}} de {{total}} registros",
+  "showMore": "Mostrar mais registros",
+  "stats": {
+    "avgAccuracy": "Média de Acertos",
+    "filteredAvg": "Média filtrada",
+    "studentsAssessed": "Alunos avaliados",
+    "totalRecords": "Total de registros"
+  },
+  "title": "Running registros",
+  "updatingResults": "(atualizando resultados...)",
+  "unknownStudent": "Desconhecido aluno",
+  "untitledText": "Untitled texto"
+}

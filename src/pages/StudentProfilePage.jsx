@@ -1,192 +1,37 @@
 import { format, parseISO } from "date-fns";
-import { useEffect, useMemo, useState } from "react";
 import { NavLink, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { supabase } from "../supabaseClient";
-import { summarizeAttendanceEntries } from "../utils/attendanceMetrics";
 import {
-  activityAssessmentMeetsExpectations,
   formatActivityAssessment,
   isActivityGrade,
 } from "../utils/activityAssessmentScale";
+import useStudentProfileController from "../features/students/useStudentProfileController";
+import {
+  activityDetailsForEntry,
+  criterionEvidenceForEntry,
+} from "../features/students/studentProfileModel";
 import EditStudentModal from "../components/student-detail/EditStudentModal";
 import "../styles/student-profile.css";
 
-const today = () => format(new Date(), "yyyy-MM-dd");
-
-function activityDetailsForEntry(entry) {
-  return Array.isArray(entry.activity_assessments)
-    ? entry.activity_assessments[0]
-    : entry.activity_assessments;
-}
-
-function activitySubjectKey(entry) {
-  const activity = activityDetailsForEntry(entry);
-  if (activity?.subject_id) return `subject:${activity.subject_id}`;
-  return `legacy:${(activity?.subject || "Activity").trim().toLocaleLowerCase()}`;
-}
-
-function criterionEvidenceForEntry(entry, studentId) {
-  const activity = activityDetailsForEntry(entry);
-  return [...(activity?.activity_assessment_criteria || [])]
-    .sort((first, second) => Number(first.sort_order || 0) - Number(second.sort_order || 0))
-    .map((criterion) => {
-      const result = (criterion.activity_assessment_criterion_results || []).find(
-        (item) => item.student_id === studentId
-      );
-      return result ? { ...result, criterionTitle: criterion.title } : null;
-    })
-    .filter(Boolean);
-}
-
-function StudentProfilePage({ students, classes, subjects = [], attendanceSessions, attendanceEntries, handleUpdateStudent }) {
+function StudentProfilePage({ students, classes, subjects = [], attendanceSessions, attendanceEntries, handleUpdateStudent, loading = false }) {
   const { t } = useTranslation();
   const { studentId } = useParams();
   const student = students.find((item) => item.id === studentId);
   const classItem = classes.find((item) => item.id === student?.class_id);
-  const [notes, setNotes] = useState([]);
-  const [activityAssessments, setActivityAssessments] = useState([]);
-  const [loadingNotes, setLoadingNotes] = useState(true);
-  const [loadingActivityAssessments, setLoadingActivityAssessments] = useState(true);
-  const [noteError, setNoteError] = useState("");
-  const [activityAssessmentError, setActivityAssessmentError] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [entry, setEntry] = useState({ noteDate: today(), entryType: "anecdotal", developmentArea: "", developmentLevel: "on_track", body: "" });
-  const [profileNote, setProfileNote] = useState("");
-  const [showProfileNote, setShowProfileNote] = useState(false);
-  const [showEditInfo, setShowEditInfo] = useState(false);
-  const [editForm, setEditForm] = useState({});
-  const [activitySubjectSelection, setActivitySubjectSelection] = useState({ studentId, value: "all" });
-  const activitySubjectFilter = activitySubjectSelection.studentId === studentId
-    ? activitySubjectSelection.value
-    : "all";
+  const {
+    notes, activityAssessments, loadingNotes, loadingActivityAssessments,
+    noteError, activityAssessmentError, saving, entry, setEntry,
+    profileNote, setProfileNote, showProfileNote, setShowProfileNote,
+    showEditInfo, setShowEditInfo, editForm, setEditForm,
+    activitySubjectFilter, setActivitySubjectSelection, activitySubjectOptions,
+    visibleActivityAssessments, activityPerformance, subjectNameById,
+    attendance, attendanceTotal, saveEntry, deleteEntry, saveProfileNote,
+  } = useStudentProfileController({
+    studentId, student, subjects, attendanceSessions, attendanceEntries, handleUpdateStudent,
+  });
 
-  const loadNotes = async () => {
-    if (!studentId) return;
-    await Promise.resolve();
-    setLoadingNotes(true);
-    const { data, error } = await supabase
-      .from("student_notes")
-      .select("id,note_date,entry_type,development_area,development_level,body,created_at")
-      .eq("student_id", studentId)
-      .order("note_date", { ascending: false })
-      .order("created_at", { ascending: false });
-    if (error) setNoteError(error.message);
-    else {
-      setNotes(data || []);
-      setNoteError("");
-    }
-    setLoadingNotes(false);
-  };
-
-  // The effect intentionally starts the async Supabase loader when its owner changes.
-  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
-  useEffect(() => { loadNotes(); }, [studentId]);
-
-  const loadActivityAssessments = async () => {
-    if (!studentId) return;
-    await Promise.resolve();
-    setLoadingActivityAssessments(true);
-    const { data, error } = await supabase
-      .from("activity_assessment_entries")
-      .select("id,outcome,notes,created_at,activity_assessments!inner(id,activity_date,subject_id,subject,title,description,activity_assessment_criteria(id,title,sort_order,activity_assessment_criterion_results(id,student_id,outcome,notes,observed_at)))")
-      .eq("student_id", studentId)
-      .order("created_at", { ascending: false });
-    if (error) setActivityAssessmentError(error.message);
-    else {
-      const sortedAssessments = [...(data || [])].sort((first, second) => {
-        return (second.created_at || "").localeCompare(first.created_at || "");
-      });
-      setActivityAssessments(sortedAssessments);
-      setActivityAssessmentError("");
-    }
-    setLoadingActivityAssessments(false);
-  };
-
-  // The effect intentionally starts the async Supabase loader when its owner changes.
-  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
-  useEffect(() => { loadActivityAssessments(); }, [studentId]);
-
-  const subjectNameById = useMemo(
-    () => new Map(subjects.map((subject) => [subject.id, subject.name])),
-    [subjects]
-  );
-  const activitySubjectOptions = useMemo(() => {
-    const options = new Map();
-    activityAssessments.forEach((assessmentEntry) => {
-      const activity = activityDetailsForEntry(assessmentEntry);
-      const key = activitySubjectKey(assessmentEntry);
-      const label = subjectNameById.get(activity?.subject_id) || activity?.subject || "Activity";
-      options.set(key, label);
-    });
-    return [...options.entries()]
-      .map(([value, label]) => ({ value, label }))
-      .sort((first, second) => first.label.localeCompare(second.label, undefined, { sensitivity: "base" }));
-  }, [activityAssessments, subjectNameById]);
-  const visibleActivityAssessments = useMemo(
-    () => activitySubjectFilter === "all"
-      ? activityAssessments
-      : activityAssessments.filter((assessmentEntry) => activitySubjectKey(assessmentEntry) === activitySubjectFilter),
-    [activityAssessments, activitySubjectFilter]
-  );
-  const activityPerformance = useMemo(() => {
-    const meetingExpectations = visibleActivityAssessments.filter(
-      (assessmentEntry) => activityAssessmentMeetsExpectations(assessmentEntry.outcome)
-    ).length;
-    return {
-      meetingExpectations,
-      usesNumericGrades: visibleActivityAssessments.some((assessmentEntry) => isActivityGrade(assessmentEntry.outcome)),
-      percentage: visibleActivityAssessments.length
-        ? Math.round((meetingExpectations / visibleActivityAssessments.length) * 100)
-        : 0,
-    };
-  }, [visibleActivityAssessments]);
-
-  const attendance = useMemo(() => {
-    const sessionIds = new Set(attendanceSessions.filter((session) => session.class_id === student?.class_id).map((session) => session.id));
-    const entries = attendanceEntries.filter((attendanceEntry) => attendanceEntry.student_id === studentId && sessionIds.has(attendanceEntry.session_id));
-    return summarizeAttendanceEntries(entries);
-  }, [attendanceEntries, attendanceSessions, student?.class_id, studentId]);
-  const attendanceTotal = attendance.present + attendance.absent + attendance.late + attendance.leftEarly;
-
+  if (loading) return <section className="panel"><p className="muted">Loading student…</p></section>;
   if (!student) return <section className="panel"><h2>Student not found</h2><NavLink to="/classes">Back to classes</NavLink></section>;
-
-  const saveEntry = async (event) => {
-    event.preventDefault();
-    if (!entry.body.trim()) return;
-    setSaving(true);
-    setNoteError("");
-    const { error } = await supabase.from("student_notes").insert({
-      student_id: studentId,
-      note_date: entry.noteDate,
-      entry_type: entry.entryType,
-      development_area: entry.entryType === "development" ? entry.developmentArea.trim() || null : null,
-      development_level: entry.entryType === "development" ? entry.developmentLevel : null,
-      body: entry.body.trim(),
-    });
-    setSaving(false);
-    if (error) { setNoteError(error.message); return; }
-    setEntry({ noteDate: today(), entryType: "anecdotal", developmentArea: "", developmentLevel: "on_track", body: "" });
-    await loadNotes();
-  };
-
-  const deleteEntry = async (id) => {
-    if (!window.confirm("Delete this entry?")) return;
-    const { error } = await supabase.from("student_notes").delete().eq("id", id);
-    if (error) { setNoteError(error.message); return; }
-    await loadNotes();
-  };
-
-  const saveProfileNote = async () => {
-    const didSave = await handleUpdateStudent(studentId, {
-      gender: student.gender || "Prefer not to say",
-      notes: profileNote,
-      isParticipatingWell: !!student.is_participating_well,
-      needsHelp: !!student.needs_help,
-      missingHomework: !!student.missing_homework,
-    });
-    if (didSave) setShowProfileNote(false);
-  };
 
   return (
     <>

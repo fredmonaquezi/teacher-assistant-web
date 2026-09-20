@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import ActivityAssessmentPage from "./ActivityAssessmentPage";
 
@@ -15,6 +16,11 @@ beforeEach(() => {
   supabaseMock.from.mockReset();
 });
 
+function renderWithQueryClient(ui) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+}
+
 test("saves one class activity and an outcome for every student", async () => {
   const single = vi.fn().mockResolvedValue({ data: { id: "activity-1" }, error: null });
   const select = vi.fn(() => ({ single }));
@@ -27,7 +33,7 @@ test("saves one class activity and an outcome for every student", async () => {
     throw new Error(`Unexpected table: ${table}`);
   });
 
-  render(
+  renderWithQueryClient(
     <MemoryRouter initialEntries={["/classes/class-1/assess-activity"]}>
       <Routes>
         <Route
@@ -103,7 +109,7 @@ test("allows an activity to be saved after assessing only participating students
     throw new Error(`Unexpected table: ${table}`);
   });
 
-  render(
+  renderWithQueryClient(
     <MemoryRouter initialEntries={["/classes/class-1/assess-activity"]}>
       <Routes>
         <Route
@@ -160,7 +166,7 @@ test("saves a 0-10 grade when numeric assessment mode is enabled", async () => {
     throw new Error(`Unexpected table: ${table}`);
   });
 
-  render(
+  renderWithQueryClient(
     <MemoryRouter initialEntries={["/classes/class-1/assess-activity"]}>
       <Routes>
         <Route path="/classes/:classId/assess-activity" element={
@@ -207,7 +213,7 @@ test("saves optional criteria, criterion evidence, and suggested overall outcome
     throw new Error(`Unexpected table: ${table}`);
   });
 
-  render(
+  renderWithQueryClient(
     <MemoryRouter initialEntries={["/classes/class-1/assess-activity"]}>
       <Routes>
         <Route

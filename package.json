@@ -10,7 +10,9 @@
     "test": "npm run test:unit && npm run test:ui",
     "test:unit": "node --experimental-specifier-resolution=node --test src/utils/*.test.js",
     "test:ui": "vitest run",
+    "test:smoke": "playwright test",
     "check:bundle": "node scripts/check-bundle-size.mjs",
+    "check:migrations": "bash scripts/verify-migrations.sh",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -27,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.3",
+    "@playwright/test": "^1.63.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.2.5",

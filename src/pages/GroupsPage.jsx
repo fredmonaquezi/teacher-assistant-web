@@ -1,40 +1,17 @@
-import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import TileIcon from "../components/navigation/TileIcon";
-import { ACADEMIC_PROFILE_KEYS, buildAbilityProfiles } from "../hooks/workspace/groupingEngine";
+import { ACADEMIC_PROFILE_KEYS } from "../features/groups/groupingEngine";
+import { genderColor, genderIcon, groupAccent } from "../features/groups/groupsPageModel";
+import useGroupsPageController from "../features/groups/useGroupsPageController";
 import "../styles/groups-page.css";
 import "../styles/separations.css";
-
-const INITIAL_VISIBLE_GROUP_CARDS = 24;
-const VISIBLE_GROUP_CARD_STEP = 24;
-
-const genderIcon = (gender) => {
-  const value = (gender || "").toLowerCase();
-  if (value.includes("female")) return "♀";
-  if (value.includes("male")) return "♂";
-  if (value.includes("non")) return "⚧";
-  return "•";
-};
-
-const genderColor = (gender) => {
-  const value = (gender || "").toLowerCase();
-  if (value.includes("female")) return "#ec4899";
-  if (value.includes("male")) return "#3b82f6";
-  if (value.includes("non")) return "#8b5cf6";
-  return "#94a3b8";
-};
-
-const groupAccent = (index) =>
-  ["#0077b6", "#00b4d8", "#03045e", "#90e0ef"][index % 4];
 
 function GroupsPage({
   formError,
   activeClass,
   activeClassId,
   students,
-  assessments = [],
-  assessmentEntries = [],
   activityAssessments = [],
   activityAssessmentEntries = [],
   subjects = [],
@@ -57,185 +34,19 @@ function GroupsPage({
   handleUpdateStudentAcademicLevel = async () => false,
 }) {
   const { t } = useTranslation();
-  const [showAdvancedHelp, setShowAdvancedHelp] = useState(false);
-  const [constraintToDelete, setConstraintToDelete] = useState(null);
-  const [visibleGroupCardCount, setVisibleGroupCardCount] = useState(INITIAL_VISIBLE_GROUP_CARDS);
-  const [savingAcademicProfileIds, setSavingAcademicProfileIds] = useState(() => new Set());
-  const deferredStudents = useDeferredValue(students);
-  const deferredGroups = useDeferredValue(groups);
-  const deferredGroupMembers = useDeferredValue(groupMembers);
-  const deferredGroupConstraints = useDeferredValue(groupConstraints);
-
-  const openSeparationsModal = () => {
-    if (typeof window !== "undefined") {
-      groupsScrollTopRef.current = window.scrollY;
-    }
-    setGroupsShowSeparations(true);
-  };
-
-  const closeSeparationsModal = () => {
-    if (typeof window !== "undefined") {
-      groupsScrollTopRef.current = window.scrollY;
-    }
-    setGroupsShowSeparations(false);
-    if (typeof window !== "undefined") {
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          window.scrollTo({ top: groupsScrollTopRef.current, behavior: "auto" });
-        });
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (!groupsShowSeparations || typeof window === "undefined") return;
-    window.requestAnimationFrame(() => {
-      window.scrollTo({ top: groupsScrollTopRef.current, behavior: "auto" });
-    });
-  }, [groupsShowSeparations, groupsScrollTopRef]);
-
-  const studentsById = useMemo(
-    () => new Map(deferredStudents.map((student) => [student.id, student])),
-    [deferredStudents]
-  );
-  const classStudents = useMemo(
-    () =>
-      activeClassId ? deferredStudents.filter((student) => student.class_id === activeClassId) : [],
-    [activeClassId, deferredStudents]
-  );
-  const academicProfiles = useMemo(
-    () =>
-      buildAbilityProfiles(
-        activeClassId,
-        classStudents,
-        assessments,
-        assessmentEntries,
-        activityAssessments,
-        activityAssessmentEntries
-      ),
-    [
-      activeClassId,
-      activityAssessmentEntries,
-      activityAssessments,
-      assessmentEntries,
-      assessments,
-      classStudents,
-    ]
-  );
-  const subjectsById = useMemo(
-    () => new Map(subjects.map((subject) => [subject.id, subject])),
-    [subjects]
-  );
-  const classStudentIdSet = useMemo(
-    () => new Set(classStudents.map((student) => student.id)),
-    [classStudents]
-  );
-  const classConstraintList = useMemo(
-    () =>
-      activeClassId
-        ? deferredGroupConstraints.filter(
-            (constraint) =>
-              classStudentIdSet.has(constraint.student_a) && classStudentIdSet.has(constraint.student_b)
-          )
-        : [],
-    [activeClassId, classStudentIdSet, deferredGroupConstraints]
-  );
-  const constraintDisplayRows = useMemo(
-    () =>
-      classConstraintList.map((constraint) => ({
-        constraint,
-        studentA: studentsById.get(constraint.student_a) || null,
-        studentB: studentsById.get(constraint.student_b) || null,
-      })),
-    [classConstraintList, studentsById]
-  );
-  const classGroups = useMemo(
-    () => (activeClassId ? deferredGroups.filter((group) => group.class_id === activeClassId) : []),
-    [activeClassId, deferredGroups]
-  );
-  const classGroupIdSet = useMemo(
-    () => new Set(classGroups.map((group) => group.id)),
-    [classGroups]
-  );
-  const classGroupMembers = useMemo(
-    () =>
-      classGroups.length
-        ? deferredGroupMembers.filter((member) => classGroupIdSet.has(member.group_id))
-        : [],
-    [classGroupIdSet, classGroups.length, deferredGroupMembers]
-  );
-  const memberIdsByGroupId = useMemo(() => {
-    const map = new Map();
-    for (const member of classGroupMembers) {
-      if (!map.has(member.group_id)) {
-        map.set(member.group_id, []);
-      }
-      map.get(member.group_id).push(member.student_id);
-    }
-    return map;
-  }, [classGroupMembers]);
-  const grouped = useMemo(
-    () =>
-      classGroups.map((group) => {
-        const memberIds = memberIdsByGroupId.get(group.id) || [];
-        const members = memberIds
-          .map((studentId) => studentsById.get(studentId))
-          .filter((student) => student && classStudentIdSet.has(student.id));
-        return { group, members };
-      }),
-    [classGroups, classStudentIdSet, memberIdsByGroupId, studentsById]
-  );
-  const visibleGrouped = grouped.slice(0, visibleGroupCardCount);
-  const hasMoreGroups = visibleGrouped.length < grouped.length;
-  const groupsDataIsPending =
-    deferredStudents !== students ||
-    deferredGroups !== groups ||
-    deferredGroupMembers !== groupMembers ||
-    deferredGroupConstraints !== groupConstraints;
-
-  const groupSize = Number(groupGenForm.size) || 4;
-  const genderCounts = new Map();
-  if (groupGenForm.separateGender) {
-    classStudents.forEach((student) => {
-      const gender = (student.gender || "").trim().toLowerCase() || "prefer not to say";
-      genderCounts.set(gender, (genderCounts.get(gender) || 0) + 1);
-    });
-  }
-  const expectedGroupCount = groupGenForm.separateGender
-    ? [...genderCounts.values()].reduce((total, count) => total + Math.ceil(count / groupSize), 0)
-    : Math.ceil(classStudents.length / groupSize);
-  const selectedStudentA = classStudentIdSet.has(constraintForm.studentA)
-    ? constraintForm.studentA
-    : "";
-  const selectedStudentB = classStudentIdSet.has(constraintForm.studentB)
-    ? constraintForm.studentB
-    : "";
-
-  const adjustGroupSize = useCallback(
-    (delta) => {
-      startTransition(() => {
-        setGroupGenForm((prev) => {
-          const currentSize = Number(prev.size) || 4;
-          const nextSize = Math.max(2, Math.min(10, currentSize + delta));
-          return { ...prev, size: String(nextSize) };
-        });
-      });
-    },
-    [setGroupGenForm]
-  );
-
-  const updateAcademicProfile = async (studentId, nextProfile) => {
-    setSavingAcademicProfileIds((current) => new Set(current).add(studentId));
-    try {
-      await handleUpdateStudentAcademicLevel(studentId, nextProfile || null);
-    } finally {
-      setSavingAcademicProfileIds((current) => {
-        const next = new Set(current);
-        next.delete(studentId);
-        return next;
-      });
-    }
-  };
+  const {
+    showAdvancedHelp, setShowAdvancedHelp, constraintToDelete, setConstraintToDelete,
+    savingAcademicProfileIds, classStudents, academicProfiles, subjectsById,
+    classConstraintList, constraintDisplayRows, classGroups, grouped, visibleGrouped,
+    hasMoreGroups, groupsDataIsPending, groupSize, expectedGroupCount,
+    selectedStudentA, selectedStudentB, adjustGroupSize, updateAcademicProfile,
+    openSeparationsModal, closeSeparationsModal, showMoreGroups,
+  } = useGroupsPageController({
+    activeClassId, students, activityAssessments, activityAssessmentEntries, subjects,
+    groups, groupMembers, groupConstraints, groupGenForm, setGroupGenForm,
+    constraintForm, groupsShowSeparations, setGroupsShowSeparations,
+    groupsScrollTopRef, handleUpdateStudentAcademicLevel,
+  });
 
   return (
     <>
@@ -552,13 +363,7 @@ function GroupsPage({
               <button
                 type="button"
                 className="secondary"
-                onClick={() =>
-                  startTransition(() => {
-                    setVisibleGroupCardCount((current) =>
-                      Math.min(current + VISIBLE_GROUP_CARD_STEP, grouped.length)
-                    );
-                  })
-                }
+                onClick={showMoreGroups}
               >
                 {t("groups.showMore")}
               </button>

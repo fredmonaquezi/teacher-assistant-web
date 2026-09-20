@@ -9,7 +9,6 @@ const { workspace } = vi.hoisted(() => ({
     attendanceSessions: [],
     activeClassId: "",
     setActiveClassId: vi.fn(),
-    ensureDataForPath: vi.fn(),
     usefulLinks: [{
       id: "link-1",
       title: "Teaching resources",
@@ -41,7 +40,6 @@ test("restores the direct Useful Links route and connects saved links and create
 
   expect(await screen.findByRole("heading", { name: "Useful Links" })).toBeTruthy();
   expect(screen.getByRole("link", { name: "Open: Teaching resources" })).toBeTruthy();
-  expect(workspace.ensureDataForPath).toHaveBeenCalledWith("/useful-links");
   const navigation = screen.getByRole("navigation");
   expect(within(navigation).getByRole("link", { name: "Useful Links" }).getAttribute("aria-current"))
     .toBe("page");

@@ -1,9 +1,717 @@
+.card {
+  width: min(420px, 100%);
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  box-shadow: 0 20px 40px rgba(16, 34, 59, 0.12);
+  display: grid;
+  gap: 16px;
+  margin: auto;
+}
+
+.error {
+  padding: 10px 12px;
+  background: #f8ddd8;
+  color: #8f3024;
+  border: 1px solid #d59b90;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: end;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.list li {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(252, 247, 235, 0.86);
+  border: 1px solid #d0b88f;
+}
+
+.drag-handle.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.drag-handle.disabled:hover {
+  background: #f7ecd2;
+  border-color: #c8ad82;
+  color: #7a6345;
+}
+
+.drag-handle.disabled:active {
+  cursor: not-allowed;
+}
+
+.random-category-chip.selected {
+  font-weight: 700;
+  box-shadow: 0 10px 16px rgba(84, 61, 35, 0.14);
+  transform: translateY(-1px);
+}
+
+.attendance-card-stat-value.late {
+  color: #f59e0b;
+}
+
+.status-btn {
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1px solid #d3deef;
+  background: #f8fbff;
+  color: #4b5f79;
+  font-weight: 700;
+  font-size: 0.86rem;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease,
+    background-color 0.14s ease;
+}
+
+.status-btn-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-btn-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.status-btn-text {
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.status-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 14px rgba(16, 42, 80, 0.1);
+}
+
+.status-btn.present {
+  background: #ecfdf3;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.status-btn.late {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+
+.status-btn.left-early {
+  background: #fefce8;
+  border-color: #fde68a;
+  color: #a16207;
+}
+
+.status-btn.absent {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.status-btn.selected {
+  border-color: transparent;
+  box-shadow: 0 10px 16px rgba(15, 23, 42, 0.16);
+}
+
+.separations-modal .grid {
+  gap: 14px;
+}
+
+.separations-modal .list li {
+  border: 1px solid #ccb188;
+  background: linear-gradient(180deg, #fdf5e3 0%, #f5e8cb 100%);
+}
+
+.class-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(250, 242, 225, 0.96) 0%, rgba(244, 232, 206, 0.94) 100%);
+  border: 1px solid #c9ae82;
+  border-radius: 10px;
+  min-height: 132px;
+  padding: 12px 12px 10px;
+  color: inherit;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 12px 18px rgba(81, 59, 34, 0.16);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.class-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 24px rgba(81, 59, 34, 0.22);
+  border-color: #b69362;
+}
+
+.class-card:focus-visible {
+  outline: 2px solid #b67947;
+  outline-offset: 2px;
+}
+
+.class-card-main {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.class-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.class-card .drag-handle {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  border: 1px solid #c7ac81;
+  background: rgba(248, 235, 204, 0.92);
+  color: #7b6243;
+}
+
+.class-card .drag-handle:hover {
+  border-color: #b58f5d;
+  background: rgba(247, 227, 188, 0.96);
+  color: #6c5232;
+}
+
+.class-card .drag-handle.disabled,
+.class-card .drag-handle.disabled:hover {
+  border-color: #c7ac81;
+  background: rgba(248, 235, 204, 0.92);
+  color: #7b6243;
+}
+
+.class-card .icon-button {
+  border: 1px solid #dbb0a8;
+  background: rgba(255, 238, 235, 0.7);
+  color: #be5446;
+  font-weight: 700;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 10px;
+}
+
+.class-card .icon-button:hover {
+  border-color: #cc8d82;
+  background: #ffe6df;
+}
+
+.student-card-link.student-tone-pink::before {
+  background: #ec4899;
+}
+
+.student-card-link.student-tone-yellow::before {
+  background: #eab308;
+}
+
+.student-flag.red {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.list.compact li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.student-status-card.status-participating {
+  border-width: 1px;
+  border-color: #606c38;
+  background: #a3b18a;
+  color: #24311a;
+}
+
+.student-status-card.status-participating.active {
+  border-color: #70e000;
+  background: #b7c59d;
+}
+
+.student-status-card.status-needs-help {
+  border-width: 1px;
+  border-color: #e09f3e;
+  background: #e09f3e;
+  color: #4d2e0f;
+}
+
+.student-status-card.status-needs-help.active {
+  border-color: #ffbe0b;
+  background: #f0b355;
+}
+
+.student-status-card.status-missing-homework {
+  border-width: 1px;
+  border-color: #ae2012;
+  background: #ce4257;
+  color: #fff4f6;
+}
+
+.student-status-card.status-missing-homework.active {
+  border-color: #c1121f;
+  background: #df5e72;
+}
+
+.student-status-card.status-participating strong,
+.student-status-card.status-participating p,
+.student-status-card.status-needs-help strong,
+.student-status-card.status-needs-help p,
+.student-status-card.status-missing-homework strong,
+.student-status-card.status-missing-homework p {
+  color: inherit;
+}
+
+.student-status-card.status-participating .student-status-icon,
+.student-status-card.status-needs-help .student-status-icon {
+  border-color: rgba(70, 46, 23, 0.32);
+  background: rgba(255, 251, 241, 0.45);
+  color: inherit;
+}
+
+.student-status-card.status-missing-homework .student-status-icon {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 249, 250, 0.22);
+  color: inherit;
+}
+
+.student-status-card.active.red {
+  box-shadow: 0 10px 16px rgba(81, 59, 32, 0.14);
+}
+
+.student-status-card.active.green strong,
+.student-status-card.active.orange strong,
+.student-status-card.active.red strong {
+  color: inherit;
+}
+
+.student-status-card.active.green p,
+.student-status-card.active.orange p,
+.student-status-card.active.red p {
+  color: inherit;
+  opacity: 0.95;
+}
+
+.simple-page {
+  display: grid;
+  gap: 24px;
+}
+
+.simple-page-header,
+.simple-class-header,
+.simple-section-heading,
+.simple-profile-note,
+.student-profile-simple-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.simple-page-header h2,
+.student-profile-simple-header h2 {
+  margin: 2px 0 6px;
+}
+
+.simple-kicker,
+.simple-class-card-label {
+  margin: 0;
+  color: #8a5c34;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.simple-class-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.simple-class-card {
+  position: relative;
+  min-height: 178px;
+  overflow: hidden;
+  border: 1px solid #d5b98d;
+  border-radius: 16px;
+  background: #fffaf0;
+  box-shadow: 0 6px 18px rgba(86, 57, 29, 0.1);
+}
+
+.simple-class-card-main {
+  width: 100%;
+  min-height: 178px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 22px;
+  color: #513a23;
+  text-align: left;
+  background: transparent;
+  box-shadow: none;
+}
+
+.simple-class-card-main:hover { background: #fff2d9; }
+
+.simple-class-card-main strong { font-size: 1.35rem; }
+
+.simple-class-card-main small { margin-top: auto; color: #785938; font-weight: 700; }
+
+.simple-delete-button,
+.simple-entry-delete {
+  color: #a34c42;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font-size: 0.78rem;
+}
+
+.simple-delete-button { position: absolute; right: 10px; bottom: 8px; }
+
+.simple-class-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 16px 14px;
+}
+
+.simple-class-card-actions .simple-delete-button { position: static; }
+
+.simple-delete-button:hover,
+.simple-entry-delete:hover { color: #7c3028; background: transparent; }
+
+.simple-empty {
+  padding: 34px 22px;
+  border: 1px dashed #c7a570;
+  border-radius: 14px;
+  color: #73563a;
+  text-align: center;
+  background: #fff9ed;
+}
+
+.simple-empty h3 { margin: 0 0 6px; }
+
+.simple-empty p { margin: 0; }
+
+.simple-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.simple-back { width: fit-content; color: #76502d; font-weight: 700; }
+
+.simple-roster-heading { display: flex; align-items: center; justify-content: space-between; }
+
+.simple-roster-heading h3 { margin: 0; }
+
+.simple-roster-heading span { min-width: 30px; padding: 4px 10px; border-radius: 999px; background: #eaddc6; color: #674829; font-weight: 800; text-align: center; }
+
+.simple-roster { border: 1px solid #dec39c; border-radius: 14px; overflow: hidden; }
+
+.simple-student-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 14px 16px; color: #4b3723; border-bottom: 1px solid #ead9bb; }
+
+.simple-student-row:last-child { border-bottom: 0; }
+
+.simple-student-row:hover { background: #fff8e9; }
+
+.simple-student-row strong, .simple-student-row small { display: block; }
+
+.simple-student-row small { margin-top: 3px; color: #806243; }
+
+.simple-avatar { width: 38px; height: 38px; display: inline-grid; place-items: center; border-radius: 50%; background: #e5c18d; color: #5c3f22; font-weight: 800; }
+
+.simple-avatar.large { width: 64px; height: 64px; font-size: 1.2rem; }
+
+.simple-timeline-section { display: grid; gap: 16px; }
+
+.simple-section-heading h3 { margin: 3px 0 0; }
+
+.simple-entry-form { display: grid; gap: 14px; padding: 18px; border: 1px solid #d7bb90; border-radius: 14px; background: #fff8e9; }
+
+.simple-entry-form button[type="submit"] { justify-self: start; }
+
+.class-journal .simple-entry-form { grid-template-columns: minmax(145px, 190px) 1fr; align-items: end; }
+
+.class-journal .simple-entry-form > button { grid-column: 2; }
+
+.simple-timeline { display: grid; gap: 12px; }
+
+.simple-timeline-entry { position: relative; padding: 16px 76px 16px 18px; border-left: 4px solid #ba8652; border-radius: 0 12px 12px 0; background: #fffdf7; box-shadow: 0 2px 10px rgba(77, 47, 21, 0.07); }
+
+.simple-timeline-entry p { margin: 10px 0 0; white-space: pre-wrap; }
+
+.simple-entry-meta { display: flex; align-items: center; gap: 9px; }
+
+.simple-entry-type { padding: 3px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 800; background: #f0debe; color: #75512f; }
+
+.simple-entry-type.development { background: #dce9d8; color: #42633d; }
+
+.simple-entry-delete { position: absolute; top: 13px; right: 13px; }
+
+.activity-student-card.assessed { border-color: #a9c6a5; background: #f8fcf4; }
+
+.class-activity-history { display: grid; gap: 14px; }
+
+.class-activity-list { display: grid; gap: 10px; }
+
+.class-activity-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px 18px; border: 1px solid #ddc39a; border-radius: 14px; background: #fffaf0; }
+
+.class-activity-card p { margin: 7px 0; color: #6f5338; }
+
+.class-activity-title { margin: 9px 0 0; color: #513a23; font-size: 1.03rem; }
+
+.class-activity-card small { color: #7a5b3c; font-weight: 800; }
+
+.class-activity-card .button { flex: 0 0 auto; }
+
+.class-activity-meta { display: flex; align-items: center; gap: 9px; }
+
+.class-activity-meta span { padding: 3px 8px; border-radius: 999px; color: #75512f; background: #f0debe; font-size: 0.72rem; font-weight: 800; }
+
+.activity-outcome { padding: 3px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 800; text-transform: capitalize; }
+
+.activity-outcome.needs_support { color: #8d302a; background: #f7d9d4; }
+
+.activity-outcome.working_towards { color: #80531a; background: #f5e2bd; }
+
+.activity-outcome.met { color: #35613a; background: #dcebd8; }
+
+.activity-outcome.exceeded { color: #315f72; background: #d7e9ef; }
+
+.activity-outcome.grade { color: #315f72; background: #d7e9ef; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 720px) {
+  .simple-page-header, .simple-class-header, .simple-profile-note { align-items: flex-start; flex-direction: column; }
+
+.class-journal .simple-entry-form { grid-template-columns: 1fr; }
+
+.class-journal .simple-entry-form > button { grid-column: auto; }
+
+.activity-profile-section .simple-section-heading { align-items: flex-start; flex-direction: column; }
+
+  .class-activity-card { align-items: flex-start; flex-direction: column; }
+}
+
+.notebook-content :is(
+  .calendar-mode,
+  .calendar-day-list .entry,
+  .calendar-day-list .event
+) {
+  border-color: #ccb289;
+}
+
+@media (max-width: 720px) {
+  .class-card {
+    min-height: 122px;
+    padding: 10px 9px 8px;
+  }
+
+.class-card-actions {
+    gap: 5px;
+  }
+
+.class-card .drag-handle {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+  }
+
+  .class-card .icon-button {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 1.15rem;
+  }
+}
+
+.error, .status, .profile-status { padding: 11px 14px; border: 0; border-radius: 10px; font-size: .84rem; box-shadow: none; }
+
+.error { color: #9f211d; background: #fff0ef; }
+
+.modal-card, .simple-form, .attendance-modal, .calendar-modal {
+  border: 0; border-radius: 18px; background: rgba(255,255,255,.96); box-shadow: 0 24px 80px rgba(0,0,0,.2);
+}
+
+.simple-page { gap: 24px; }
+
+.simple-kicker, .simple-class-card-label { color: var(--ink-soft); font-size: .68rem; letter-spacing: .07em; }
+
+.simple-back { color: var(--brand); font-size: .84rem; font-weight: 560; }
+
+.simple-page-header h2, .student-profile-simple-header h2 { color: var(--ink); font-size: 2rem; letter-spacing: -.035em; }
+
+.simple-avatar { color: #075cae; background: var(--brand-soft); }
+
+.simple-avatar.large { width: 58px; height: 58px; }
+
+.simple-class-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+
+.simple-class-card {
+  min-height: 166px; border: 1px solid var(--line); border-radius: 16px; background: #fff;
+  box-shadow: var(--shadow-sm); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.simple-class-card:hover { transform: translateY(-2px); border-color: #c7dff8; box-shadow: var(--shadow-md); }
+
+.simple-class-card.active { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-soft), var(--shadow-md); }
+
+.simple-class-card-main { min-height: 166px; padding: 20px; color: var(--ink); }
+
+.simple-class-card-main:hover { background: transparent; }
+
+.simple-class-card-main strong { font-size: 1.25rem; letter-spacing: -.02em; }
+
+.simple-class-card-main small { color: var(--ink-soft); }
+
+.simple-delete-button, .simple-entry-delete { color: var(--danger); }
+
+.simple-empty, .attendance-empty {
+  padding: 38px 24px; border: 1px dashed var(--line-strong); border-radius: 16px;
+  color: var(--ink-soft); background: rgba(255,255,255,.58);
+}
+
+.simple-roster { border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow-sm); }
+
+.simple-student-row, .simple-class-card-main, .attendance-card { text-decoration: none; }
+
+.simple-roster-heading span { color: var(--ink-soft); background: #e9e9ed; }
+
+.simple-student-row { padding: 13px 16px; color: var(--ink); border-bottom-color: var(--line); }
+
+.simple-student-row:hover { background: #f8f8fa; }
+
+.simple-student-row small { color: var(--ink-soft); }
+
+.simple-profile-note, .simple-entry-form, .activity-details-card, .class-activity-card, .activity-student-card {
+  border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow-sm);
+}
+
+.simple-profile-note p, .class-activity-card p { color: var(--ink-soft); }
+
+.simple-timeline-entry { border-left-color: var(--brand); border-radius: 0 14px 14px 0; background: #fff; box-shadow: var(--shadow-sm); }
+
+.simple-entry-type, .class-activity-meta span { color: #515154; background: #eeeef2; }
+
+.activity-student-card.assessed { border-color: #b7dfc0; background: #fbfffb; }
+
+.activity-outcome.needs_support { color: #9f211d; background: #fff0ef; }
+
+.activity-outcome.working_towards { color: #8a5700; background: #fff5d9; }
+
+.activity-outcome.met { color: #176b2d; background: #edf8ef; }
+
+.activity-outcome.exceeded { color: #075cae; background: var(--brand-soft); }
+
+.activity-outcome.grade { color: #075cae; background: var(--brand-soft); font-variant-numeric: tabular-nums; }
+
+.notebook-content .status-btn {
+  min-height: 36px; padding: 0 10px; border-radius: 9px; box-shadow: none;
+  font-size: .78rem; font-weight: 620; transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.notebook-content .status-btn:hover { transform: none; box-shadow: none; filter: brightness(.98); }
+
+.notebook-content .status-btn.selected { border-color: transparent; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+
+.status-btn-icon { width: 16px; height: 16px; }
+
+.status-btn-icon svg { width: 15px; height: 15px; }
+
+.notebook-content .random-category-chip.selected { box-shadow: 0 3px 12px rgba(0,0,0,.07); transform: none; }
+
+.notebook-content .separations-modal .list li { border: 0; border-radius: 10px; background: var(--surface-soft); }
+
+.card.auth-card {
+  width: min(430px, 100%); padding: 30px; gap: 18px; border: 1px solid var(--line);
+  border-radius: 20px; background: rgba(255,255,255,.94); box-shadow: 0 24px 80px rgba(0,0,0,.1);
+}
+
+@media (max-width: 720px) {
+  .simple-page-header, .simple-class-header, .simple-profile-note { gap: 14px; }
+
+.class-activity-card .button { width: 100%; }
+
+  .notebook-content .status-btn { width: 100%; }
+}
+
+.simple-header-actions{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:10px}
+
+.simple-class-grid{grid-template-columns:repeat(auto-fit,minmax(176px,1fr));gap:16px}
+
+.simple-class-card.active{border-color:var(--ocean-turquoise)!important;box-shadow:0 0 0 3px #00b4d81f,var(--shadow-md)!important}
+
+.simple-class-card-main{color:var(--ink);background:transparent;box-shadow:none}
+
+.simple-roster-heading-tools{display:flex;align-items:center;gap:12px}
+
+.simple-view-toggle{display:grid;grid-template-columns:repeat(2,1fr);gap:3px;padding:3px;border:1px solid var(--line);border-radius:12px;background:#caf0f866}
+
+.simple-view-toggle button{min-height:34px;padding:6px 13px;border:0;border-radius:9px;color:var(--ink-soft);background:transparent;box-shadow:none;font-size:.78rem}
+
+.simple-view-toggle button:hover{color:var(--ink);background:#ffffff99;box-shadow:none;transform:none}
+
+.simple-view-toggle button.active{color:#fff;background:var(--brand);box-shadow:0 5px 12px #0077b629}
+
+.simple-roster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;overflow:visible;border:0;background:transparent;box-shadow:none}
+
+.simple-roster-grid .simple-student-row{min-height:88px;border:1px solid var(--line);border-radius:16px;background:#fffffff0;box-shadow:var(--shadow-sm)}
+
+.simple-roster-grid .simple-student-row:hover{border-color:var(--line-strong);background:#fff;box-shadow:var(--shadow-md);transform:translateY(-1px)}
+
+@media (max-width: 720px) {
+  :is(.teacher-home-class,.simple-page-header,.attendance-header){align-items:stretch;flex-direction:column}
+
+  :is(.teacher-home-class-actions,.simple-header-actions,.modal-actions,.teacher-home-actions){grid-template-columns:1fr}
+}
+
+@media (max-width: 440px) {
+  .attendance-stats,.simple-class-grid{grid-template-columns:1fr}
+
+.simple-roster-heading{align-items:flex-start;gap:10px}
+
+.simple-roster-heading-tools{align-items:flex-end;flex-direction:column;gap:8px}
+
+  .simple-roster-grid{grid-template-columns:1fr}
+}
+
 .polished-class-grid .simple-class-card {
   display: grid;
   grid-template-rows: 1fr auto;
   overflow: hidden;
   border-radius: 18px;
 }
+
 .polished-class-grid .simple-class-card-main {
   display: flex;
   flex-direction: column;
@@ -17,14 +725,18 @@
   text-align: center;
   border-radius: 0;
 }
+
 .polished-class-grid .simple-class-card-label {
   padding: 4px 9px;
   border-radius: 6px;
   background: var(--surface-soft);
   line-height: 1.2;
 }
+
 .polished-class-grid .active .simple-class-card-label { color: var(--brand); background: var(--ocean-mist); }
+
 .polished-class-grid .simple-class-card-main strong { line-height: 1.2; overflow-wrap: anywhere; }
+
 .polished-class-grid .simple-class-card-main > span:not(.simple-class-card-label) {
   color: var(--ink-soft);
   font-size: .8rem;
@@ -32,7 +744,9 @@
   line-height: 1.4;
   text-wrap: balance;
 }
+
 .polished-class-grid .simple-class-card-main small { margin: 0; font-size: .76rem; }
+
 .polished-class-grid .simple-class-card-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -41,6 +755,7 @@
   border-top: 1px solid var(--line);
   background: var(--surface-soft);
 }
+
 .polished-class-grid .simple-class-card-actions button {
   width: 100%;
   min-height: 40px;
@@ -52,10 +767,13 @@
   text-align: center;
   box-shadow: none;
 }
+
 .polished-class-grid .simple-class-card-actions .simple-delete-button {
   border: 1px solid #efc2c7;
   color: #a12636;
   background: #fff1f3;
 }
+
 .polished-class-grid .simple-delete-button:hover { color: #801b28; background: #fce0e5; border-color: #d68996; }
+
 .polished-class-grid button:focus-visible { outline: 2px solid var(--brand); outline-offset: -3px; }

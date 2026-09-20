@@ -14,6 +14,7 @@ import {
   getAttendanceStatusMeta,
   summarizeAttendanceEntries,
 } from "../utils/attendanceMetrics";
+import "../styles/attendance.css";
 
 function StatusIcon({ kind }) {
   if (kind === "present") {

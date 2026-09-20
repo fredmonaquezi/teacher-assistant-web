@@ -69,15 +69,15 @@ test("shows subject-balanced assessment profiles and saves a teacher override", 
           { id: "student-1", class_id: "class-1", first_name: "Ana", last_name: "Silva" },
           { id: "student-2", class_id: "class-1", first_name: "Ben", last_name: "Souza", academic_level_override: "needs_support" },
         ]}
-        assessments={[
-          { id: "math-1", class_id: "class-1", subject_id: "math", max_score: 10 },
-          { id: "math-2", class_id: "class-1", subject_id: "math", max_score: 10 },
-          { id: "reading-1", class_id: "class-1", subject_id: "reading", max_score: 10 },
+        activityAssessments={[
+          { id: "math-1", class_id: "class-1", subject_id: "math" },
+          { id: "math-2", class_id: "class-1", subject_id: "math" },
+          { id: "reading-1", class_id: "class-1", subject_id: "reading" },
         ]}
-        assessmentEntries={[
-          { assessment_id: "math-1", student_id: "student-1", score: 10 },
-          { assessment_id: "math-2", student_id: "student-1", score: 10 },
-          { assessment_id: "reading-1", student_id: "student-1", score: 0 },
+        activityAssessmentEntries={[
+          { activity_assessment_id: "math-1", student_id: "student-1", outcome: "exceeded" },
+          { activity_assessment_id: "math-2", student_id: "student-1", outcome: "exceeded" },
+          { activity_assessment_id: "reading-1", student_id: "student-1", outcome: "grade_0" },
         ]}
         subjects={[{ id: "math", name: "Math" }, { id: "reading", name: "Reading" }]}
         groups={[]}

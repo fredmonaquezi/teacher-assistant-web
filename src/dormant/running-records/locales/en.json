@@ -1,0 +1,100 @@
+{
+  "detail": {
+    "title": "Detail"
+  },
+  "empty": {
+    "createFirst": "Create first",
+    "description": "Empty",
+    "title": "Empty"
+  },
+  "export": {
+    "accuracy": "Accuracy",
+    "class": "Class",
+    "date": "Date",
+    "errors": "Errors",
+    "level": "Level",
+    "notes": "Notes",
+    "scRatio": "SC ratio",
+    "selfCorrections": "Self corrections",
+    "student": "Student",
+    "textTitle": "Text title",
+    "totalWords": "Total words"
+  },
+  "exportCsv": "Export csv",
+  "exportJson": "Export json",
+  "filters": {
+    "allClasses": "All classes",
+    "allStudents": "All students",
+    "allTime": "All time",
+    "class": "Class",
+    "clear": "Clear",
+    "last30Days": "Last 30 days",
+    "last7Days": "Last 7 days",
+    "search": "Search",
+    "searchPlaceholder": "Search",
+    "sort": "Sort",
+    "sortAccuracyHighLow": "Sort accuracy high low",
+    "sortAccuracyLowHigh": "Sort accuracy low high",
+    "sortNewest": "Sort newest",
+    "sortOldest": "Sort oldest",
+    "student": "Student",
+    "thisTerm": "This term"
+  },
+  "levels": {
+    "frustration": {
+      "short": "Frustration"
+    },
+    "independent": {
+      "short": "Independent"
+    },
+    "instructional": {
+      "short": "Instructional"
+    }
+  },
+  "loading": "Loading",
+  "metrics": {
+    "accuracy": "Accuracy",
+    "errors": "Errors",
+    "sc": "SC",
+    "scRatio": "SC ratio",
+    "words": "Words"
+  },
+  "modal": {
+    "bookLevel": "Book level",
+    "bookLevelPlaceholder": "Select A-Z",
+    "clickToChoose": "Click to choose",
+    "date": "Date",
+    "editDescription": "Update reading assessment data",
+    "editTitle": "Edit Record",
+    "errors": "Errors",
+    "newDescription": "Record Reading Assessment data",
+    "newTitle": "New Record",
+    "notesOptional": "Notes optional",
+    "notesPlaceholder": "Notes",
+    "readingLevel": "Reading level",
+    "results": "Results",
+    "selectStudent": "Select student",
+    "selfCorrectionRatio": "Self correction ratio",
+    "selfCorrections": "Self corrections",
+    "student": "Student",
+    "textTitle": "Text title",
+    "textTitlePlaceholder": "e.g., The Cat in the Hat",
+    "totalWords": "Total words"
+  },
+  "na": "N/A",
+  "newRecord": "New Record",
+  "noClass": "No class",
+  "noDate": "No date",
+  "resultsSummary": "Showing {{shown}} of {{total}} records",
+  "showMore": "Show more records",
+  "stats": {
+    "avgAccuracy": "Avg accuracy",
+    "filteredAvg": "Filtered avg",
+    "studentsAssessed": "Students assessed",
+    "totalRecords": "Total records"
+  },
+  "title": "Running records",
+  "updatingResults": "(updating results...)",
+  "unknownStudent": "Unknown student",
+  "untitledText": "Untitled text"
+}

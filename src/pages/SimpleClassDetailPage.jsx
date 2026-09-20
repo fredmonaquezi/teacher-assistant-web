@@ -5,13 +5,14 @@ import ClassJournal from "../components/ClassJournal";
 import EditClassModal from "../components/common/EditClassModal";
 import ClassSubjectsModal from "../components/common/ClassSubjectsModal";
 import StudentGenderField from "../components/common/StudentGenderField";
+import "../styles/class-cards.css";
 import "../styles/student-create.css";
 
 function byName(first, second) {
   return `${first.first_name || ""} ${first.last_name || ""}`.localeCompare(`${second.first_name || ""} ${second.last_name || ""}`, undefined, { sensitivity: "base" });
 }
 
-function SimpleClassDetailPage({ classes, students, subjects = [], handleAddClassSubjects, handleRenameClassSubject, studentForm, setStudentForm, handleCreateStudent, handleUpdateClass, formError, setFormError }) {
+function SimpleClassDetailPage({ classes, students, subjects = [], handleAddClassSubjects, handleRenameClassSubject, studentForm, setStudentForm, handleCreateStudent, handleUpdateClass, formError, setFormError, loading = false }) {
   const { classId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,6 +22,10 @@ function SimpleClassDetailPage({ classes, students, subjects = [], handleAddClas
   const [showSubjects, setShowSubjects] = useState(false);
   const [rosterView, setRosterView] = useState("list");
   const classStudents = students.filter((student) => student.class_id === classId).sort(byName);
+
+  if (loading) {
+    return <section className="panel"><p className="muted">Loading class…</p></section>;
+  }
 
   if (!classItem) {
     return <section className="panel"><h2>Class not found</h2><NavLink to="/classes">Back to classes</NavLink></section>;

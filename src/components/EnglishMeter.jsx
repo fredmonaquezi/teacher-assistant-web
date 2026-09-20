@@ -1,13 +1,11 @@
 import { useTranslation } from "react-i18next";
+import {
+  DEFAULT_ENGLISH_METER_VALUE,
+  clampEnglishMeterPercentage,
+} from "../constants/englishMeter";
+import "../styles/english-meter.css";
 
-const DEFAULT_VALUE = 50;
 const STEP = 5;
-
-function clampPercentage(value) {
-  const numericValue = Number(value);
-  if (!Number.isFinite(numericValue)) return DEFAULT_VALUE;
-  return Math.min(100, Math.max(0, Math.round(numericValue)));
-}
 
 function getLevelKey(value) {
   if (value >= 90) return "immersed";
@@ -17,11 +15,11 @@ function getLevelKey(value) {
   return "starting";
 }
 
-function EnglishMeter({ className, value = DEFAULT_VALUE, onChange }) {
+function EnglishMeter({ className, value = DEFAULT_ENGLISH_METER_VALUE, onChange }) {
   const { t } = useTranslation();
-  const percentage = clampPercentage(value);
+  const percentage = clampEnglishMeterPercentage(value);
   const levelKey = getLevelKey(percentage);
-  const updateValue = (nextValue) => onChange?.(clampPercentage(nextValue));
+  const updateValue = (nextValue) => onChange?.(clampEnglishMeterPercentage(nextValue));
 
   return (
     <section
@@ -105,5 +103,4 @@ function EnglishMeter({ className, value = DEFAULT_VALUE, onChange }) {
   );
 }
 
-export { DEFAULT_VALUE as DEFAULT_ENGLISH_METER_VALUE, clampPercentage };
 export default EnglishMeter;

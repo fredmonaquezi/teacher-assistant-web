@@ -1,38 +1,17 @@
 import { format, parseISO } from "date-fns";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { NavLink } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { fetchClassActivityHistory } from "../features/activity-assessments/activityAssessmentRepository";
 
 function ActivityAssessmentHistory({ classId, studentCount, refreshKey = "" }) {
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let active = true;
-
-    const loadActivities = async () => {
-      setLoading(true);
-      const { data, error: loadError } = await supabase
-        .from("activity_assessments")
-        .select("id,activity_date,subject,title,description,created_at,activity_assessment_entries(id,student_id),activity_assessment_criteria(id)")
-        .eq("class_id", classId)
-        .order("activity_date", { ascending: false })
-        .order("created_at", { ascending: false });
-
-      if (!active) return;
-      if (loadError) {
-        setError(loadError.message);
-      } else {
-        setActivities(data || []);
-        setError("");
-      }
-      setLoading(false);
-    };
-
-    loadActivities();
-    return () => { active = false; };
-  }, [classId, refreshKey]);
+  const activitiesQuery = useQuery({
+    queryKey: ["class-activity-history", classId, refreshKey],
+    queryFn: () => fetchClassActivityHistory(supabase, classId),
+    enabled: Boolean(classId),
+  });
+  const activities = activitiesQuery.data || [];
+  const error = activitiesQuery.error?.message || "";
 
   return (
     <section className="class-activity-history">
@@ -44,7 +23,7 @@ function ActivityAssessmentHistory({ classId, studentCount, refreshKey = "" }) {
       </div>
 
       {error && <div className="error">{error}</div>}
-      {loading ? (
+      {activitiesQuery.isPending ? (
         <p className="muted">Loading activity assessments…</p>
       ) : activities.length === 0 ? (
         <div className="simple-empty">

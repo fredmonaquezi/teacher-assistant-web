@@ -3,12 +3,12 @@
 Teacher workflow app built with React + Vite + Supabase.
 
 ## What it does
-- Keep a deliberately small private classroom workspace: classes, students, dated anecdotal notes, development updates, and attendance.
+- Keep a private classroom workspace for classes, students, notes, activity assessments, attendance, groups, random selection, and useful links.
 - Student notes are protected with per-user Supabase Row Level Security; only the signed-in owner can read or change them.
 - Uses Supabase Auth and Postgres with row-level security.
 - Supports optional Google OAuth sign-in (feature-flagged).
 
-## Before reactivating
+## Database setup
 
 Apply the latest Supabase migration so the private `student_notes` table and its Row Level Security policies exist:
 
@@ -16,15 +16,18 @@ Apply the latest Supabase migration so the private `student_notes` table and its
 npx supabase db push
 ```
 
-Then deploy the app as usual. The active UI only exposes Classes, Attendance, and the student records reached from a class. Older features are no longer routable.
+The active Class Notes UI includes teacher home, classes and student profiles, activity assessments, attendance, groups, random picker, useful links, and profile preferences.
+
+Running Records is currently dormant but retained for a possible future return. Traditional assessments, units, rubrics, calendar, timer, and superseded page implementations have been removed from the frontend; database migrations and existing data remain untouched. See `docs/app-refactor-checklist.md` for the canonical product boundary and refactor plan.
 
 ## Tech stack
-- React 18
+- React 19
 - Vite
 - Supabase JS client
 - React Router
 - React Query
 - Vitest + Testing Library
+- Playwright
 
 ## Prerequisites
 - Node.js 20+ and npm
@@ -59,8 +62,10 @@ npm run dev
 - `npm run dev` - start local dev server
 - `npm run lint` - run ESLint
 - `npm test` - run unit + UI tests
+- `npm run test:smoke` - run browser smoke tests against an isolated local server
 - `npm run build` - production build
 - `npm run check:bundle` - enforce bundle-size limits
+- `npm run check:migrations` - verify migration naming, ordering, and transaction policy
 
 ## Supabase migrations (CLI)
 Use this when new SQL migrations are added:
@@ -136,4 +141,11 @@ curl -sI https://<your-production-domain> | rg -i "content-security-policy|stric
 
 ## Refactor notes
 - Main style entrypoint is `src/styles/app-core.css`.
-- Domain style files live under `src/styles/core/`.
+- Canonical design tokens and shared shell primitives live in `src/styles/core/foundation.css`.
+- Page and component styles live under `src/styles/` and are imported by their owning lazy route or component instead of a global redesign cascade.
+- Active server-state code is organized by domain under `src/features/`; React Query owns cached server data and feature repositories own Supabase calls.
+- Complex route pages use feature-owned controller hooks and pure models, leaving `src/pages` focused on presentation and route wiring.
+- Workspace route definitions and page prop wiring live under `src/routing/`; `TeacherWorkspaceApp.jsx` is only the router boundary, while the shell owns layout and global class selection synchronization.
+- `src/hooks/useTeacherWorkspaceData.js` is a compatibility composer for route props rather than a persistence layer.
+- The canonical product boundary, smoke checklist, and staged refactor plan are documented in `docs/app-refactor-checklist.md`.
+- The post-refactor runtime boundaries, data flow, ownership rules, and test strategy are documented in `docs/architecture.md`.

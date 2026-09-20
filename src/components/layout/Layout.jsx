@@ -78,6 +78,9 @@ function Layout({
     { label: t("layout.nav.usefulLinks"), path: "/useful-links", icon: "links" },
   ];
   const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
+  const openMobileSidebar = () => {
+    if (isMobileViewport) setIsMobileSidebarOpen(true);
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -213,7 +216,7 @@ function Layout({
             aria-controls="app-sidebar"
             aria-expanded={isMobileSidebarOpen}
             aria-label={t("layout.mobileNav.openAria")}
-            onClick={() => setIsMobileSidebarOpen(true)}
+            onClick={openMobileSidebar}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M5 7h14M5 12h14M5 17h14" />
