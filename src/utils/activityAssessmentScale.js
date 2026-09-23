@@ -59,6 +59,16 @@ export function activityAssessmentLevelFromPercent(percent) {
     .find((level) => percent >= level.minPercent) || ACTIVITY_PERFORMANCE_LEVELS[0];
 }
 
+export function convertActivityAssessmentValue(value, targetScale) {
+  if (!value) return "";
+  const percent = activityAssessmentToPercent(value);
+  if (!Number.isFinite(percent)) return "";
+  if (targetScale === ACTIVITY_ASSESSMENT_SCALES.GRADE) {
+    return `grade_${Math.round(percent / 10)}`;
+  }
+  return activityAssessmentLevelFromPercent(percent)?.key || "";
+}
+
 export function summarizeActivityAssessmentResults(samples = []) {
   const percentsBySubject = new Map();
   let meetingExpectations = 0;

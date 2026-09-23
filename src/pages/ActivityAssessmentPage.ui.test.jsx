@@ -155,7 +155,7 @@ test("allows an activity to be saved after assessing only participating students
   ], { onConflict: "activity_assessment_id,student_id" });
 });
 
-test("saves a 0-10 grade when numeric assessment mode is enabled", async () => {
+test("switches a new assessment to 0-10 grades and saves the selected scale", async () => {
   const single = vi.fn().mockResolvedValue({ data: { id: "activity-1" }, error: null });
   const insertActivity = vi.fn(() => ({ select: vi.fn(() => ({ single })) }));
   const upsertEntries = vi.fn().mockResolvedValue({ error: null });
@@ -174,7 +174,7 @@ test("saves a 0-10 grade when numeric assessment mode is enabled", async () => {
             classes={[{ id: "class-1", name: "Year 3" }]}
             subjects={[{ id: "subject-1", class_id: "class-1", name: "Maths", sort_order: 1 }]}
             students={[{ id: "student-1", class_id: "class-1", first_name: "Ana", last_name: "Silva" }]}
-            preferences={{ activityAssessmentScale: "grade" }}
+            preferences={{ activityAssessmentScale: "outcome" }}
           />
         } />
         <Route path="/classes/:classId" element={<p>Class page</p>} />
@@ -182,10 +182,14 @@ test("saves a 0-10 grade when numeric assessment mode is enabled", async () => {
     </MemoryRouter>
   );
 
+  expect(screen.getByRole("button", { name: "Written levels" }).getAttribute("aria-pressed")).toBe("true");
+  fireEvent.change(screen.getByLabelText("Outcome for Ana Silva"), { target: { value: "met" } });
+  fireEvent.click(screen.getByRole("button", { name: "0–10 grades" }));
+  expect(screen.getByRole("button", { name: "0–10 grades" }).getAttribute("aria-pressed")).toBe("true");
+  expect(screen.getByLabelText("Grade for Ana Silva").value).toBe("grade_8");
   fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "subject-1" } });
   fireEvent.change(screen.getByLabelText("Activity title"), { target: { value: "Number facts" } });
   fireEvent.change(screen.getByLabelText("Brief activity description"), { target: { value: "Practised number facts." } });
-  fireEvent.change(screen.getByLabelText("Grade for Ana Silva"), { target: { value: "grade_8" } });
   fireEvent.click(screen.getByRole("button", { name: "Save activity" }));
 
   await waitFor(() => expect(screen.getByText("Class page")).toBeTruthy());

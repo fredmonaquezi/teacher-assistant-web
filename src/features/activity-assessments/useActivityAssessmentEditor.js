@@ -6,6 +6,7 @@ import { criterionKey } from "../../utils/activityAssessmentCriteria";
 import {
   ACTIVITY_ASSESSMENT_SCALES,
   activityAssessmentOptions,
+  convertActivityAssessmentValue,
 } from "../../utils/activityAssessmentScale";
 import { fetchActivityAssessment, saveActivityAssessment } from "./activityAssessmentRepository";
 import {
@@ -143,6 +144,18 @@ export default function useActivityAssessmentEditor({
     ])));
     setDirtyStudentIds(classStudents.map((student) => student.id));
   };
+  const changeAssessmentScale = (nextScale) => {
+    if (isExistingActivity || nextScale === assessmentScale) return;
+    setStudentResults((current) => Object.fromEntries(Object.entries(current).map(([studentId, result]) => [
+      studentId,
+      { ...result, outcome: convertActivityAssessmentValue(result.outcome, nextScale) },
+    ])));
+    setCriterionResults((current) => Object.fromEntries(Object.entries(current).map(([key, result]) => [
+      key,
+      { ...result, outcome: convertActivityAssessmentValue(result.outcome, nextScale) },
+    ])));
+    setAssessmentScale(nextScale);
+  };
   const addCriterion = () => {
     const criterion = createEmptyCriterion();
     setCriteria((current) => [...current, criterion]);
@@ -233,10 +246,10 @@ export default function useActivityAssessmentEditor({
   return {
     isExistingActivity, classStudents, classSubjects, activity, setActivity,
     studentResults, criteria, criterionResults, assessmentMode, setAssessmentMode,
-    activeCriterionKey, setActiveCriterionKey, saving, assessmentOptions, resultLabel,
+    activeCriterionKey, setActiveCriterionKey, saving, assessmentScale, assessmentOptions, resultLabel,
     loadingActivity: isExistingActivity && activityQuery.isPending,
     displayError: error || activityQuery.error?.message || "",
-    assessedCount, suggestedOutcomeForStudent, updateStudentResult, setOutcomeForAll,
+    assessedCount, suggestedOutcomeForStudent, updateStudentResult, setOutcomeForAll, changeAssessmentScale,
     addCriterion, updateCriterion, moveCriterion, removeCriterion, updateCriterionResult,
     saveAssessment,
   };

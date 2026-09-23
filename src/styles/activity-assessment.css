@@ -380,6 +380,31 @@
 
 .activity-details-card h3 { margin: 0; color: var(--ink); font-size: 1.05rem; }
 
+.activity-details-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+
+.activity-scale-control { display: grid; justify-items: end; gap: 6px; }
+
+.activity-scale-control > span { color: var(--ink); font-size: 0.76rem; font-weight: 800; }
+
+.activity-scale-control small { max-width: 360px; color: var(--ink-soft); font-size: 0.72rem; text-align: right; }
+
+.activity-scale-toggle { display: inline-flex; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-soft); }
+
+.activity-scale-toggle button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ink-soft);
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.78rem;
+}
+
+.activity-scale-toggle button[aria-pressed="true"] { color: #fff; background: var(--brand); }
+
+.activity-scale-toggle button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
 .activity-assessment-page .activity-details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 
 .activity-assessment-page .stack { min-width: 0; gap: 7px; }
@@ -742,6 +767,10 @@
   .activity-criteria-student-results { margin-left: 0; }
   .activity-student-criterion-row { grid-template-columns: 1fr; }
   .activity-student-criterion-copy { grid-column: auto; }
+  .activity-details-heading { align-items: stretch; flex-direction: column; }
+  .activity-scale-control { justify-items: stretch; }
+  .activity-scale-control small { max-width: none; text-align: left; }
+  .activity-scale-toggle { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .activity-assessment-page .activity-details-card { padding: 16px; }
   .activity-assessment-page .activity-details-grid { grid-template-columns: 1fr; }
   .activity-assessment-page .activity-student-heading { padding: 16px; flex-direction: column; align-items: stretch; gap: 16px; }

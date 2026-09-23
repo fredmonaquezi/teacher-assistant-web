@@ -6,6 +6,7 @@ import {
   activityAssessmentMeetsExpectations,
   activityAssessmentOptions,
   activityAssessmentToPercent,
+  convertActivityAssessmentValue,
   formatActivityAssessment,
   isActivityGrade,
   summarizeActivityAssessmentResults,
@@ -36,6 +37,17 @@ test("uses consistent written levels for numerical averages", () => {
   assert.equal(activityAssessmentLevelFromPercent(70).key, "met");
   assert.equal(activityAssessmentLevelFromPercent(85).key, "exceeded");
   assert.equal(activityAssessmentLevelFromPercent(null), null);
+});
+
+test("converts selected results when a new assessment changes scale", () => {
+  assert.equal(convertActivityAssessmentValue("needs_support", ACTIVITY_ASSESSMENT_SCALES.GRADE), "grade_3");
+  assert.equal(convertActivityAssessmentValue("working_towards", ACTIVITY_ASSESSMENT_SCALES.GRADE), "grade_5");
+  assert.equal(convertActivityAssessmentValue("met", ACTIVITY_ASSESSMENT_SCALES.GRADE), "grade_8");
+  assert.equal(convertActivityAssessmentValue("exceeded", ACTIVITY_ASSESSMENT_SCALES.GRADE), "grade_10");
+  assert.equal(convertActivityAssessmentValue("grade_4", ACTIVITY_ASSESSMENT_SCALES.OUTCOME), "needs_support");
+  assert.equal(convertActivityAssessmentValue("grade_6", ACTIVITY_ASSESSMENT_SCALES.OUTCOME), "working_towards");
+  assert.equal(convertActivityAssessmentValue("grade_8", ACTIVITY_ASSESSMENT_SCALES.OUTCOME), "met");
+  assert.equal(convertActivityAssessmentValue("grade_9", ACTIVITY_ASSESSMENT_SCALES.OUTCOME), "exceeded");
 });
 
 test("summarizes mixed qualitative and numerical results in both forms", () => {

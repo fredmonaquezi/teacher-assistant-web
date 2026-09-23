@@ -8,6 +8,7 @@ import {
   emptyStudentResult,
 } from "../features/activity-assessments/activityAssessmentEditorModel";
 import { criterionKey } from "../utils/activityAssessmentCriteria";
+import { ACTIVITY_ASSESSMENT_SCALES } from "../utils/activityAssessmentScale";
 import "../styles/activity-assessment.css";
 
 function ActivityAssessmentPage({ classes, students, subjects = [], preferences, loading = false }) {
@@ -17,9 +18,9 @@ function ActivityAssessmentPage({ classes, students, subjects = [], preferences,
   const {
     isExistingActivity, classStudents, classSubjects, activity, setActivity,
     studentResults, criteria, criterionResults, assessmentMode, setAssessmentMode,
-    activeCriterionKey, setActiveCriterionKey, saving, assessmentOptions, resultLabel,
+    activeCriterionKey, setActiveCriterionKey, saving, assessmentScale, assessmentOptions, resultLabel,
     loadingActivity, displayError, assessedCount, suggestedOutcomeForStudent,
-    updateStudentResult, setOutcomeForAll, addCriterion, updateCriterion,
+    updateStudentResult, setOutcomeForAll, changeAssessmentScale, addCriterion, updateCriterion,
     moveCriterion, removeCriterion, updateCriterionResult, saveAssessment,
   } = useActivityAssessmentEditor({
     classId,
@@ -73,7 +74,31 @@ function ActivityAssessmentPage({ classes, students, subjects = [], preferences,
 
       {!loadingActivity && <form className="activity-assessment-form" onSubmit={saveAssessment}>
         <section className="activity-details-card">
-          <h3>Activity details</h3>
+          <div className="activity-details-heading">
+            <h3>Activity details</h3>
+            {!isExistingActivity && (
+              <div className="activity-scale-control">
+                <span>Assessment scale</span>
+                <div className="activity-scale-toggle" role="group" aria-label="Assessment scale">
+                  <button
+                    type="button"
+                    aria-pressed={assessmentScale === ACTIVITY_ASSESSMENT_SCALES.OUTCOME}
+                    onClick={() => changeAssessmentScale(ACTIVITY_ASSESSMENT_SCALES.OUTCOME)}
+                  >
+                    Written levels
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={assessmentScale === ACTIVITY_ASSESSMENT_SCALES.GRADE}
+                    onClick={() => changeAssessmentScale(ACTIVITY_ASSESSMENT_SCALES.GRADE)}
+                  >
+                    0–10 grades
+                  </button>
+                </div>
+                <small>Applies to this activity. Existing selections are converted when you switch.</small>
+              </div>
+            )}
+          </div>
           <div className="activity-details-grid">
             <label className="stack">
               <span>Date</span>
