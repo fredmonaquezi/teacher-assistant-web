@@ -94,14 +94,17 @@ function StudentProfilePage({ students, classes, subjects = [], attendanceSessio
               <div className="activity-performance-summary" aria-label="Activity performance summary">
                 <article><strong>{visibleActivityAssessments.length}</strong><span>assessed activities</span></article>
                 <article>
-                  <strong>{activityPerformance.meetingExpectations}</strong>
-                  <span>{activityPerformance.usesNumericGrades ? "at or above expectations" : "met or exceeded"}</span>
+                  <strong>{Number.isFinite(activityPerformance.averageGrade) ? activityPerformance.averageGrade.toFixed(1) : "—"} / 10</strong>
+                  <span>average grade</span>
                 </article>
                 <article>
-                  <strong>{activityPerformance.percentage}%</strong>
-                  <span>{activityPerformance.usesNumericGrades ? "at or above expectations" : "meeting expectations"}</span>
+                  <strong>{activityPerformance.levelLabel}</strong>
+                  <span>written average</span>
                 </article>
               </div>
+              <p className="activity-performance-explanation">
+                {activityPerformance.meetingExpectations} of {activityPerformance.sampleCount} {activityPerformance.sampleCount === 1 ? "assessment is" : "assessments are"} at or above expectations. Qualitative results are converted to numerical equivalents only for this average; original records stay unchanged.
+              </p>
               <div className="simple-timeline">
                 {visibleActivityAssessments.map((assessmentEntry) => {
                   const assessment = activityDetailsForEntry(assessmentEntry);

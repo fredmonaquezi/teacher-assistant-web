@@ -367,6 +367,8 @@
 
 .activity-performance-summary span { color: #806243; font-size: 0.76rem; }
 
+.activity-performance-explanation { margin: 10px 2px 0; color: #806243; font-size: 0.78rem; line-height: 1.5; }
+
 .activity-outcome { padding: 3px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 800; text-transform: capitalize; }
 
 .activity-outcome.needs_support { color: #8d302a; background: #f7d9d4; }
@@ -674,6 +676,8 @@
 .student-profile-page .activity-performance-summary strong { color: var(--ink); }
 
 .student-profile-page .activity-performance-summary span { color: var(--ink-soft); line-height: 1.35; text-wrap: balance; }
+
+.student-profile-page .activity-performance-explanation { color: var(--ink-soft); }
 
 .student-profile-page .simple-timeline { gap: 10px; }
 

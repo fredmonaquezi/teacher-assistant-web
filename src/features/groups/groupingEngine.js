@@ -1,4 +1,7 @@
-import { activityAssessmentToPercent } from "../../utils/activityAssessmentScale";
+import {
+  activityAssessmentLevelFromPercent,
+  activityAssessmentToPercent,
+} from "../../utils/activityAssessmentScale";
 
 const averageFromPercents = (values) => {
   const finiteValues = values.filter(Number.isFinite);
@@ -66,11 +69,13 @@ const ACADEMIC_PROFILE_RANK = {
 };
 
 function inferredAcademicProfile(averagePercent) {
-  if (!Number.isFinite(averagePercent)) return "unknown";
-  if (averagePercent < 50) return "needs_support";
-  if (averagePercent < 70) return "developing";
-  if (averagePercent < 85) return "on_track";
-  return "extending";
+  const level = activityAssessmentLevelFromPercent(averagePercent)?.key;
+  return {
+    needs_support: "needs_support",
+    working_towards: "developing",
+    met: "on_track",
+    exceeded: "extending",
+  }[level] || "unknown";
 }
 
 export function buildAbilityProfiles(

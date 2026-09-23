@@ -140,6 +140,9 @@ test("filters activity performance by the selected subject", async () => {
   ));
 
   await screen.findByText("Explained two multiplication strategies.");
+  const allSubjectsSummary = screen.getByLabelText("Activity performance summary");
+  expect(within(allSubjectsSummary).getByText("5.0 / 10", { selector: "strong" })).toBeTruthy();
+  expect(within(allSubjectsSummary).getByText("Working towards", { selector: "strong" })).toBeTruthy();
   fireEvent.change(screen.getByLabelText("Filter activity assessments by subject"), {
     target: { value: "subject:subject-math" },
   });
@@ -150,7 +153,9 @@ test("filters activity performance by the selected subject", async () => {
   expect(screen.getByText("Used two clear examples.")).toBeTruthy();
   expect(screen.queryByText("Identified evidence in a short text.")).toBeNull();
   const summary = screen.getByLabelText("Activity performance summary");
-  expect(within(summary).getAllByText("1", { selector: "strong" })).toHaveLength(2);
-  expect(within(summary).getByText("100%", { selector: "strong" })).toBeTruthy();
+  expect(within(summary).getByText("1", { selector: "strong" })).toBeTruthy();
+  expect(within(summary).getByText("7.5 / 10", { selector: "strong" })).toBeTruthy();
+  expect(within(summary).getByText("Met expectations", { selector: "strong" })).toBeTruthy();
+  expect(screen.getByText(/1 of 1 assessment is at or above expectations/)).toBeTruthy();
   await waitFor(() => expect(supabaseMock.from).toHaveBeenCalledWith("activity_assessment_entries"));
 });

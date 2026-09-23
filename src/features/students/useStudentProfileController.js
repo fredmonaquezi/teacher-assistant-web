@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../supabaseClient";
 import { summarizeAttendanceEntries } from "../../utils/attendanceMetrics";
-import { activityAssessmentMeetsExpectations, isActivityGrade } from "../../utils/activityAssessmentScale";
+import { summarizeActivityAssessmentResults } from "../../utils/activityAssessmentScale";
 import { fetchStudentActivityEntries } from "../activity-assessments/activityAssessmentRepository";
 import { createStudentNote, deleteStudentNote, fetchStudentNotes } from "./studentRepository";
 import { activityDetailsForEntry, activitySubjectKey } from "./studentProfileModel";
@@ -85,17 +85,13 @@ export default function useStudentProfileController({
       : activityAssessments.filter((item) => activitySubjectKey(item) === activitySubjectFilter),
     [activityAssessments, activitySubjectFilter]
   );
-  const activityPerformance = useMemo(() => {
-    const meetingExpectations = visibleActivityAssessments
-      .filter((item) => activityAssessmentMeetsExpectations(item.outcome)).length;
-    return {
-      meetingExpectations,
-      usesNumericGrades: visibleActivityAssessments.some((item) => isActivityGrade(item.outcome)),
-      percentage: visibleActivityAssessments.length
-        ? Math.round((meetingExpectations / visibleActivityAssessments.length) * 100)
-        : 0,
-    };
-  }, [visibleActivityAssessments]);
+  const activityPerformance = useMemo(
+    () => summarizeActivityAssessmentResults(visibleActivityAssessments.map((item) => ({
+      outcome: item.outcome,
+      subjectKey: activitySubjectKey(item),
+    }))),
+    [visibleActivityAssessments]
+  );
   const attendance = useMemo(() => {
     const sessionIds = new Set(attendanceSessions
       .filter((session) => session.class_id === student?.class_id)
